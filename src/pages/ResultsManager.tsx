@@ -69,7 +69,6 @@ const ResultsManager = () => {
 
       return {
         'STT': i + 1,
-        'Khóa đào tạo': r.student?.course?.name || r.student?.courseName || '-',
         'Họ và Tên': r.student?.name,
         'CCCD': r.student?.cccd,
         'Trạm thi': r.testType?.name || '-',
@@ -126,7 +125,6 @@ const ResultsManager = () => {
             <thead className="table-light">
               <tr>
                 <th style={{ width: '50px' }}>STT</th>
-                <th>Khóa đào tạo</th>
                 <th>Họ và Tên</th>
                 <th>CCCD</th>
                 <th>Trạm thi</th>
@@ -144,7 +142,6 @@ const ResultsManager = () => {
                 return (
                   <tr key={r.id}>
                     <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td><span className="badge badge-info">{r.student?.course?.name || r.student?.courseName || '-'}</span></td>
                     <td><strong>{r.student?.name}</strong></td>
                     <td>{r.student?.cccd}</td>
                     <td>{r.testType?.name}</td>
