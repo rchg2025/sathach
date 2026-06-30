@@ -94,6 +94,7 @@ model Exam {
   testTypeId  Int
   testType    TestType @relation(fields: [testTypeId], references: [id])
   criteria    Criterion[]
+  assignments TestAssignment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -108,12 +109,17 @@ model Criterion {
 }
 
 model TestAssignment {
-  id          Int      @id @default(autoincrement())
-  examinerId  Int
-  examiner    User     @relation(fields: [examinerId], references: [id])
-  testTypeId  Int
-  testType    TestType @relation(fields: [testTypeId], references: [id])
-  courseId    Int?
+  id             Int      @id @default(autoincrement())
+  examinerId     Int
+  examiner       User     @relation(fields: [examinerId], references: [id])
+  testTypeId     Int
+  testType       TestType @relation(fields: [testTypeId], references: [id])
+  examId         Int?
+  exam           Exam?    @relation(fields: [examId], references: [id])
+  courseId       Int?
+  assignmentDate DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
 }
 
 model TestResult {

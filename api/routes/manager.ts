@@ -238,12 +238,40 @@ router.get('/students', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
-// Assign Examiner
-router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeId, courseId } = req.body;
+// Assignments Management
+router.get('/assignments', async (req, res) => {
   try {
-    const assignment = await prisma.testAssignment.create({ data: { examinerId, testTypeId, courseId } });
+    const assignments = await prisma.testAssignment.findMany({
+      include: {
+        examiner: { select: { id: true, name: true, role: true } },
+        testType: { select: { id: true, name: true } },
+        exam: { select: { id: true, name: true } }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(assignments);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/assignments', async (req, res) => {
+  const { examinerId, testTypeId, examId, assignmentDate } = req.body;
+  try {
+    const data: any = {
+      examinerId: Number(examinerId),
+      testTypeId: Number(testTypeId),
+    };
+    if (examId) data.examId = Number(examId);
+    if (assignmentDate) data.assignmentDate = new Date(assignmentDate);
+
+    const assignment = await prisma.testAssignment.create({ data });
     res.json(assignment);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.delete('/assignments/:id', async (req, res) => {
+  try {
+    await prisma.testAssignment.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 

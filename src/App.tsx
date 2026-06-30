@@ -5,10 +5,11 @@ import Login from './pages/Login';
 import StudentSearch from './pages/StudentSearch';
 import ManagerDashboard from './pages/ManagerDashboard';
 import CourseManager from './pages/CourseManager';
-import TestTypeManager from './pages/TestTypeManager';
+
 import CategoryManager from './pages/CategoryManager';
 import UserManager from './pages/UserManager';
 import StudentManager from './pages/StudentManager';
+import AssignmentManager from './pages/AssignmentManager';
 import ExaminerDashboard from './pages/ExaminerDashboard';
 import Profile from './pages/Profile';
 import SettingsManager from './pages/SettingsManager';
@@ -42,8 +43,8 @@ function App() {
         <Route path="/manager/categories" element={<CategoryManager />} />
         {/* Kept for backward compatibility if needed, though they aren't in sidebar anymore */}
         <Route path="/manager/courses" element={<CourseManager />} />
-        <Route path="/manager/test-types" element={<TestTypeManager />} />
         <Route path="/manager/students" element={<StudentManager />} />
+        <Route path="/manager/assignments" element={<AssignmentManager />} />
         <Route path="/manager/users" element={<UserManager />} />
         <Route path="/manager/settings" element={<SettingsManager />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
