@@ -16,6 +16,9 @@ const StationTesting = () => {
   const [selectedTestType, setSelectedTestType] = useState<number | null>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('ALL');
+
   useEffect(() => {
     const u = localStorage.getItem('user');
     if (u) {
@@ -88,6 +91,13 @@ const StationTesting = () => {
     }
   };
 
+  const getStudentStatusText = (student: any) => {
+    if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
+    const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
+    if (inProgress) return 'Đang thi';
+    return 'Đã kết thúc';
+  };
+
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     // For simplicity, just check if any is IN_PROGRESS
@@ -99,6 +109,21 @@ const StationTesting = () => {
     return 'Đã kết thúc / Đang chờ';
   };
 
+  const filteredStudents = students.filter(s => {
+    let match = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
+    }
+    if (match && filterStatus !== 'ALL') {
+      const st = getStudentStatusText(s);
+      if (filterStatus === 'NOT_STARTED' && st !== 'Chưa thi') match = false;
+      if (filterStatus === 'IN_PROGRESS' && st !== 'Đang thi') match = false;
+      if (filterStatus === 'FINISHED' && st !== 'Đã kết thúc') match = false;
+    }
+    return match;
+  });
+
   return (
     <AdminLayout user={user}>
       <div className="container">
@@ -107,6 +132,25 @@ const StationTesting = () => {
         </div>
         
         <div className="card" style={{ padding: '0' }}>
+          <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Tìm kiếm theo Tên, CCCD hoặc Mã ĐK..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div style={{ width: '200px' }}>
+              <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+                <option value="ALL">Tất cả trạng thái</option>
+                <option value="NOT_STARTED">Chưa thi</option>
+                <option value="IN_PROGRESS">Đang thi</option>
+                <option value="FINISHED">Đã kết thúc</option>
+              </select>
+            </div>
+          </div>
           <div style={{ overflowX: 'auto' }}>
             <table className="table" style={{ margin: 0 }}>
               <thead>
@@ -120,7 +164,7 @@ const StationTesting = () => {
                 </tr>
               </thead>
               <tbody>
-                {students.map(s => (
+                {filteredStudents.map(s => (
                   <tr key={s.id}>
                     <td>{s.registrationCode}</td>
                     <td><strong>{s.name}</strong></td>
@@ -142,7 +186,7 @@ const StationTesting = () => {
                     </td>
                   </tr>
                 ))}
-                {students.length === 0 && (
+                {filteredStudents.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
                       Chưa có học viên nào được phân công.
