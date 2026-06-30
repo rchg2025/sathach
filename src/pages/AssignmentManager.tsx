@@ -18,7 +18,7 @@ const AssignmentManager = () => {
   const [roleType, setRoleType] = useState<'STATION_MANAGER' | 'EXAMINER'>('STATION_MANAGER');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedTestType, setSelectedTestType] = useState('');
-  const [selectedExam, setSelectedExam] = useState('');
+  const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
 
@@ -54,21 +54,21 @@ const AssignmentManager = () => {
   }, [roleType]);
 
   useEffect(() => {
-    setSelectedExam('');
+    setSelectedExams([]);
   }, [selectedTestType]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return toast.error('Vui lòng chọn người được phân công');
     if (!selectedTestType) return toast.error('Vui lòng chọn Trạm thi');
-    if (roleType === 'EXAMINER' && !selectedExam) return toast.error('Vui lòng chọn Bài thi');
+    if (roleType === 'EXAMINER' && selectedExams.length === 0) return toast.error('Vui lòng chọn ít nhất 1 Bài thi');
     if (!assignmentDate) return toast.error('Vui lòng chọn Ngày thực hiện');
 
     try {
       await axios.post(`${API_BASE_URL}/api/manager/assignments`, {
         examinerId: selectedUser,
         testTypeId: selectedTestType,
-        examId: roleType === 'EXAMINER' ? selectedExam : undefined,
+        examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
         courseId: selectedCourse ? selectedCourse : undefined,
         assignmentDate
       });
@@ -77,7 +77,7 @@ const AssignmentManager = () => {
       // Reset form
       setSelectedUser('');
       setSelectedTestType('');
-      setSelectedExam('');
+      setSelectedExams([]);
       setSelectedCourse('');
       setAssignmentDate('');
       
@@ -167,14 +167,18 @@ const AssignmentManager = () => {
 
             {roleType === 'EXAMINER' && (
               <div className="form-group">
-                <label className="form-label">Bài thi</label>
+                <label className="form-label">Bài thi (Nhấn giữ Ctrl/Cmd để chọn nhiều bài thi)</label>
                 <select 
+                  multiple
                   className="form-control" 
-                  value={selectedExam} 
-                  onChange={(e) => setSelectedExam(e.target.value)}
+                  style={{ minHeight: '120px' }}
+                  value={selectedExams} 
+                  onChange={(e) => {
+                    const values = Array.from(e.target.selectedOptions, option => option.value);
+                    setSelectedExams(values);
+                  }}
                   disabled={!selectedTestType}
                 >
-                  <option value="">-- Chọn Bài thi --</option>
                   {filteredExams.map(ex => (
                     <option key={ex.id} value={ex.id}>{ex.name}</option>
                   ))}

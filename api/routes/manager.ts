@@ -255,18 +255,26 @@ router.get('/assignments', async (req, res) => {
 });
 
 router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeId, examId, courseId, assignmentDate } = req.body;
+  const { examinerId, testTypeId, examIds, courseId, assignmentDate } = req.body;
   try {
-    const data: any = {
+    const baseData: any = {
       examinerId: Number(examinerId),
       testTypeId: Number(testTypeId),
     };
-    if (examId) data.examId = Number(examId);
-    if (courseId) data.courseId = Number(courseId);
-    if (assignmentDate) data.assignmentDate = new Date(assignmentDate);
+    if (courseId) baseData.courseId = Number(courseId);
+    if (assignmentDate) baseData.assignmentDate = new Date(assignmentDate);
 
-    const assignment = await prisma.testAssignment.create({ data });
-    res.json(assignment);
+    if (examIds && Array.isArray(examIds) && examIds.length > 0) {
+      const records = examIds.map(eId => ({
+        ...baseData,
+        examId: Number(eId)
+      }));
+      await prisma.testAssignment.createMany({ data: records });
+      res.json({ success: true, count: records.length });
+    } else {
+      const assignment = await prisma.testAssignment.create({ data: baseData });
+      res.json(assignment);
+    }
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
