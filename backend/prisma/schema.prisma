@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   // "ADMIN", "MANAGER", "EXAMINER"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  assignments TestAssignment[]
+}
+
+model Student {
+  id          Int      @id @default(autoincrement())
+  cccd        String   @unique
+  name        String
+  dob         String?
+  courseId    Int
+  course      Course   @relation(fields: [courseId], references: [id])
+  testResults TestResult[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Course {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  startDate   DateTime?
+  endDate     DateTime?
+  students    Student[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TestType {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  criteria    Criterion[]
+  assignments TestAssignment[]
+  testResults TestResult[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Criterion {
+  id             Int      @id @default(autoincrement())
+  name           String
+  pointsToDeduct Int      @default(5)
+  testTypeId     Int
+  testType       TestType @relation(fields: [testTypeId], references: [id])
+  scores         Score[]
+}
+
+model TestAssignment {
+  id          Int      @id @default(autoincrement())
+  examinerId  Int
+  examiner    User     @relation(fields: [examinerId], references: [id])
+  testTypeId  Int
+  testType    TestType @relation(fields: [testTypeId], references: [id])
+  courseId    Int?
+}
+
+model TestResult {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  student     Student  @relation(fields: [studentId], references: [id])
+  testTypeId  Int
+  testType    TestType @relation(fields: [testTypeId], references: [id])
+  totalScore  Int      @default(100)
+  status      String   @default("PENDING") // PENDING, PASSED, FAILED
+  scores      Score[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([studentId, testTypeId])
+}
+
+model Score {
+  id             Int        @id @default(autoincrement())
+  testResultId   Int
+  testResult     TestResult @relation(fields: [testResultId], references: [id])
+  criterionId    Int
+  criterion      Criterion  @relation(fields: [criterionId], references: [id])
+  timesDeducted  Int        @default(1)
+  createdAt      DateTime   @default(now())
+}
