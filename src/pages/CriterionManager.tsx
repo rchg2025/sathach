@@ -103,6 +103,9 @@ const CriterionManager = () => {
     if (e.testType) uniqueTestTypesMap.set(e.testType.id, e.testType);
   });
   const availableTestTypes = Array.from(uniqueTestTypesMap.values());
+  const availableExamsForFilter = testTypeFilter === 'all' 
+    ? exams 
+    : exams.filter((e: any) => e.testTypeId?.toString() === testTypeFilter);
 
   const filteredCriteria = criteria.filter((c: any) => {
     const keyword = removeAccents(searchKeyword);
@@ -165,15 +168,15 @@ const CriterionManager = () => {
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))].find((opt: any) => opt.value.toString() === testTypeFilter)}
-                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value.toString() : 'all'); setCurrentPage(1); }}
+                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value.toString() : 'all'); setExamFilter('all'); setCurrentPage(1); }}
                   placeholder="Lọc Trạm thi..."
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
                 />
               </div>
               <div style={{ width: '220px' }}>
                 <Select
-                  options={[{ value: 'all', label: 'Tất cả Bài thi' }, ...exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))]}
-                  value={[{ value: 'all', label: 'Tất cả Bài thi' }, ...exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))].find((opt: any) => opt.value.toString() === examFilter)}
+                  options={[{ value: 'all', label: 'Tất cả Bài thi' }, ...availableExamsForFilter.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))]}
+                  value={[{ value: 'all', label: 'Tất cả Bài thi' }, ...availableExamsForFilter.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))].find((opt: any) => opt.value.toString() === examFilter)}
                   onChange={(selected: any) => { setExamFilter(selected ? selected.value.toString() : 'all'); setCurrentPage(1); }}
                   placeholder="Lọc Bài thi..."
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
