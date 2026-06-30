@@ -673,8 +673,18 @@ router.get('/station/students', async (req, res) => {
   const { examinerId } = req.query;
   if (!examinerId) return res.status(400).json({ error: 'Missing examinerId' });
   try {
+    const localNow = new Date();
+    const localDateStr = localNow.getFullYear() + '-' + String(localNow.getMonth() + 1).padStart(2, '0') + '-' + String(localNow.getDate()).padStart(2, '0');
+    const todayUtcMidnight = new Date(`${localDateStr}T00:00:00.000Z`);
+
     const assignments = await prisma.testAssignment.findMany({
-      where: { examinerId: Number(examinerId) },
+      where: { 
+        examinerId: Number(examinerId),
+        OR: [
+          { assignmentDate: null },
+          { assignmentDate: todayUtcMidnight }
+        ]
+      },
       include: { testType: true, course: true, vehicles: true }
     });
     

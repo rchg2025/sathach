@@ -157,6 +157,7 @@ const ExaminerDashboard = () => {
                 <th style={{ width: '10%' }}>CCCD</th>
                 <th style={{ width: '10%' }}>Số xe</th>
                 <th style={{ width: '15%' }}>Khóa đào tạo</th>
+                <th style={{ width: '10%' }}>Thời gian thực hiện</th>
                 <th style={{ width: '15%' }}>Bài thi hiện tại</th>
                 <th style={{ width: '15%' }}>Trạng thái</th>
                 <th style={{ width: '5%' }}>Điểm thi</th>
@@ -165,7 +166,7 @@ const ExaminerDashboard = () => {
             </thead>
             <tbody>
               {filteredStudents.length === 0 ? (
-                <tr><td colSpan={9} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
+                <tr><td colSpan={10} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
               ) : filteredStudents.map((s: any, index: number) => {
                 const tr = s.testResults?.find((r: any) => r.id === s.testResultId);
                 const score = tr ? tr.totalScore : 100;
@@ -188,6 +189,7 @@ const ExaminerDashboard = () => {
                     <td>{s.cccd}</td>
                     <td><span className="badge badge-info">{s.vehicle?.name || '-'}</span></td>
                     <td>{s.course?.name || s.courseName || '-'}</td>
+                    <td>{s.assignmentDate ? new Date(s.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
                     <td>
                       <div className="badge badge-primary" style={{ display: 'inline-flex', padding: '0.4rem 0.6rem', fontSize: '0.9rem' }}>
                         {s.currentExam?.name || '-'}

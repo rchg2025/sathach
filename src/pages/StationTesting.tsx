@@ -308,6 +308,7 @@ const StationTesting = () => {
                   <th>Họ và Tên</th>
                   <th>CCCD</th>
                   <th>Khóa đào tạo</th>
+                  <th>Thời gian thực hiện</th>
                   <th>Trạng thái</th>
                   <th style={{ textAlign: 'center' }}>Điểm thi</th>
                   <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>
@@ -320,6 +321,12 @@ const StationTesting = () => {
                     <td><strong>{toTitleCase(s.name)}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
+                    <td>
+                      {(() => {
+                        const studentAssignment = assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                        return studentAssignment?.assignmentDate ? new Date(studentAssignment.assignmentDate).toLocaleDateString('vi-VN') : '-';
+                      })()}
+                    </td>
                     <td>
                       <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (getStudentStatusText(s) === 'Đã chuyển điểm' ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
                         {getStudentStatus(s)}
