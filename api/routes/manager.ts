@@ -296,6 +296,32 @@ router.post('/assignments', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.put('/assignments/:id', async (req, res) => {
+  const { id } = req.params;
+  const { examinerId, testTypeId, examId, courseId, assignmentDate, vehicleIds } = req.body;
+  try {
+    const data: any = {
+      examinerId: Number(examinerId),
+      testTypeId: Number(testTypeId),
+      examId: examId ? Number(examId) : null,
+      courseId: courseId ? Number(courseId) : null,
+      assignmentDate: assignmentDate ? new Date(assignmentDate) : null,
+    };
+
+    if (vehicleIds && Array.isArray(vehicleIds)) {
+      data.vehicles = { set: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
+    } else {
+      data.vehicles = { set: [] };
+    }
+
+    const assignment = await prisma.testAssignment.update({
+      where: { id: Number(id) },
+      data
+    });
+    res.json(assignment);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 router.delete('/assignments/:id', async (req, res) => {
   try {
     await prisma.testAssignment.delete({ where: { id: Number(req.params.id) } });

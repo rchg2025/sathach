@@ -26,6 +26,7 @@ const AssignmentManager = () => {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [assignmentDate, setAssignmentDate] = useState('');
+  const [editingId, setEditingId] = useState<number | null>(null);
 
   // Delete modal state
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({ isOpen: false, id: null });
@@ -84,17 +85,30 @@ const AssignmentManager = () => {
     if (!assignmentDate) return toast.error('Vui lòng chọn Ngày thực hiện');
 
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/assignments`, {
-        examinerId: selectedUser,
-        testTypeId: selectedTestType,
-        examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
-        courseId: selectedCourse ? selectedCourse : undefined,
-        vehicleIds: selectedVehicles,
-        assignmentDate
-      });
-      toast.success('Phân công thành công!');
+      if (editingId) {
+        await axios.put(`${API_BASE_URL}/api/manager/assignments/${editingId}`, {
+          examinerId: selectedUser,
+          testTypeId: selectedTestType,
+          examId: roleType === 'EXAMINER' ? selectedExams[0] : undefined,
+          courseId: selectedCourse ? selectedCourse : undefined,
+          vehicleIds: selectedVehicles,
+          assignmentDate
+        });
+        toast.success('Cập nhật phân công thành công!');
+      } else {
+        await axios.post(`${API_BASE_URL}/api/manager/assignments`, {
+          examinerId: selectedUser,
+          testTypeId: selectedTestType,
+          examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
+          courseId: selectedCourse ? selectedCourse : undefined,
+          vehicleIds: selectedVehicles,
+          assignmentDate
+        });
+        toast.success('Phân công thành công!');
+      }
       
       // Reset form
+      setEditingId(null);
       setSelectedUser('');
       setSelectedTestType('');
       setSelectedExams([]);
@@ -104,8 +118,31 @@ const AssignmentManager = () => {
       
       fetchData();
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Lỗi khi phân công');
+      toast.error(err.response?.data?.error || 'Lỗi khi lưu phân công');
     }
+  };
+
+  const handleEdit = (assignment: any) => {
+    setEditingId(assignment.id);
+    setRoleType(assignment.examiner?.role || 'STATION_MANAGER');
+    
+    // We need to use setTimeout to allow roleType effect to run and reset fields
+    // But since we want to populate them, we bypass the effect's reset behavior
+    // by setting them immediately. The effects will run but won't undo these if we structure it carefully,
+    // actually the effects will wipe them if roleType changes!
+    // To fix that, we can wrap the resets in the effects to check if editingId is set, or just use a small timeout.
+    setTimeout(() => {
+      setSelectedUser(String(assignment.examinerId));
+      setSelectedTestType(String(assignment.testTypeId));
+      setSelectedCourse(assignment.courseId ? String(assignment.courseId) : '');
+      setSelectedVehicles(assignment.vehicles?.map((v: any) => String(v.id)) || []);
+      if (assignment.examId) {
+        setSelectedExams([String(assignment.examId)]);
+      }
+      if (assignment.assignmentDate) {
+        setAssignmentDate(new Date(assignment.assignmentDate).toISOString().split('T')[0]);
+      }
+    }, 50);
   };
 
   const handleDelete = (id: number) => {
@@ -168,10 +205,27 @@ const AssignmentManager = () => {
       <h2 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Phân công Nhiệm vụ</h2>
 
       <div className="card mb-4">
-        <h4 style={{ marginBottom: '1.5rem', borderBottom: '1px dashed var(--border)', paddingBottom: '0.5rem' }}>
-          Tạo phân công mới
-        </h4>
-        <form onSubmit={handleSubmit}>
+        <div className="card-header">
+          <h3 className="card-title">{editingId ? 'Cập nhật phân công' : 'Tạo phân công mới'}</h3>
+          {editingId && (
+            <button 
+              className="btn" 
+              style={{ background: '#f3f4f6', color: '#4b5563', padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
+              onClick={() => {
+                setEditingId(null);
+                setSelectedUser('');
+                setSelectedTestType('');
+                setSelectedExams([]);
+                setSelectedCourse('');
+                setSelectedVehicles([]);
+                setAssignmentDate('');
+              }}
+            >
+              Hủy cập nhật
+            </button>
+          )}
+        </div>
+        <form className="card-body" onSubmit={handleSubmit}>
           <div className="grid-cols-3-responsive">
             <div className="form-group">
               <label className="form-label">Loại phân công</label>
@@ -268,7 +322,11 @@ const AssignmentManager = () => {
               <Select
                 isMulti={roleType === 'STATION_MANAGER'}
                 options={vehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
-                value={vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                value={
+                  roleType === 'STATION_MANAGER' 
+                    ? vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))
+                    : vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))[0] || null
+                }
                 onChange={(selected: any) => {
                   if (!selected) {
                     setSelectedVehicles([]);
@@ -295,9 +353,9 @@ const AssignmentManager = () => {
             </div>
           </div>
 
-          <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
-            <button type="submit" className="btn btn-primary">Lưu Phân Công</button>
-          </div>
+            <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+              <button type="submit" className="btn btn-primary">{editingId ? 'Cập nhật Phân Công' : 'Lưu Phân Công'}</button>
+            </div>
         </form>
       </div>
 
@@ -401,6 +459,9 @@ const AssignmentManager = () => {
                   </td>
                   <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
                   <td style={{ textAlign: 'center' }}>
+                    <button className="action-btn btn-edit" onClick={() => handleEdit(a)} title="Sửa phân công" style={{ marginRight: '8px' }}>
+                      <span className="material-icons" style={{ fontSize: '18px' }}>edit</span>
+                    </button>
                     <button className="action-btn btn-delete" onClick={() => handleDelete(a.id)} title="Xóa phân công">
                       <Trash2 size={16} />
                     </button>
