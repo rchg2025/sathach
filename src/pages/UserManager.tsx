@@ -294,7 +294,7 @@ const UserManager = () => {
                     <th>Tên đăng nhập</th>
                     <th>Quyền</th>
                     <th>Trạng thái (Khóa/Mở)</th>
-                    <th style={{ textAlign: 'right' }}>Thao tác</th>
+                    <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -319,8 +319,8 @@ const UserManager = () => {
                           <span className="toggle-slider"></span>
                         </label>
                       </td>
-                      <td style={{ textAlign: 'right' }}>
-                      <div style={{ display: 'flex', gap: '5px' }}>
+                      <td className="sticky-col-right" style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
                         <button className="btn btn-primary" title="Sửa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleEditClick(u)} disabled={user?.role !== 'ADMIN' && u.role === 'ADMIN'}><Edit size={16} /></button>
                         {user?.role === 'ADMIN' && (
                           <button className="btn btn-danger" title="Xóa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}><Trash2 size={16} /></button>

@@ -553,7 +553,7 @@ const StudentManager = () => {
                   <th>Ngày sinh</th>
                   <th>CCCD</th>
                   <th>Hạng</th>
-                  <th style={{ width: '120px' }}>Hành động</th>
+                  <th className="sticky-col-right" style={{ width: '120px' }}>Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -573,7 +573,7 @@ const StudentManager = () => {
                     <td>{formatDate(student.dob)}</td>
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
-                    <td>
+                    <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
                         <button className="action-btn" title="Xem" style={{ color: '#17a2b8' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(student)}><Edit size={16} /></button>

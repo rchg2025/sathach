@@ -430,7 +430,7 @@ const AssignmentManager = () => {
                 <th>Bài thi</th>
                 <th>Số xe</th>
                 <th>Thời gian thực hiện</th>
-                <th style={{ textAlign: 'center' }}>Thao tác</th>
+                <th className="sticky-col-right" style={{ textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -458,7 +458,7 @@ const AssignmentManager = () => {
                     ) : '-'}
                   </td>
                   <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
-                  <td style={{ textAlign: 'center' }}>
+                  <td className="sticky-col-right" style={{ textAlign: 'center' }}>
                     <button className="action-btn btn-edit" onClick={() => handleEdit(a)} title="Sửa phân công" style={{ marginRight: '8px' }}>
                       <Edit size={16} />
                     </button>

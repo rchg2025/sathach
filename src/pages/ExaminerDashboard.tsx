@@ -117,7 +117,7 @@ const ExaminerDashboard = () => {
   const currentScore = calculateCurrentScore();
 
   return (
-    <AdminLayout>
+    <AdminLayout user={user}>
       <div className="card mb-4" style={{ borderRadius: '15px' }}>
         <h3 className="mb-4" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Sát hạch (Giám khảo: {user?.name})</h3>
         
