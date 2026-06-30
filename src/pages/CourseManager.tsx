@@ -205,9 +205,10 @@ const CourseManager = () => {
                     </div>
                   </td>
                   <td>
-                    <button className="action-btn btn-view" title="Xem"><Eye size={16} /></button>
-                    <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(course)}><Edit size={16} /></button>
-                    <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(course.id)}><Trash2 size={16} /></button>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(course)}><Edit size={16} /></button>
+                      <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(course.id)}><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               )) : (
