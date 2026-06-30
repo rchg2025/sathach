@@ -87,7 +87,8 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
   });
 
   // Return a direct image link format so it can be embedded in <img> tags
-  return `https://drive.google.com/uc?export=view&id=${fileId}`;
+  // Using lh3.googleusercontent.com/d/ is the most reliable way to embed Drive images in 2024
+  return `https://lh3.googleusercontent.com/d/${fileId}`;
 }
 
 export async function testDriveConnection(clientEmail: string, privateKey: string, folderId: string): Promise<boolean> {
