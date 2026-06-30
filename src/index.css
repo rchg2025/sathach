@@ -28,6 +28,7 @@ body {
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  font-size: 14px;
 }
 
 a {
@@ -161,6 +162,10 @@ h1, h2, h3, h4, h5, h6 {
   width: 100%;
   border-collapse: collapse;
   margin-bottom: 1rem;
+  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table th, .table td {
@@ -400,12 +405,57 @@ input:checked + .toggle-slider:before {
     flex-direction: column;
   }
   .sidebar {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 260px;
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    border-right: 1px solid var(--border);
+    border-bottom: none;
+  }
+  .sidebar.open {
+    transform: translateX(0);
   }
   .main-content {
     padding: 1rem;
+    width: 100%;
+    margin-top: 60px; /* space for mobile header */
+  }
+  .mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    z-index: 900;
+    box-shadow: var(--shadow-sm);
+  }
+  .mobile-header .menu-btn {
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    margin-right: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
   }
   .dashboard-grid.grid-cols-4,
   .dashboard-grid.grid-cols-2 {
@@ -416,12 +466,13 @@ input:checked + .toggle-slider:before {
   }
   .sidebar-nav {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
   }
   .sidebar-item {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
   }
   .tabs {
     flex-wrap: wrap;
@@ -429,6 +480,14 @@ input:checked + .toggle-slider:before {
   .tab-btn {
     width: 100%;
     justify-content: center;
+  }
+}
+@media (min-width: 769px) {
+  .mobile-header {
+    display: none;
+  }
+  .sidebar-overlay {
+    display: none;
   }
 }
 

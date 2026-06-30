@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -8,7 +8,9 @@ import {
   LogOut,
   Shield,
   UserCircle,
-  Car
+  Car,
+  Menu,
+  X
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -20,6 +22,7 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -28,11 +31,31 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
   const isActive = (path: string) => location.pathname === path ? 'active' : '';
 
+  const closeSidebar = () => setIsSidebarOpen(false);
+
   return (
     <div className="admin-layout">
+      {/* Mobile Header */}
+      <div className="mobile-header">
+        <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
+          <Menu size={24} />
+        </button>
+        <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Hệ thống Quản lý</h3>
+      </div>
+
+      {/* Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
       {/* Sidebar */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }} className="d-md-none">
+            {isSidebarOpen && (
+              <X size={24} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={closeSidebar} />
+            )}
+          </div>
           <div className="sidebar-avatar" style={{ overflow: 'hidden' }}>
             {user?.avatarUrl ? (
               <img src={user.avatarUrl.startsWith('/') ? API_BASE_URL + user.avatarUrl : user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -48,35 +71,35 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
         </div>
 
         <nav className="sidebar-nav">
-          <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`}>
+          <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`} onClick={closeSidebar}>
             <LayoutDashboard size={20} /> Bảng điều khiển
           </Link>
           {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-            <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`}>
+            <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
               <Car size={20} /> Sát hạch
             </Link>
           )}
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
             <>
-              <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`}>
+              <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`} onClick={closeSidebar}>
                 <BookOpen size={20} /> Quản lý Danh mục
               </Link>
-              <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`}>
+              <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`} onClick={closeSidebar}>
                 <Users size={20} /> Quản lý Học viên
               </Link>
-              <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`}>
+              <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`} onClick={closeSidebar}>
                 <Users size={20} /> Phân công Giám khảo
               </Link>
-              <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`}>
+              <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`} onClick={closeSidebar}>
                 <Shield size={20} /> Quản lý Thành viên
               </Link>
             </>
           )}
-          <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`}>
+          <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`} onClick={closeSidebar}>
             <UserCircle size={20} /> Hồ sơ cá nhân
           </Link>
           {user?.role === 'ADMIN' && (
-            <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`}>
+            <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`} onClick={closeSidebar}>
               <Settings size={20} /> Cấu hình hệ thống
             </Link>
           )}
