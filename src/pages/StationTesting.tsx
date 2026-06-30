@@ -14,6 +14,7 @@ const StationTesting = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [selectedTestType, setSelectedTestType] = useState<any>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
 
@@ -56,6 +57,7 @@ const StationTesting = () => {
     }
     
     setSelectedStudent(student);
+    setSelectedAssignment(studentAssignment);
     setSelectedTestType(studentAssignment.testType);
     setSelectedVehicleId(null);
     setIsModalOpen(true);
@@ -228,7 +230,7 @@ const StationTesting = () => {
               <div className="form-group mt-3">
                 <label>Tìm chọn Số Xe <Car size={14} style={{ display: 'inline', marginLeft: '5px' }}/></label>
                 <Select
-                  options={vehicles.map(v => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                  options={(selectedAssignment?.vehicles?.length > 0 ? selectedAssignment.vehicles : vehicles).map((v: any) => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
                   value={vehicles.filter(v => v.id === selectedVehicleId).map(v => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))[0] || null}
                   onChange={(selectedOption) => setSelectedVehicleId(selectedOption ? selectedOption.value : null)}
                   placeholder="-- Gõ để tìm xe --"

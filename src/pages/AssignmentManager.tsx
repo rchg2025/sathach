@@ -16,6 +16,7 @@ const AssignmentManager = () => {
   const [testTypes, setTestTypes] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
 
   // Form states
   const [roleType, setRoleType] = useState<'STATION_MANAGER' | 'EXAMINER'>('STATION_MANAGER');
@@ -23,6 +24,7 @@ const AssignmentManager = () => {
   const [selectedTestType, setSelectedTestType] = useState('');
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [assignmentDate, setAssignmentDate] = useState('');
 
   // Delete modal state
@@ -42,18 +44,20 @@ const AssignmentManager = () => {
 
   const fetchData = async () => {
     try {
-      const [assnRes, usrRes, ttRes, examRes, courseRes] = await Promise.all([
+      const [assnRes, usrRes, ttRes, examRes, courseRes, vehicleRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/assignments`),
         axios.get(`${API_BASE_URL}/api/manager/users`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`),
         axios.get(`${API_BASE_URL}/api/manager/exams`),
-        axios.get(`${API_BASE_URL}/api/manager/courses`)
+        axios.get(`${API_BASE_URL}/api/manager/courses`),
+        axios.get(`${API_BASE_URL}/api/manager/vehicle-types`)
       ]);
       setAssignments(assnRes.data);
       setUsers(usrRes.data);
       setTestTypes(ttRes.data);
       setExams(examRes.data);
       setCourses(courseRes.data);
+      setVehicles(vehicleRes.data.filter((v: any) => v.isActive));
     } catch (err) {
       toast.error('Lỗi khi tải dữ liệu');
     }
@@ -65,6 +69,7 @@ const AssignmentManager = () => {
   // Reset dependent fields when parent selection changes
   useEffect(() => {
     setSelectedUser('');
+    setSelectedVehicles([]);
   }, [roleType]);
 
   useEffect(() => {
@@ -84,6 +89,7 @@ const AssignmentManager = () => {
         testTypeId: selectedTestType,
         examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
         courseId: selectedCourse ? selectedCourse : undefined,
+        vehicleIds: selectedVehicles,
         assignmentDate
       });
       toast.success('Phân công thành công!');
@@ -93,6 +99,7 @@ const AssignmentManager = () => {
       setSelectedTestType('');
       setSelectedExams([]);
       setSelectedCourse('');
+      setSelectedVehicles([]);
       setAssignmentDate('');
       
       fetchData();
@@ -132,6 +139,7 @@ const AssignmentManager = () => {
       'Khóa đào tạo': a.course?.name || '',
       'Trạm thi': a.testType?.name || '',
       'Bài thi': a.exam?.name || '',
+      'Số xe': a.vehicles?.map((v: any) => v.name).join(', ') || '',
       'Thời gian thực hiện': a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : ''
     }));
 
@@ -242,24 +250,39 @@ const AssignmentManager = () => {
 
             {roleType === 'EXAMINER' && (
               <div className="form-group">
-                <label className="form-label">Bài thi (Nhấn giữ Ctrl/Cmd để chọn nhiều bài thi)</label>
-                <select 
-                  multiple
-                  className="form-control" 
-                  style={{ minHeight: '120px' }}
-                  value={selectedExams} 
-                  onChange={(e) => {
-                    const values = Array.from(e.target.selectedOptions, option => option.value);
-                    setSelectedExams(values);
-                  }}
-                  disabled={!selectedTestType}
-                >
-                  {filteredExams.map(ex => (
-                    <option key={ex.id} value={ex.id}>{ex.name}</option>
-                  ))}
-                </select>
+                <label className="form-label">Bài thi</label>
+                <Select
+                  isMulti
+                  options={filteredExams.map(e => ({ value: String(e.id), label: e.name }))}
+                  value={filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))}
+                  onChange={(selected: any) => setSelectedExams(selected ? selected.map((s: any) => s.value) : [])}
+                  placeholder="Tìm chọn bài thi..."
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                  noOptionsMessage={() => "Không tìm thấy bài thi"}
+                />
               </div>
             )}
+
+            <div className="form-group">
+              <label className="form-label">Số xe</label>
+              <Select
+                isMulti={roleType === 'STATION_MANAGER'}
+                options={vehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                value={vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                onChange={(selected: any) => {
+                  if (!selected) {
+                    setSelectedVehicles([]);
+                  } else if (Array.isArray(selected)) {
+                    setSelectedVehicles(selected.map((s: any) => s.value));
+                  } else {
+                    setSelectedVehicles([selected.value]);
+                  }
+                }}
+                placeholder="Tìm chọn số xe..."
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                noOptionsMessage={() => "Không tìm thấy số xe"}
+              />
+            </div>
 
             <div className="form-group">
               <label className="form-label">Thời gian thực hiện</label>
@@ -347,7 +370,8 @@ const AssignmentManager = () => {
                 <th>Khóa đào tạo</th>
                 <th>Trạm thi</th>
                 <th>Bài thi</th>
-                <th>Thời gian</th>
+                <th>Số xe</th>
+                <th>Thời gian thực hiện</th>
                 <th style={{ textAlign: 'center' }}>Thao tác</th>
               </tr>
             </thead>
@@ -364,8 +388,17 @@ const AssignmentManager = () => {
                     )}
                   </td>
                   <td>{a.course?.name || '-'}</td>
-                  <td>{a.testType?.name || 'N/A'}</td>
+                  <td>{a.testType?.name}</td>
                   <td>{a.exam?.name || '-'}</td>
+                  <td>
+                    {a.vehicles && a.vehicles.length > 0 ? (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {a.vehicles.map((v: any) => (
+                          <span key={v.id} className="badge badge-secondary" style={{ fontSize: '0.75rem', padding: '0.2rem 0.4rem' }}>{v.name}</span>
+                        ))}
+                      </div>
+                    ) : '-'}
+                  </td>
                   <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button className="action-btn btn-delete" onClick={() => handleDelete(a.id)} title="Xóa phân công">

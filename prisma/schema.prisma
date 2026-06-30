@@ -73,6 +73,7 @@ model VehicleType {
   contractEnd   DateTime?
   isActive    Boolean  @default(true)
   testResults TestResult[]
+  assignments TestAssignment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -121,6 +122,7 @@ model TestAssignment {
   exam           Exam?    @relation(fields: [examId], references: [id])
   courseId       Int?
   course         Course?  @relation(fields: [courseId], references: [id])
+  vehicles       VehicleType[]
   assignmentDate DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt

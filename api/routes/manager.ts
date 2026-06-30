@@ -246,7 +246,8 @@ router.get('/assignments', async (req, res) => {
         examiner: { select: { id: true, name: true, role: true } },
         testType: { select: { id: true, name: true } },
         exam: { select: { id: true, name: true } },
-        course: { select: { id: true, name: true } }
+        course: { select: { id: true, name: true } },
+        vehicles: { select: { id: true, name: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -255,33 +256,36 @@ router.get('/assignments', async (req, res) => {
 });
 
 router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeId, examIds, courseId, assignmentDate } = req.body;
+  const { examinerId, testTypeId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
   try {
-    const baseData: any = {
+    const whereData: any = {
       examinerId: Number(examinerId),
       testTypeId: Number(testTypeId),
     };
-    if (courseId) baseData.courseId = Number(courseId);
-    if (assignmentDate) baseData.assignmentDate = new Date(assignmentDate);
+    if (courseId) whereData.courseId = Number(courseId);
+    if (assignmentDate) whereData.assignmentDate = new Date(assignmentDate);
+
+    const baseData = { ...whereData };
+    if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
+      baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
+    }
 
     if (examIds && Array.isArray(examIds) && examIds.length > 0) {
-      const records = examIds.map(eId => ({
-        ...baseData,
-        examId: Number(eId)
-      }));
-
-      for (const record of records) {
-        const existing = await prisma.testAssignment.findFirst({ where: record });
+      for (const eId of examIds) {
+        const recordWhere = { ...whereData, examId: Number(eId) };
+        const existing = await prisma.testAssignment.findFirst({ where: recordWhere });
         if (existing) {
-          const exam = await prisma.exam.findUnique({ where: { id: record.examId } });
+          const exam = await prisma.exam.findUnique({ where: { id: recordWhere.examId } });
           return res.status(400).json({ error: `Bài thi "${exam?.name || 'này'}" đã được phân công cho người này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.` });
         }
       }
 
-      await prisma.testAssignment.createMany({ data: records });
-      res.json({ success: true, count: records.length });
+      for (const eId of examIds) {
+        await prisma.testAssignment.create({ data: { ...baseData, examId: Number(eId) } });
+      }
+      res.json({ success: true, count: examIds.length });
     } else {
-      const existing = await prisma.testAssignment.findFirst({ where: baseData });
+      const existing = await prisma.testAssignment.findFirst({ where: whereData });
       if (existing) {
         return res.status(400).json({ error: 'Người này đã được phân công ở trạm này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.' });
       }
@@ -594,7 +598,7 @@ router.get('/station/students', async (req, res) => {
   try {
     const assignments = await prisma.testAssignment.findMany({
       where: { examinerId: Number(examinerId) },
-      include: { testType: true, course: true }
+      include: { testType: true, course: true, vehicles: true }
     });
     
     const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
