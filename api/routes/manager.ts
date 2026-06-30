@@ -74,31 +74,32 @@ router.post('/assignments', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, role: true, name: true, isActive: true, createdAt: true }
+      select: { id: true, username: true, role: true, name: true, phone: true, email: true, isActive: true, createdAt: true },
+      orderBy: { createdAt: 'desc' }
     });
     res.json(users);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
 router.post('/users', async (req, res) => {
-  const { username, password, role, name } = req.body;
+  const { username, password, role, name, phone, email } = req.body;
   try {
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) return res.status(400).json({ error: 'Tên đăng nhập đã tồn tại' });
     
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { username, password: passwordHash, role, name }
+      data: { username, password: passwordHash, role, name, phone, email }
     });
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, isActive: user.isActive });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
 router.put('/users/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, role, isActive, password } = req.body;
+  const { name, role, isActive, password, phone, email } = req.body;
   try {
-    const data: any = { name, role, isActive };
+    const data: any = { name, role, isActive, phone, email };
     if (password) {
       data.password = await bcrypt.hash(password, 10);
     }
@@ -106,7 +107,7 @@ router.put('/users/:id', async (req, res) => {
       where: { id: Number(id) },
       data
     });
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, isActive: user.isActive });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
