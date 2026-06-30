@@ -667,4 +667,23 @@ router.post('/station/start-test', async (req, res) => {
   }
 });
 
+router.post('/station/end-test', async (req, res) => {
+  const { studentId, testTypeId } = req.body;
+  try {
+    const testResult = await prisma.testResult.findUnique({
+      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    });
+    
+    if (testResult) {
+      await prisma.testResult.update({
+        where: { id: testResult.id },
+        data: { status: 'FINISHED' }
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

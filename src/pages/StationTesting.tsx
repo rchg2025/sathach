@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Play, Car } from 'lucide-react';
+import { Play, Car, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -104,6 +104,37 @@ const StationTesting = () => {
     }
   };
 
+  const handleEndTest = async (student: any) => {
+    const studentAssignment = assignments.find(a => 
+      a.courseId === student.courseId || 
+      (a.course && a.course.name === student.courseName)
+    );
+    if (!studentAssignment) return toast.error('Không tìm thấy bài thi phân công');
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/station/end-test`, {
+        studentId: student.id,
+        testTypeId: studentAssignment.testType?.id
+      });
+      toast.success('Kết thúc phần thi thành công.');
+      
+      // Update local state to reflect FINISHED
+      setStudents(prev => prev.map(s => {
+        if (s.id === student.id) {
+          const newTestResults = [...(s.testResults || [])];
+          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === studentAssignment.testType?.id);
+          if (trIndex > -1) {
+            newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'FINISHED' };
+          }
+          return { ...s, testResults: newTestResults };
+        }
+        return s;
+      }));
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi khi kết thúc thi');
+    }
+  };
+
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
@@ -193,13 +224,28 @@ const StationTesting = () => {
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button 
-                        className="btn btn-primary" 
-                        style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                        onClick={() => openStartTestModal(s)}
-                      >
-                        <Play size={16} /> Bắt đầu thi
-                      </button>
+                      {!getStudentStatus(s).includes('Đang thi') && (
+                        <button 
+                          className="btn btn-primary" 
+                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                          onClick={() => openStartTestModal(s)}
+                        >
+                          <Play size={16} /> Bắt đầu thi
+                        </button>
+                      )}
+                      {getStudentStatus(s).includes('Đang thi') && (
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
+                          onClick={() => {
+                            if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
+                              handleEndTest(s);
+                            }
+                          }}
+                        >
+                          <CheckCircle size={16} /> Kết thúc
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -230,13 +276,23 @@ const StationTesting = () => {
               <div className="form-group mt-3">
                 <label>Tìm chọn Số Xe <Car size={14} style={{ display: 'inline', marginLeft: '5px' }}/></label>
                 <Select
-                  options={(selectedAssignment?.vehicles?.length > 0 ? selectedAssignment.vehicles : vehicles).map((v: any) => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                  options={
+                    (selectedAssignment?.vehicles?.length > 0 ? selectedAssignment.vehicles : vehicles)
+                      .filter((v: any) => {
+                         // Filter out vehicles that are currently IN_PROGRESS
+                         const inProgressVehicles = students.flatMap(s => s.testResults || [])
+                            .filter((tr: any) => tr.status === 'IN_PROGRESS' && tr.vehicleId)
+                            .map((tr: any) => tr.vehicleId);
+                         return !inProgressVehicles.includes(v.id);
+                      })
+                      .map((v: any) => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))
+                  }
                   value={vehicles.filter(v => v.id === selectedVehicleId).map(v => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))[0] || null}
                   onChange={(selectedOption) => setSelectedVehicleId(selectedOption ? selectedOption.value : null)}
                   placeholder="-- Gõ để tìm xe --"
                   isClearable
                   isSearchable
-                  noOptionsMessage={() => "Không tìm thấy xe"}
+                  noOptionsMessage={() => "Không tìm thấy xe phù hợp (hoặc đang bận)"}
                 />
               </div>
 
