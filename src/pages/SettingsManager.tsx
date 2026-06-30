@@ -67,12 +67,6 @@ const SettingsManager = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check size limit (e.g., 2MB)
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error('Kích thước ảnh quá lớn (Tối đa 2MB)');
-      return;
-    }
-    
     const formData = new FormData();
     formData.append('file', file);
     
