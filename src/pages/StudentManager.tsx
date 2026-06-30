@@ -140,6 +140,8 @@ const StudentManager = () => {
   const [viewStudent, setViewStudent] = useState<any>(null);
   
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
+  const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
+  const [selectedStudentIds, setSelectedStudentIds] = useState<number[]>([]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -262,11 +264,46 @@ const StudentManager = () => {
     try {
       await axios.delete(`${API_BASE_URL}/api/manager/students/${deleteModal.id}`);
       toast.success('Xóa Học viên thành công!');
+      setSelectedStudentIds(prev => prev.filter(id => id !== deleteModal.id));
       fetchStudents();
     } catch (err) {
       toast.error('Lỗi khi xóa Học viên');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
+    }
+  };
+
+  const confirmBulkDelete = async () => {
+    if (selectedStudentIds.length === 0) return;
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/students/bulk-delete`, {
+        ids: selectedStudentIds
+      });
+      toast.success(`Đã xóa ${selectedStudentIds.length} Học viên!`);
+      setSelectedStudentIds([]);
+      fetchStudents();
+    } catch (err) {
+      toast.error('Lỗi khi xóa Học viên');
+    } finally {
+      setBulkDeleteModal(false);
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      const idsOnPage = displayedStudents.map((s: any) => s.id);
+      setSelectedStudentIds(prev => Array.from(new Set([...prev, ...idsOnPage])));
+    } else {
+      const idsOnPage = displayedStudents.map((s: any) => s.id);
+      setSelectedStudentIds(prev => prev.filter(id => !idsOnPage.includes(id)));
+    }
+  };
+
+  const handleSelectOne = (id: number, checked: boolean) => {
+    if (checked) {
+      setSelectedStudentIds(prev => [...prev, id]);
+    } else {
+      setSelectedStudentIds(prev => prev.filter(studentId => studentId !== id));
     }
   };
 
@@ -483,6 +520,17 @@ const StudentManager = () => {
               <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>📥 Xuất Excel</span>
               </button>
+
+              {selectedStudentIds.length > 0 && (
+                <button 
+                  className="btn btn-danger" 
+                  onClick={() => setBulkDeleteModal(true)} 
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                >
+                  <Trash2 size={16} />
+                  <span>Xóa đã chọn ({selectedStudentIds.length})</span>
+                </button>
+              )}
             </div>
           </div>
           
@@ -490,6 +538,13 @@ const StudentManager = () => {
             <table className="table" style={{ minWidth: '1000px' }}>
               <thead>
                 <tr>
+                  <th style={{ width: '40px', textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      onChange={handleSelectAll}
+                      checked={displayedStudents.length > 0 && displayedStudents.every((s: any) => selectedStudentIds.includes(s.id))}
+                    />
+                  </th>
                   <th style={{ width: '50px' }}>STT</th>
                   <th>Khóa</th>
                   <th>Mã ĐK</th>
@@ -503,6 +558,13 @@ const StudentManager = () => {
               <tbody>
                 {displayedStudents.length > 0 ? displayedStudents.map((student: any, idx: number) => (
                   <tr key={student.id}>
+                    <td style={{ textAlign: 'center' }}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedStudentIds.includes(student.id)}
+                        onChange={(e) => handleSelectOne(student.id, e.target.checked)}
+                      />
+                    </td>
                     <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td><span className="badge badge-info">{student.courseName || '-'}</span></td>
                     <td>{student.registrationCode || '-'}</td>
@@ -708,6 +770,14 @@ const StudentManager = () => {
         message="Bạn có chắc chắn muốn xóa Học viên này không? Các bài thi liên quan cũng sẽ bị xóa."
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
+
+      <ConfirmModal
+        isOpen={bulkDeleteModal}
+        title="Xác nhận xóa hàng loạt"
+        message={`Bạn có chắc chắn muốn xóa ${selectedStudentIds.length} Học viên đã chọn không? Các bài thi liên quan cũng sẽ bị xóa.`}
+        onConfirm={confirmBulkDelete}
+        onCancel={() => setBulkDeleteModal(false)}
       />
     </AdminLayout>
   );

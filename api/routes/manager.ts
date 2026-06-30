@@ -520,6 +520,15 @@ router.delete('/students/:id', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.post('/students/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
+  try {
+    await prisma.student.deleteMany({ where: { id: { in: ids.map((id: any) => Number(id)) } } });
+    res.json({ success: true, count: ids.length });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 router.post('/students/bulk', async (req, res) => {
   const { students } = req.body;
   if (!Array.isArray(students)) return res.status(400).json({ error: 'Invalid data format' });
