@@ -24,8 +24,26 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
     throw new Error('Google Drive configuration is missing in Settings');
   }
 
-  // In case the private key was pasted directly from JSON and contains \n strings instead of actual newlines
-  const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
+  let formattedPrivateKey = privateKey;
+  try {
+    // If user pasted the whole JSON object
+    if (formattedPrivateKey.trim().startsWith('{')) {
+      const parsed = JSON.parse(formattedPrivateKey);
+      if (parsed.private_key) {
+        formattedPrivateKey = parsed.private_key;
+      }
+    }
+  } catch(e) {
+    // ignore
+  }
+
+  // Handle potentially escaped newlines in private key
+  formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
+  
+  // also, if it's enclosed in quotes, remove them
+  if (formattedPrivateKey.startsWith('"') && formattedPrivateKey.endsWith('"')) {
+    formattedPrivateKey = formattedPrivateKey.slice(1, -1);
+  }
 
   const auth = new google.auth.GoogleAuth({
     credentials: {
