@@ -22,6 +22,7 @@ model User {
   updatedAt  DateTime @updatedAt
   assignments TestAssignment[]
   managedTests  TestResult[] @relation("StationManagerTests")
+  examProgress  ExamProgress[]
 }
 
 model Student {
@@ -99,6 +100,7 @@ model Exam {
   testType    TestType @relation(fields: [testTypeId], references: [id])
   criteria    Criterion[]
   assignments TestAssignment[]
+  progress    ExamProgress[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -143,6 +145,7 @@ model TestResult {
   stationManagerId Int?
   stationManager   User?   @relation("StationManagerTests", fields: [stationManagerId], references: [id])
   scores      Score[]
+  progress    ExamProgress[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -163,4 +166,19 @@ model Setting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+model ExamProgress {
+  id           Int        @id @default(autoincrement())
+  testResultId Int
+  testResult   TestResult @relation(fields: [testResultId], references: [id])
+  examId       Int
+  exam         Exam       @relation(fields: [examId], references: [id])
+  examinerId   Int
+  examiner     User       @relation(fields: [examinerId], references: [id])
+  status       String     @default("PENDING") // PENDING, COMPLETED
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  
+  @@unique([testResultId, examId])
 }

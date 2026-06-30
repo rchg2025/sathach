@@ -1,149 +1,175 @@
-import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Play, CheckCircle, Plus, Minus } from 'lucide-react';
+import toast from 'react-hot-toast';
+import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 
 const ExaminerDashboard = () => {
-  const navigate = useNavigate();
+  const [students, setStudents] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   
-  const [students, setStudents] = useState<any[]>([]);
-  const [testTypes, setTestTypes] = useState<any[]>([]);
-  const [criteria, setCriteria] = useState<any[]>([]);
-  
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [selectedTestType, setSelectedTestType] = useState<number>(1);
+  const [criteria, setCriteria] = useState<any[]>([]);
+  const [errors, setErrors] = useState<{ [criterionId: number]: number }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentScore, setCurrentScore] = useState<number>(100);
+  const [baseScore, setBaseScore] = useState<number>(100);
+
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
-    if (!userStr) {
-      navigate('/login');
-    } else {
-      setUser(JSON.parse(userStr));
-    }
-    fetchData();
-  }, [navigate]);
-
-  const fetchData = async () => {
-    try {
-      const [studentsRes, testTypesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/examiner/students`),
-        axios.get(`${API_BASE_URL}/api/manager/test-types`) // We can reuse manager's API
-      ]);
-      setStudents(studentsRes.data);
-      setTestTypes(testTypesRes.data);
+    const u = localStorage.getItem('user');
+    if (u) {
+      const parsedUser = JSON.parse(u);
+      setUser(parsedUser);
+      fetchData(parsedUser.id);
       
-      if (testTypesRes.data.length > 0) {
-        setSelectedTestType(testTypesRes.data[0].id);
-        fetchCriteria(testTypesRes.data[0].id);
-      }
+      const interval = setInterval(() => {
+        fetchData(parsedUser.id, false);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  const fetchData = async (examinerId: number, showLoading = true) => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/examiner/students?examinerId=${examinerId}`);
+      setStudents(res.data);
     } catch (e) {
-      console.error('Lỗi lấy dữ liệu', e);
+      console.error(e);
+      if (showLoading) toast.error('Lỗi lấy danh sách học viên');
     }
   };
 
-  const fetchCriteria = async (testTypeId: number) => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/examiner/criteria/${testTypeId}`);
-      setCriteria(res.data);
-    } catch (e) { console.error(e); }
-  };
-
-  const handleTestTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = Number(e.target.value);
-    setSelectedTestType(id);
-    fetchCriteria(id);
-  };
-
-  const selectStudent = (student: any) => {
+  const openGradingModal = async (student: any) => {
     setSelectedStudent(student);
-    // Find if the student already has a result for this testType
-    const result = student.testResults?.find((r: any) => r.testTypeId === selectedTestType);
-    setCurrentScore(result ? result.totalScore : 100);
+    setErrors({});
+    
+    const tr = student.testResults?.find((r: any) => r.id === student.testResultId);
+    setBaseScore(tr ? tr.totalScore : 100);
+    
+    setIsModalOpen(true);
+    
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/examiner/criteria/${student.currentExam.id}`);
+      setCriteria(res.data);
+    } catch (e) {
+      toast.error('Lỗi lấy tiêu chí chấm điểm');
+    }
   };
 
-  const handleScore = async (criterionId: number) => {
-    if (isSubmitting || !selectedStudent) return;
+  const updateErrorCount = (criterionId: number, delta: number) => {
+    setErrors(prev => {
+      const current = prev[criterionId] || 0;
+      const next = current + delta;
+      if (next < 0) return prev;
+      return { ...prev, [criterionId]: next };
+    });
+  };
+
+  const calculateCurrentScore = () => {
+    let deducted = 0;
+    for (const c of criteria) {
+      const count = errors[c.id] || 0;
+      deducted += count * c.pointsToDeduct;
+    }
+    return baseScore - deducted;
+  };
+
+  const handleSubmitExam = async () => {
+    if (!selectedStudent || isSubmitting) return;
     setIsSubmitting(true);
+    
+    const errorsList = Object.entries(errors).map(([cId, count]) => ({
+      criterionId: Number(cId),
+      errorCount: count
+    }));
+    
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/examiner/score`, { 
-        studentId: selectedStudent.id, 
-        testTypeId: selectedTestType, 
-        criterionId: criterionId
+      await axios.post(`${API_BASE_URL}/api/examiner/submit-exam`, {
+        studentId: selectedStudent.id,
+        testTypeId: selectedStudent.currentExam.testTypeId,
+        examId: selectedStudent.currentExam.id,
+        examinerId: user.id,
+        errors: errorsList
       });
-      // Update local score
-      setCurrentScore(res.data.totalScore);
       
-      // Update students list cache silently
-      setStudents(prev => prev.map(s => {
-        if (s.id === selectedStudent.id) {
-          const newResults = s.testResults ? [...s.testResults] : [];
-          const idx = newResults.findIndex((r: any) => r.testTypeId === selectedTestType);
-          if (idx >= 0) newResults[idx] = res.data;
-          else newResults.push(res.data);
-          return { ...s, testResults: newResults };
-        }
-        return s;
-      }));
+      toast.success('Đã hoàn thành bài thi!');
+      setIsModalOpen(false);
+      
+      setStudents(prev => prev.filter(s => s.id !== selectedStudent.id));
+      fetchData(user.id, false);
+      
     } catch (e) {
-      toast.error('Lỗi cập nhật điểm. Vui lòng kiểm tra mạng.');
+      toast.error('Lỗi lưu điểm');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (!user) return null;
+  const filteredStudents = students.filter((s: any) => 
+    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    s.cccd.includes(searchQuery) ||
+    s.currentExam?.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const currentScore = calculateCurrentScore();
 
   return (
-    <div style={{ padding: '1rem', maxWidth: '800px', margin: '0 auto' }}>
-      <div className="flex justify-between items-center mb-4">
-        <h3 style={{ margin: 0 }}>Giao diện Giám khảo ({user.name})</h3>
-        <button className="btn btn-danger" onClick={() => { localStorage.clear(); navigate('/login'); }}>
-          Đăng xuất
-        </button>
-      </div>
-
-      {!selectedStudent ? (
-        <div className="card">
-          <h4>Chọn Bài thi & Học viên</h4>
-          <div className="form-group">
-            <label>Loại sát hạch</label>
-            <select className="form-control" value={selectedTestType} onChange={handleTestTypeChange}>
-              {testTypes.map(t => (
-                <option key={t.id} value={t.id}>{t.name}</option>
-              ))}
-            </select>
+    <AdminLayout>
+      <div className="card mb-4" style={{ borderRadius: '15px' }}>
+        <h3 className="mb-4" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Sát hạch (Giám khảo: {user?.name})</h3>
+        
+        <div className="row mb-4">
+          <div className="col-md-12">
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="Tìm kiếm theo Tên, CCCD hoặc Bài thi..." 
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
           </div>
-          
-          <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
-<table className="table mt-4" style={{ fontSize: '0.9rem' }}>
-            <thead>
+        </div>
+
+        <div className="table-responsive" style={{ minHeight: '400px' }}>
+          <table className="table table-hover align-middle">
+            <thead className="table-light">
               <tr>
-                <th>CCCD</th>
-                <th>Họ và Tên</th>
-                <th>Điểm hiện tại</th>
-                <th>Thao Tác</th>
+                <th style={{ width: '5%' }}>STT</th>
+                <th style={{ width: '20%' }}>Họ và Tên</th>
+                <th style={{ width: '15%' }}>CCCD</th>
+                <th style={{ width: '15%' }}>Khóa đào tạo</th>
+                <th style={{ width: '20%' }}>Bài thi hiện tại</th>
+                <th style={{ width: '10%' }}>Điểm thi</th>
+                <th style={{ width: '15%', textAlign: 'center' }} className="sticky-col-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
-              {students.map(s => {
-                const result = s.testResults?.find((r: any) => r.testTypeId === selectedTestType);
-                const score = result ? result.totalScore : 100;
+              {filteredStudents.length === 0 ? (
+                <tr><td colSpan={7} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
+              ) : filteredStudents.map((s: any, index: number) => {
+                const tr = s.testResults?.find((r: any) => r.id === s.testResultId);
+                const score = tr ? tr.totalScore : 100;
                 return (
                   <tr key={s.id}>
+                    <td>{index + 1}</td>
+                    <td style={{ fontWeight: '600' }}>{s.name}</td>
                     <td>{s.cccd}</td>
-                    <td>{s.name}</td>
+                    <td>{s.course?.name || s.courseName || '-'}</td>
                     <td>
-                      <span className={`badge ${score >= 80 ? 'badge-success' : 'badge-danger'}`}>
-                        {score}
-                      </span>
+                      <div className="badge badge-primary" style={{ display: 'inline-flex', padding: '0.4rem 0.6rem', fontSize: '0.9rem' }}>
+                        {s.currentExam?.name || '-'}
+                      </div>
                     </td>
-                    <td>
-                      <button className="btn btn-primary" style={{ padding: '0.4rem 1rem' }} onClick={() => selectStudent(s)}>
-                        Chấm thi
+                    <td style={{ fontWeight: 'bold' }}>{score}</td>
+                    <td className="sticky-col-right" style={{ textAlign: 'center' }}>
+                      <button 
+                        className="btn btn-primary btn-sm rounded-pill px-3"
+                        onClick={() => openGradingModal(s)}
+                      >
+                        <Play size={16} className="me-1" /> Chấm điểm
                       </button>
                     </td>
                   </tr>
@@ -151,47 +177,91 @@ const ExaminerDashboard = () => {
               })}
             </tbody>
           </table>
-</div>
         </div>
-      ) : (
-        <div className="card mt-4" style={{ border: '2px solid var(--primary)' }}>
-          <div className="flex justify-between items-center mb-4">
-            <h4>Đang chấm: <span style={{ color: 'var(--primary)' }}>{selectedStudent.name}</span></h4>
-            <button className="btn" style={{ backgroundColor: '#ccc', color: '#333' }} onClick={() => setSelectedStudent(null)}>
-              Quay lại
-            </button>
-          </div>
-          
-          <h1 className="text-center" style={{ fontSize: '5rem', color: currentScore >= 80 ? 'var(--success)' : 'var(--danger)', margin: '1rem 0' }}>
-            {currentScore}
-          </h1>
-          <p className="text-center text-muted mb-4">Điểm dưới 80 là TRƯỢT</p>
-          
-          <div className="flex" style={{ gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
-            {criteria.map(c => (
-              <button 
-                key={c.id} 
-                className="btn btn-danger" 
-                style={{ 
-                  padding: '1rem', 
-                  fontSize: '1rem',
-                  opacity: isSubmitting ? 0.6 : 1,
-                  pointerEvents: isSubmitting ? 'none' : 'auto',
-                  flex: '1 1 45%'
-                }}
-                onClick={() => handleScore(c.id)}
-              >
-                -{c.pointsToDeduct} điểm<br/>
-                <small style={{ fontWeight: 'normal' }}>{c.name}</small>
-              </button>
-            ))}
-            {criteria.length === 0 && (
-              <p className="text-muted">Chưa có tiêu chí chấm điểm nào được tạo cho bài thi này.</p>
+      </div>
+
+      {isModalOpen && selectedStudent && (
+        <div className="modal-backdrop" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="modal-content" style={{
+            background: 'white', padding: '2rem', borderRadius: '15px',
+            width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <div className="flex justify-between items-center mb-4">
+              <h4 style={{ margin: 0, color: 'var(--primary)' }}>
+                Chấm điểm: {selectedStudent.name}
+              </h4>
+              <button className="btn btn-light" onClick={() => setIsModalOpen(false)}>Đóng</button>
+            </div>
+            
+            <div className="mb-4 text-center">
+              <h5>{selectedStudent.currentExam?.name}</h5>
+              <h1 style={{ 
+                fontSize: '4rem', 
+                color: currentScore >= 80 ? 'var(--success)' : 'var(--danger)',
+                margin: '1rem 0'
+              }}>
+                {currentScore}
+              </h1>
+              <p className="text-muted">Tổng điểm hiện tại</p>
+            </div>
+
+            <h5 className="mb-3 border-bottom pb-2">Tiêu chí trừ điểm</h5>
+            
+            {criteria.length === 0 ? (
+              <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
+            ) : (
+              <div className="d-flex flex-column" style={{ gap: '10px' }}>
+                {criteria.map(c => {
+                  const errCount = errors[c.id] || 0;
+                  return (
+                    <div key={c.id} className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: '600' }}>{c.name}</div>
+                        <div className="text-danger small">Trừ {c.pointsToDeduct} điểm / lỗi</div>
+                      </div>
+                      <div className="d-flex align-items-center" style={{ gap: '15px' }}>
+                        <button 
+                          className="btn btn-outline-secondary rounded-circle p-1" 
+                          onClick={() => updateErrorCount(c.id, -1)}
+                          disabled={errCount === 0}
+                        >
+                          <Minus size={20} />
+                        </button>
+                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold', width: '30px', textAlign: 'center' }}>
+                          {errCount}
+                        </span>
+                        <button 
+                          className="btn btn-outline-danger rounded-circle p-1" 
+                          onClick={() => updateErrorCount(c.id, 1)}
+                        >
+                          <Plus size={20} />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
+
+            <div className="mt-4 pt-3 border-top d-flex justify-content-end">
+              <button 
+                className="btn btn-success rounded-pill px-4 py-2" 
+                onClick={handleSubmitExam}
+                disabled={isSubmitting}
+              >
+                <CheckCircle size={20} className="me-2" /> 
+                {isSubmitting ? 'Đang lưu...' : 'Hoàn thành bài thi'}
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 };
 
