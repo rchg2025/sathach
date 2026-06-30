@@ -54,6 +54,7 @@ model Course {
   endDate     DateTime?
   isCompleted Boolean  @default(false)
   students    Student[]
+  assignments TestAssignment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -117,6 +118,7 @@ model TestAssignment {
   examId         Int?
   exam           Exam?    @relation(fields: [examId], references: [id])
   courseId       Int?
+  course         Course?  @relation(fields: [courseId], references: [id])
   assignmentDate DateTime?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @default(now()) @updatedAt

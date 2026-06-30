@@ -245,7 +245,8 @@ router.get('/assignments', async (req, res) => {
       include: {
         examiner: { select: { id: true, name: true, role: true } },
         testType: { select: { id: true, name: true } },
-        exam: { select: { id: true, name: true } }
+        exam: { select: { id: true, name: true } },
+        course: { select: { id: true, name: true } }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -254,13 +255,14 @@ router.get('/assignments', async (req, res) => {
 });
 
 router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeId, examId, assignmentDate } = req.body;
+  const { examinerId, testTypeId, examId, courseId, assignmentDate } = req.body;
   try {
     const data: any = {
       examinerId: Number(examinerId),
       testTypeId: Number(testTypeId),
     };
     if (examId) data.examId = Number(examId);
+    if (courseId) data.courseId = Number(courseId);
     if (assignmentDate) data.assignmentDate = new Date(assignmentDate);
 
     const assignment = await prisma.testAssignment.create({ data });

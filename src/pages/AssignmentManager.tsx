@@ -12,12 +12,14 @@ const AssignmentManager = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [testTypes, setTestTypes] = useState<any[]>([]);
   const [exams, setExams] = useState<any[]>([]);
+  const [courses, setCourses] = useState<any[]>([]);
 
   // Form states
   const [roleType, setRoleType] = useState<'STATION_MANAGER' | 'EXAMINER'>('STATION_MANAGER');
   const [selectedUser, setSelectedUser] = useState('');
   const [selectedTestType, setSelectedTestType] = useState('');
   const [selectedExam, setSelectedExam] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
 
   useEffect(() => {
@@ -26,16 +28,18 @@ const AssignmentManager = () => {
 
   const fetchData = async () => {
     try {
-      const [assnRes, usrRes, ttRes, examRes] = await Promise.all([
+      const [assnRes, usrRes, ttRes, examRes, courseRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/assignments`),
         axios.get(`${API_BASE_URL}/api/manager/users`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`),
-        axios.get(`${API_BASE_URL}/api/manager/exams`)
+        axios.get(`${API_BASE_URL}/api/manager/exams`),
+        axios.get(`${API_BASE_URL}/api/manager/courses`)
       ]);
       setAssignments(assnRes.data);
       setUsers(usrRes.data);
       setTestTypes(ttRes.data);
       setExams(examRes.data);
+      setCourses(courseRes.data);
     } catch (err) {
       toast.error('Lỗi khi tải dữ liệu');
     }
@@ -65,6 +69,7 @@ const AssignmentManager = () => {
         examinerId: selectedUser,
         testTypeId: selectedTestType,
         examId: roleType === 'EXAMINER' ? selectedExam : undefined,
+        courseId: selectedCourse ? selectedCourse : undefined,
         assignmentDate
       });
       toast.success('Phân công thành công!');
@@ -73,6 +78,7 @@ const AssignmentManager = () => {
       setSelectedUser('');
       setSelectedTestType('');
       setSelectedExam('');
+      setSelectedCourse('');
       setAssignmentDate('');
       
       fetchData();
@@ -127,6 +133,20 @@ const AssignmentManager = () => {
                 <option value="">-- Chọn thành viên --</option>
                 {filteredUsers.map(u => (
                   <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Khóa đào tạo (Tùy chọn)</label>
+              <select 
+                className="form-control" 
+                value={selectedCourse} 
+                onChange={(e) => setSelectedCourse(e.target.value)}
+              >
+                <option value="">-- Chọn Khóa đào tạo --</option>
+                {courses.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
             </div>
@@ -190,6 +210,7 @@ const AssignmentManager = () => {
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Họ tên</th>
                 <th>Vai trò</th>
+                <th>Khóa đào tạo</th>
                 <th>Trạm thi</th>
                 <th>Bài thi</th>
                 <th>Thời gian</th>
@@ -208,6 +229,7 @@ const AssignmentManager = () => {
                       <span className="badge badge-primary">Giám khảo</span>
                     )}
                   </td>
+                  <td>{a.course?.name || '-'}</td>
                   <td>{a.testType?.name || 'N/A'}</td>
                   <td>{a.exam?.name || '-'}</td>
                   <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
@@ -219,7 +241,7 @@ const AssignmentManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={7} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={8} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu phân công
                   </td>
                 </tr>
