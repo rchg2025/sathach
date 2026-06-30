@@ -59,7 +59,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`}>
             <Users size={20} /> Phân công Giám khảo
           </Link>
-          {user?.role === 'ADMIN' && (
+          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
             <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`}>
               <Shield size={20} /> Quản lý Thành viên
             </Link>

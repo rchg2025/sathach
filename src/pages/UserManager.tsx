@@ -315,7 +315,9 @@ const UserManager = () => {
                       <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '5px' }}>
                         <button className="btn btn-primary" title="Sửa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleEditClick(u)}><Edit size={16} /></button>
-                        <button className="btn btn-danger" title="Xóa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}><Trash2 size={16} /></button>
+                        {user?.role === 'ADMIN' && (
+                          <button className="btn btn-danger" title="Xóa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}><Trash2 size={16} /></button>
+                        )}
                       </div>
                       </td>
                     </tr>
