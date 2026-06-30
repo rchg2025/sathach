@@ -3,6 +3,8 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import Select from 'react-select';
+import { removeAccents } from '../utils/stringUtils';
 
 const CriterionManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -17,6 +19,8 @@ const CriterionManager = () => {
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [testTypeFilter, setTestTypeFilter] = useState('all');
+  const [examFilter, setExamFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -94,11 +98,21 @@ const CriterionManager = () => {
     }
   };
 
-  const filteredCriteria = criteria.filter((c: any) => 
-    c.name.toLowerCase().includes(searchKeyword.toLowerCase()) || 
-    (c.exam?.name || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-    (c.exam?.testType?.name || '').toLowerCase().includes(searchKeyword.toLowerCase())
-  );
+  const uniqueTestTypesMap = new Map();
+  exams.forEach((e: any) => {
+    if (e.testType) uniqueTestTypesMap.set(e.testType.id, e.testType);
+  });
+  const availableTestTypes = Array.from(uniqueTestTypesMap.values());
+
+  const filteredCriteria = criteria.filter((c: any) => {
+    const keyword = removeAccents(searchKeyword);
+    const matchSearch = removeAccents(c.name).includes(keyword) || 
+                        removeAccents(c.exam?.name || '').includes(keyword) ||
+                        removeAccents(c.exam?.testType?.name || '').includes(keyword);
+    const matchTestType = testTypeFilter === 'all' ? true : (c.exam?.testTypeId?.toString() === testTypeFilter);
+    const matchExam = examFilter === 'all' ? true : (c.examId.toString() === examFilter);
+    return matchSearch && matchTestType && matchExam;
+  });
   
   const totalPages = Math.ceil(filteredCriteria.length / itemsPerPage);
   const displayedCriteria = filteredCriteria.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -137,16 +151,36 @@ const CriterionManager = () => {
 
       {activeTab === 'list' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="🔍 Tìm kiếm tiêu chí..." 
-              value={searchKeyword}
-              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm tiêu chí..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+              />
+              <div style={{ width: '200px' }}>
+                <Select
+                  options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))]}
+                  value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))].find((opt: any) => opt.value.toString() === testTypeFilter)}
+                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value.toString() : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc Trạm thi..."
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
+              </div>
+              <div style={{ width: '220px' }}>
+                <Select
+                  options={[{ value: 'all', label: 'Tất cả Bài thi' }, ...exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))]}
+                  value={[{ value: 'all', label: 'Tất cả Bài thi' }, ...exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))].find((opt: any) => opt.value.toString() === examFilter)}
+                  onChange={(selected: any) => { setExamFilter(selected ? selected.value.toString() : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc Bài thi..."
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>
@@ -228,12 +262,14 @@ const CriterionManager = () => {
           <form onSubmit={handleAddCriterion}>
             <div className="form-group">
               <label>Thuộc Bài thi (Gồm cả Trạm thi)</label>
-              <select className="form-control" value={examId} onChange={e => setExamId(e.target.value)} required>
-                <option value="">-- Chọn Bài thi --</option>
-                {exams.map((e: any) => (
-                  <option key={e.id} value={e.id}>{e.testType?.name} ➔ {e.name}</option>
-                ))}
-              </select>
+              <Select
+                options={exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))}
+                value={exams.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` })).find((opt: any) => opt.value.toString() === examId) || null}
+                onChange={(selected: any) => setExamId(selected ? selected.value.toString() : '')}
+                placeholder="-- Chọn Bài thi (có thể gõ tìm kiếm) --"
+                isClearable
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+              />
             </div>
             <div className="form-group">
               <label>Tên Tiêu chí (VD: Xe bị chết máy)</label>

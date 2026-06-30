@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 // import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import { removeAccents } from '../utils/stringUtils';
 
 const TestTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -84,7 +85,10 @@ const TestTypeManager = () => {
     }
   };
 
-  const filteredTestTypes = testTypes.filter((t: any) => t.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const filteredTestTypes = testTypes.filter((t: any) => {
+    const keyword = removeAccents(searchKeyword);
+    return removeAccents(t.name).includes(keyword) || removeAccents(t.description || '').includes(keyword);
+  });
   const totalPages = Math.ceil(filteredTestTypes.length / itemsPerPage);
   const displayedTestTypes = filteredTestTypes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -127,7 +131,7 @@ const TestTypeManager = () => {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="🔍 Tìm kiếm..." 
+              placeholder="🔍 Tìm kiếm tên trạm, mô tả..." 
               value={searchKeyword}
               onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
               style={{ maxWidth: '300px' }}

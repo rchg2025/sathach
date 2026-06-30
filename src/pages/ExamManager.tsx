@@ -3,6 +3,8 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import Select from 'react-select';
+import { removeAccents } from '../utils/stringUtils';
 
 const ExamManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -17,6 +19,7 @@ const ExamManager = () => {
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [testTypeFilter, setTestTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -94,7 +97,14 @@ const ExamManager = () => {
     }
   };
 
-  const filteredExams = exams.filter((e: any) => e.name.toLowerCase().includes(searchKeyword.toLowerCase()) || (e.testType?.name || '').toLowerCase().includes(searchKeyword.toLowerCase()));
+  const filteredExams = exams.filter((e: any) => {
+    const keyword = removeAccents(searchKeyword);
+    const matchSearch = removeAccents(e.name).includes(keyword) || 
+                        removeAccents(e.testType?.name || '').includes(keyword) || 
+                        removeAccents(e.description || '').includes(keyword);
+    const matchTestType = testTypeFilter === 'all' ? true : (e.testTypeId.toString() === testTypeFilter);
+    return matchSearch && matchTestType;
+  });
   const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
   const displayedExams = filteredExams.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -133,16 +143,27 @@ const ExamManager = () => {
 
       {activeTab === 'list' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="🔍 Tìm kiếm bài thi..." 
-              value={searchKeyword}
-              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm bài thi, mô tả..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ maxWidth: '300px' }}
+              />
+              <div style={{ width: '250px' }}>
+                <Select
+                  options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: t.id, label: t.name }))]}
+                  value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: t.id, label: t.name }))].find((opt: any) => opt.value.toString() === testTypeFilter)}
+                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value.toString() : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc theo Trạm thi..."
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
+              </div>
+            </div>
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>
@@ -222,12 +243,14 @@ const ExamManager = () => {
           <form onSubmit={handleAddExam}>
             <div className="form-group">
               <label>Thuộc Trạm thi</label>
-              <select className="form-control" value={testTypeId} onChange={e => setTestTypeId(e.target.value)} required>
-                <option value="">-- Chọn Trạm thi --</option>
-                {testTypes.map((t: any) => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
+              <Select
+                options={testTypes.map((t: any) => ({ value: t.id, label: t.name }))}
+                value={testTypes.map((t: any) => ({ value: t.id, label: t.name })).find((opt: any) => opt.value.toString() === testTypeId) || null}
+                onChange={(selected: any) => setTestTypeId(selected ? selected.value.toString() : '')}
+                placeholder="-- Chọn Trạm thi (có thể gõ tìm kiếm) --"
+                isClearable
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+              />
             </div>
             <div className="form-group">
               <label>Tên Bài thi (VD: Xuất phát, Lùi chuồng)</label>

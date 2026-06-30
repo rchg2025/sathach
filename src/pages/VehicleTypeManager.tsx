@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import { removeAccents } from '../utils/stringUtils';
 
 const VehicleTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -22,6 +23,8 @@ const VehicleTypeManager = () => {
 
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [seatsFilter, setSeatsFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -138,7 +141,16 @@ const VehicleTypeManager = () => {
     return dateFormatted;
   };
 
-  const filteredVehicles = vehicleTypes.filter((v: any) => v.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const filteredVehicles = vehicleTypes.filter((v: any) => {
+    const keyword = removeAccents(searchKeyword);
+    const matchSearch = removeAccents(v.name).includes(keyword) || 
+                        removeAccents(v.description || '').includes(keyword) ||
+                        removeAccents(v.brand || '').includes(keyword) ||
+                        removeAccents(v.owner || '').includes(keyword);
+    const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'active' ? v.isActive : !v.isActive);
+    const matchSeats = seatsFilter === 'all' ? true : (v.seats?.toString() === seatsFilter);
+    return matchSearch && matchStatus && matchSeats;
+  });
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
   const displayedVehicles = filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -182,16 +194,32 @@ const VehicleTypeManager = () => {
 
       {activeTab === 'list' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="🔍 Tìm kiếm xe..." 
-              value={searchKeyword}
-              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm biển số, hãng, chủ xe..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+              />
+              <select className="form-control" style={{ maxWidth: '180px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Đang hoạt động</option>
+                <option value="inactive">Tạm ngưng</option>
+              </select>
+              <select className="form-control" style={{ maxWidth: '150px' }} value={seatsFilter} onChange={e => { setSeatsFilter(e.target.value); setCurrentPage(1); }}>
+                <option value="all">Tất cả số chỗ</option>
+                <option value="4">4 chỗ</option>
+                <option value="5">5 chỗ</option>
+                <option value="7">7 chỗ</option>
+                <option value="16">16 chỗ</option>
+                <option value="29">29 chỗ</option>
+                <option value="45">45 chỗ</option>
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>

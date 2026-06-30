@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 // import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import { removeAccents } from '../utils/stringUtils';
 
 const CourseManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -18,6 +19,7 @@ const CourseManager = () => {
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
@@ -96,7 +98,12 @@ const CourseManager = () => {
     }
   };
 
-  const filteredCourses = courses.filter((c: any) => c.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const filteredCourses = courses.filter((c: any) => {
+    const keyword = removeAccents(searchKeyword);
+    const matchSearch = removeAccents(c.name).includes(keyword) || removeAccents(c.description || '').includes(keyword);
+    const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'completed' ? c.isCompleted : !c.isCompleted);
+    return matchSearch && matchStatus;
+  });
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
   const displayedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
@@ -136,16 +143,23 @@ const CourseManager = () => {
 
       {activeTab === 'list' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="🔍 Tìm kiếm tên khóa học..." 
-              value={searchKeyword}
-              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1 }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm tên khóa học, mô tả..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ maxWidth: '300px' }}
+              />
+              <select className="form-control" style={{ maxWidth: '200px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+                <option value="all">Tất cả trạng thái</option>
+                <option value="active">Đang diễn ra</option>
+                <option value="completed">Đã hoàn thành</option>
+              </select>
+            </div>
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>
