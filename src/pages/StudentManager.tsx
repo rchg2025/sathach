@@ -110,6 +110,7 @@ const StudentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [students, setStudents] = useState([]);
+  const [dbCourses, setDbCourses] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
@@ -145,8 +146,18 @@ const StudentManager = () => {
     }
   };
 
+  const fetchDbCourses = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
+      setDbCourses(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
+    fetchDbCourses();
   }, []);
 
   useEffect(() => {
@@ -341,9 +352,22 @@ const StudentManager = () => {
         const wsname = workbook.SheetNames[0];
         const ws = workbook.Sheets[wsname];
         
-        // Use defval to get all columns even if empty
         const data = XLSX.utils.sheet_to_json(ws, { defval: '' });
         
+        // Validate courses
+        for (let i = 0; i < data.length; i++) {
+          const row: any = data[i];
+          const courseName = row['Khóa đào tạo']?.toString().trim();
+          if (courseName) {
+            const exists = dbCourses.find(c => c.name === courseName);
+            if (!exists) {
+              toast.error(`Dòng ${i + 2}: Khóa đào tạo "${courseName}" không có trong Danh mục! Vui lòng tạo Khóa trước.`);
+              if (fileInputRef.current) fileInputRef.current.value = '';
+              return;
+            }
+          }
+        }
+
         // Map Excel headers to payload
         const payload = data.map((row: any) => ({
           courseName: row['Khóa đào tạo']?.toString() || '',
@@ -551,10 +575,10 @@ const StudentManager = () => {
               {/* 5. Khóa đào tạo */}
               <div className="form-group">
                 <label>Khóa đào tạo</label>
-                <CreatableSelect
+                <Select
                   isClearable
-                  placeholder="Chọn hoặc nhập Khóa mới..."
-                  options={availableCourses.map((c: any) => ({ value: c, label: c }))}
+                  placeholder="Chọn Khóa đào tạo..."
+                  options={dbCourses.map((c: any) => ({ value: c.name, label: c.name }))}
                   value={courseName ? { value: courseName, label: courseName } : null}
                   onChange={(selected: any) => setCourseName(selected ? selected.value : '')}
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
