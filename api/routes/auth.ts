@@ -17,12 +17,19 @@ const getSetting = async (key: string) => {
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   try {
-    const user = await prisma.user.findUnique({ where: { username } });
-    if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    const user = await prisma.user.findFirst({ 
+      where: { 
+        OR: [
+          { username: username },
+          { email: username }
+        ]
+      } 
+    });
+    if (!user) return res.status(401).json({ error: 'Tên đăng nhập, email hoặc mật khẩu không đúng' });
     if (!user.isActive) return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa' });
 
     const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!isValid) return res.status(401).json({ error: 'Tên đăng nhập, email hoặc mật khẩu không đúng' });
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
     res.json({ token, user: { id: user.id, username: user.username, name: user.name, role: user.role, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl } });

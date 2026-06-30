@@ -149,7 +149,7 @@ const Login = () => {
         
         <form onSubmit={handleLogin}>
           <div className="form-group">
-            <label>Tên đăng nhập</label>
+            <label>Tên đăng nhập / Email</label>
             <input 
               type="text" 
               className="form-control" 
