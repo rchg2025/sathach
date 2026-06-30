@@ -7,8 +7,18 @@ const StudentSearch = () => {
   const [student, setStudent] = useState<any>(null);
   const [error, setError] = useState('');
   const [isPolling, setIsPolling] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
   
   const pollingRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Fetch dynamic logo
+    axios.get(`${API_BASE_URL}/api/manager/settings`)
+      .then(res => {
+        if (res.data.logo_url) setLogoUrl(res.data.logo_url);
+      })
+      .catch(console.error);
+  }, []);
 
   const lookupStudent = async (searchCccd: string) => {
     try {
@@ -84,7 +94,9 @@ const StudentSearch = () => {
   return (
     <div className="container" style={{ maxWidth: '1080px', margin: '3rem auto' }}>
       <div className="card text-center shadow-lg" style={{ borderTop: '4px solid var(--primary)' }}>
-        <img src="/logo.jpg" alt="Logo" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px' }} />
+        {logoUrl && (
+          <img src={logoUrl} alt="Logo" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px', objectFit: 'contain' }} />
+        )}
         <h2>Hệ thống chấm thi thực hành lái xe</h2>
         <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp (Real-time)</p>
         
