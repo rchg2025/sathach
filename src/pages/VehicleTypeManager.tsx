@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
+import { Edit, Trash2 } from 'lucide-react';
 
 const VehicleTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -262,8 +263,10 @@ const VehicleTypeManager = () => {
                     </div>
                   </td>
                   <td>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(v)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(v.id)}>Xóa</button>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(v)}><Edit size={16} /></button>
+                      <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(v.id)}><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               )) : (

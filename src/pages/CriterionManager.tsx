@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
 import { removeAccents } from '../utils/stringUtils';
+import { Edit, Trash2 } from 'lucide-react';
 
 const CriterionManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -210,8 +211,10 @@ const CriterionManager = () => {
                   </td>
                   <td><strong style={{ color: 'var(--danger)' }}>-{criterion.pointsToDeduct}</strong></td>
                   <td>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(criterion)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(criterion.id)}>Xóa</button>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(criterion)}><Edit size={16} /></button>
+                      <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(criterion.id)}><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               )) : (

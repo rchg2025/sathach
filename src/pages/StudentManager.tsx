@@ -7,6 +7,7 @@ import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
 import { removeAccents } from '../utils/stringUtils';
 import AdminLayout from '../components/AdminLayout';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -492,9 +493,11 @@ const StudentManager = () => {
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
                     <td>
-                      <button className="action-btn" style={{ color: '#17a2b8', marginRight: '5px' }} onClick={() => setViewStudent(student)}>Xem</button>
-                      <button className="action-btn btn-edit" onClick={() => handleEdit(student)}>Sửa</button>
-                      <button className="action-btn btn-delete" onClick={() => handleDelete(student.id)}>Xóa</button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        <button className="action-btn" title="Xem" style={{ color: '#17a2b8', marginRight: '5px' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
+                        <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(student)}><Edit size={16} /></button>
+                        <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(student.id)}><Trash2 size={16} /></button>
+                      </div>
                     </td>
                   </tr>
                 )) : (

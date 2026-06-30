@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-// import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
+import { Edit, Trash2 } from 'lucide-react';
 
 const TestTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -161,8 +161,10 @@ const TestTypeManager = () => {
                   <td><span className="badge badge-info">{type.maxScore || 100}</span></td>
                   <td><span className="badge badge-success">{type.passingScore || 80}</span></td>
                   <td>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(type)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(type.id)}>Xóa</button>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(type)}><Edit size={16} /></button>
+                      <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(type.id)}><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               )) : (

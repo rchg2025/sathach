@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
 import { removeAccents } from '../utils/stringUtils';
+import { Edit, Trash2 } from 'lucide-react';
 
 const ExamManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -188,8 +189,10 @@ const ExamManager = () => {
                   <td>{exam.description || '-'}</td>
                   <td><span className="badge badge-warning">{exam.criteria?.length || 0}</span></td>
                   <td>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(exam)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(exam.id)}>Xóa</button>
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(exam)}><Edit size={16} /></button>
+                      <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(exam.id)}><Trash2 size={16} /></button>
+                    </div>
                   </td>
                 </tr>
               )) : (

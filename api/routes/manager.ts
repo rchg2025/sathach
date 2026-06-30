@@ -26,10 +26,14 @@ router.post('/courses', async (req, res) => {
 
 router.put('/courses/:id', async (req, res) => {
   const { id } = req.params;
-  const { isCompleted } = req.body;
+  const { isCompleted, name, description, startDate, endDate } = req.body;
   try {
     const data: any = {};
     if (isCompleted !== undefined) data.isCompleted = isCompleted;
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (startDate) data.startDate = new Date(startDate);
+    if (endDate) data.endDate = new Date(endDate);
     const course = await prisma.course.update({ where: { id: Number(id) }, data });
     res.json(course);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }

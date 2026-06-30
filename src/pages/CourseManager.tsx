@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 
 const CourseManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -196,9 +197,9 @@ const CourseManager = () => {
                     </div>
                   </td>
                   <td>
-                    <button className="action-btn btn-view">Xem</button>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(course)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(course.id)}>Xóa</button>
+                    <button className="action-btn btn-view" title="Xem"><Eye size={16} /></button>
+                    <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(course)}><Edit size={16} /></button>
+                    <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(course.id)}><Trash2 size={16} /></button>
                   </td>
                 </tr>
               )) : (

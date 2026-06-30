@@ -4,6 +4,7 @@ import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import * as XLSX from 'xlsx';
+import { Edit, Trash2 } from 'lucide-react';
 
 const UserManager = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -312,8 +313,10 @@ const UserManager = () => {
                         </label>
                       </td>
                       <td style={{ textAlign: 'right' }}>
-                        <button className="btn btn-primary" style={{ padding: '0.2rem 0.5rem', marginRight: '5px' }} onClick={() => handleEditClick(u)}>Sửa</button>
-                        <button className="btn btn-danger" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}>Xóa</button>
+                      <div style={{ display: 'flex', gap: '5px' }}>
+                        <button className="btn btn-primary" title="Sửa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleEditClick(u)}><Edit size={16} /></button>
+                        <button className="btn btn-danger" title="Xóa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}><Trash2 size={16} /></button>
+                      </div>
                       </td>
                     </tr>
                   ))}
