@@ -4,11 +4,12 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import { GoogleOAuthProvider, GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
-import { KeyRound, Mail } from 'lucide-react';
+import { KeyRound, Mail, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   
   const [clientId, setClientId] = useState('');
@@ -20,6 +21,7 @@ const Login = () => {
   const [fpEmail, setFpEmail] = useState('');
   const [fpOtp, setFpOtp] = useState('');
   const [fpNewPassword, setFpNewPassword] = useState('');
+  const [showFpPassword, setShowFpPassword] = useState(false);
   const [isFpLoading, setIsFpLoading] = useState(false);
 
   const navigate = useNavigate();
@@ -157,16 +159,23 @@ const Login = () => {
               style={{ padding: '0.75rem' }}
             />
           </div>
-          <div className="form-group mb-2">
+          <div className="form-group mb-2" style={{ position: 'relative' }}>
             <label>Mật khẩu</label>
             <input 
-              type="password" 
+              type={showPassword ? "text" : "password"} 
               className="form-control" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required 
-              style={{ padding: '0.75rem' }}
+              style={{ padding: '0.75rem', paddingRight: '2.5rem' }}
             />
+            <button 
+              type="button" 
+              onClick={() => setShowPassword(!showPassword)}
+              style={{ position: 'absolute', right: '10px', top: '38px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)' }}
+            >
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </button>
           </div>
           
           <div style={{ textAlign: 'right', marginBottom: '1.5rem' }}>
@@ -248,9 +257,16 @@ const Login = () => {
               <form onSubmit={handleResetPassword}>
                 <p className="text-muted text-center mb-4" style={{ fontSize: '0.9rem' }}>Xác thực thành công. Vui lòng tạo mật khẩu mới.</p>
                 <div className="form-group">
-                  <div style={{ display: 'flex', alignItems: 'center', background: '#f8f9fa', border: '1px solid var(--border)', borderRadius: '8px', padding: '0 10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', background: '#f8f9fa', border: '1px solid var(--border)', borderRadius: '8px', padding: '0 10px', position: 'relative' }}>
                     <KeyRound size={18} color="var(--text-light)" />
-                    <input type="password" className="form-control" style={{ border: 'none', background: 'transparent' }} placeholder="Mật khẩu mới..." value={fpNewPassword} onChange={e => setFpNewPassword(e.target.value)} required minLength={6} />
+                    <input type={showFpPassword ? "text" : "password"} className="form-control" style={{ border: 'none', background: 'transparent', paddingRight: '2.5rem' }} placeholder="Mật khẩu mới..." value={fpNewPassword} onChange={e => setFpNewPassword(e.target.value)} required minLength={6} />
+                    <button 
+                      type="button" 
+                      onClick={() => setShowFpPassword(!showFpPassword)}
+                      style={{ position: 'absolute', right: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', display: 'flex', alignItems: 'center' }}
+                    >
+                      {showFpPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '10px', marginTop: '1.5rem' }}>
