@@ -254,60 +254,6 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary);
   border-right: 3px solid var(--primary);
 }
-}
-.admin-layout {
-  display: flex;
-  min-height: 100vh;
-  background-color: #f0f4f8; /* Nhìn màu nền xanh rất nhạt giống ảnh */
-}
-
-.sidebar {
-  width: 260px;
-  background-color: var(--surface);
-  border-right: 1px solid var(--border);
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-header {
-  padding: 2rem 1rem;
-  text-align: center;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar-avatar {
-  width: 60px;
-  height: 60px;
-  background-color: #e6f0fa;
-  color: var(--primary);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 1rem auto;
-}
-
-.sidebar-nav {
-  padding: 1rem 0;
-  flex: 1;
-}
-
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  color: var(--text-muted);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.sidebar-item:hover, .sidebar-item.active {
-  background-color: #e6f0fa;
-  color: var(--primary);
-  border-right: 3px solid var(--primary);
-}
 
 .sidebar-item svg {
   margin-right: 1rem;
