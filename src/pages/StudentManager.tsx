@@ -7,6 +7,53 @@ import Select from 'react-select';
 import { removeAccents } from '../utils/stringUtils';
 import AdminLayout from '../components/AdminLayout';
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return '-';
+  
+  // Check if it's an Excel serial date (numeric)
+  if (!isNaN(Number(dateStr)) && Number(dateStr) > 10000 && Number(dateStr) < 100000) {
+    const excelEpoch = new Date(1899, 11, 30);
+    const date = new Date(excelEpoch.getTime() + Number(dateStr) * 86400000);
+    const dd = String(date.getDate()).padStart(2, '0');
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  // Clean time part if exists like "12/01/2002 12:00:00 SA"
+  const cleanDateStr = dateStr.toString().split(' ')[0];
+
+  if (cleanDateStr.includes('/')) {
+    const parts = cleanDateStr.split('/');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY/MM/DD or YYYY/DD/MM
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      } else { 
+        // DD/MM/YYYY or MM/DD/YYYY
+        return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+      }
+    }
+  } else if (cleanDateStr.includes('-')) {
+    const parts = cleanDateStr.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) { // YYYY-MM-DD
+        return `${parts[2].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[0]}`;
+      }
+    }
+  }
+
+  // Try parsing ISO
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime()) && dateStr.includes('T')) {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  return cleanDateStr;
+};
+
 const StudentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -326,7 +373,7 @@ const StudentManager = () => {
                     <td><span className="badge badge-info">{student.courseName || '-'}</span></td>
                     <td>{student.registrationCode || '-'}</td>
                     <td><strong>{student.name}</strong></td>
-                    <td>{student.dob || '-'}</td>
+                    <td>{formatDate(student.dob)}</td>
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
                     <td>
