@@ -55,6 +55,32 @@ const formatDate = (dateStr: string) => {
   return cleanDateStr;
 };
 
+const parseDateStr = (dateStr: string) => {
+  if (!dateStr) return null;
+  if (!isNaN(Number(dateStr)) && Number(dateStr) > 10000 && Number(dateStr) < 100000) {
+    const excelEpoch = new Date(1899, 11, 30);
+    return new Date(excelEpoch.getTime() + Number(dateStr) * 86400000);
+  }
+  const cleanStr = dateStr.toString().split(' ')[0];
+  if (cleanStr.includes('/')) {
+    const parts = cleanStr.split('/');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) return new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    }
+  }
+  if (cleanStr.includes('-')) {
+    const parts = cleanStr.split('-');
+    if (parts.length === 3) {
+      if (parts[0].length === 4) return new Date(`${parts[0]}-${parts[1]}-${parts[2]}`);
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    }
+  }
+  const d = new Date(dateStr);
+  if (!isNaN(d.getTime())) return d;
+  return null;
+};
+
 const StudentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -90,13 +116,26 @@ const StudentManager = () => {
       const res = await axios.get(`${API_BASE_URL}/api/manager/students`);
       setStudents(res.data);
     } catch (err) {
-      console.error(err);
+      toast.error('Lỗi khi tải dữ liệu Học viên');
     }
   };
 
   useEffect(() => {
     fetchStudents();
   }, []);
+
+  useEffect(() => {
+    if (licenseIssueDate && licenseExpiryDate) {
+      const issue = parseDateStr(licenseIssueDate);
+      const expiry = parseDateStr(licenseExpiryDate);
+      if (issue && expiry && !isNaN(issue.getTime()) && !isNaN(expiry.getTime())) {
+        const diffYears = expiry.getFullYear() - issue.getFullYear();
+        if (diffYears > 0) {
+          setLicenseDuration(`${diffYears} năm`);
+        }
+      }
+    }
+  }, [licenseIssueDate, licenseExpiryDate]);
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,17 +188,17 @@ const StudentManager = () => {
 
   const handleEdit = (student: any) => {
     setEditingId(student.id);
-    setCourseName(student.courseName || '');
-    setRegistrationCode(student.registrationCode || '');
     setName(student.name);
-    setDob(student.dob || '');
     setCccd(student.cccd);
+    setRegistrationCode(student.registrationCode || '');
+    setCourseName(student.courseName || '');
+    setDob(formatDate(student.dob) === '-' ? '' : formatDate(student.dob));
     setAddress(student.address || '');
     setLicenseNumber(student.licenseNumber || '');
     setLicenseClass(student.licenseClass || '');
-    setLicenseIssueDate(student.licenseIssueDate || '');
-    setPassDate(student.passDate || '');
-    setLicenseExpiryDate(student.licenseExpiryDate || '');
+    setLicenseIssueDate(formatDate(student.licenseIssueDate) === '-' ? '' : formatDate(student.licenseIssueDate));
+    setLicenseExpiryDate(formatDate(student.licenseExpiryDate) === '-' ? '' : formatDate(student.licenseExpiryDate));
+    setPassDate(formatDate(student.passDate) === '-' ? '' : formatDate(student.passDate));
     setLicenseDuration(student.licenseDuration || '');
     setActiveTab('add');
   };
@@ -562,9 +601,9 @@ const StudentManager = () => {
                 <tr><td><strong>Mã đăng ký:</strong></td><td>{viewStudent.registrationCode || '-'}</td></tr>
                 <tr><td><strong>Số GPLX hiện tại:</strong></td><td>{viewStudent.licenseNumber || '-'}</td></tr>
                 <tr><td><strong>Hạng GPLX:</strong></td><td>{viewStudent.licenseClass || '-'}</td></tr>
-                <tr><td><strong>Ngày cấp:</strong></td><td>{viewStudent.licenseIssueDate || '-'}</td></tr>
-                <tr><td><strong>Ngày hết hạn:</strong></td><td>{viewStudent.licenseExpiryDate || '-'}</td></tr>
-                <tr><td><strong>Ngày trúng tuyển:</strong></td><td>{viewStudent.passDate || '-'}</td></tr>
+                <tr><td><strong>Ngày cấp:</strong></td><td>{formatDate(viewStudent.licenseIssueDate)}</td></tr>
+                <tr><td><strong>Ngày hết hạn:</strong></td><td>{formatDate(viewStudent.licenseExpiryDate)}</td></tr>
+                <tr><td><strong>Ngày trúng tuyển:</strong></td><td>{formatDate(viewStudent.passDate)}</td></tr>
                 <tr><td><strong>Thời gian GPLX:</strong></td><td>{viewStudent.licenseDuration || '-'}</td></tr>
               </tbody>
             </table>
