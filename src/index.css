@@ -191,6 +191,7 @@ h1, h2, h3, h4, h5, h6 {
 .badge-success { background-color: var(--success); }
 .badge-danger { background-color: var(--danger); }
 .badge-warning { background-color: #ffc107; color: #333; }
+.badge-info { background-color: #17a2b8; color: white; }
 
 /* Utilities */
 .text-center { text-align: center; }
