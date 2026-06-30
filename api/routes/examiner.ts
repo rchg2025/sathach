@@ -15,11 +15,25 @@ router.get('/students', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Examiner get criteria for a test type
+router.get('/criteria/:testTypeId', async (req, res) => {
+  try {
+    const criteria = await prisma.criterion.findMany({
+      where: { testTypeId: Number(req.params.testTypeId) }
+    });
+    res.json(criteria);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // Examiner deducts score
 router.post('/score', async (req, res) => {
-  const { studentId, testTypeId, criterionId, pointsToDeduct } = req.body;
+  const { studentId, testTypeId, criterionId } = req.body;
   
   try {
+    const criterion = await prisma.criterion.findUnique({ where: { id: Number(criterionId) } });
+    if (!criterion) return res.status(404).json({ error: 'Criterion not found' });
+    
+    const pointsToDeduct = criterion.pointsToDeduct;
     let result = await prisma.testResult.findFirst({
       where: { studentId: Number(studentId), testTypeId: Number(testTypeId) }
     });

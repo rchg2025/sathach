@@ -16,18 +16,19 @@ const Login = () => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       
-      if (res.data.user.role === 'MANAGER' || res.data.user.role === 'ADMIN') {
+      if (res.data.user.role === 'ADMIN') {
         navigate('/manager');
-      } else if (res.data.user.role === 'EXAMINER') {
+      } else {
         navigate('/examiner');
       }
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.error) {
-        setError(err.response.data.error);
+        const errMsg = err.response.data.error;
+        setError(typeof errMsg === 'string' ? errMsg : 'Lỗi kết nối máy chủ (500)');
       } else {
         setError('Lỗi kết nối máy chủ. Vui lòng thử lại sau.');
       }
-    }
+    } finally { };
   };
 
   return (
