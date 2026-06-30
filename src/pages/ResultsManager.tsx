@@ -69,7 +69,7 @@ const ResultsManager = () => {
 
       return {
         'STT': i + 1,
-        'Họ và Tên': r.student?.name,
+        'Họ và Tên': r.student?.name ? r.student.name.toLowerCase().replace(/(^|\s)\S/g, (l: string) => l.toUpperCase()) : '',
         'CCCD': r.student?.cccd,
         'Trạm thi': r.testType?.name || '-',
         'Bài thi (đang diễn ra)': currentExamStr,
@@ -142,7 +142,7 @@ const ResultsManager = () => {
                 return (
                   <tr key={r.id}>
                     <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td><strong>{r.student?.name}</strong></td>
+                    <td style={{ textTransform: 'capitalize' }}><strong>{r.student?.name?.toLowerCase()}</strong></td>
                     <td>{r.student?.cccd}</td>
                     <td>{r.testType?.name}</td>
                     <td>
