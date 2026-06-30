@@ -74,7 +74,7 @@ router.post('/assignments', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, role: true, name: true, createdAt: true }
+      select: { id: true, username: true, role: true, name: true, isActive: true, createdAt: true }
     });
     res.json(users);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
@@ -90,7 +90,23 @@ router.post('/users', async (req, res) => {
     const user = await prisma.user.create({
       data: { username, password: passwordHash, role, name }
     });
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, isActive: user.isActive });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, role, isActive, password } = req.body;
+  try {
+    const data: any = { name, role, isActive };
+    if (password) {
+      data.password = await bcrypt.hash(password, 10);
+    }
+    const user = await prisma.user.update({
+      where: { id: Number(id) },
+      data
+    });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, isActive: user.isActive });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 

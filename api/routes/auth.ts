@@ -11,6 +11,7 @@ router.post('/login', async (req, res) => {
   try {
     const user = await prisma.user.findUnique({ where: { username } });
     if (!user) return res.status(401).json({ error: 'Invalid credentials' });
+    if (!user.isActive) return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Invalid credentials' });

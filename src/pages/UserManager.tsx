@@ -13,6 +13,14 @@ const UserManager = () => {
     name: ''
   });
 
+  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editData, setEditData] = useState({
+    name: '',
+    role: '',
+    isActive: true,
+    password: ''
+  });
+
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -43,6 +51,42 @@ const UserManager = () => {
     }
   };
 
+  const handleEditClick = (u: any) => {
+    setEditingUser(u);
+    setEditData({
+      name: u.name,
+      role: u.role,
+      isActive: u.isActive,
+      password: '' // Optional for edit
+    });
+  };
+
+  const handleUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await axios.put(`${API_BASE_URL}/api/manager/users/${editingUser.id}`, editData);
+      alert('Cập nhật thành công!');
+      setEditingUser(null);
+      fetchUsers();
+    } catch (e: any) {
+      alert(e.response?.data?.error || 'Lỗi cập nhật');
+    }
+  };
+
+  const toggleActive = async (u: any) => {
+    try {
+      if (u.id === user?.id) {
+        alert('Không thể tự vô hiệu hóa tài khoản của chính mình!');
+        return;
+      }
+      if (!confirm(`Bạn có chắc muốn ${u.isActive ? 'vô hiệu hóa' : 'kích hoạt'} tài khoản này?`)) return;
+      await axios.put(`${API_BASE_URL}/api/manager/users/${u.id}`, { ...u, isActive: !u.isActive });
+      fetchUsers();
+    } catch (e) {
+      alert('Lỗi cập nhật trạng thái');
+    }
+  };
+
   return (
     <AdminLayout user={user}>
       <div className="container">
@@ -51,7 +95,7 @@ const UserManager = () => {
         <div className="tabs">
           <div 
             className={`tab ${activeTab === 'list' ? 'active' : ''}`}
-            onClick={() => setActiveTab('list')}
+            onClick={() => { setActiveTab('list'); setEditingUser(null); }}
           >
             Danh sách Thành viên
           </div>
@@ -63,7 +107,7 @@ const UserManager = () => {
           </div>
         </div>
 
-        {activeTab === 'list' && (
+        {activeTab === 'list' && !editingUser && (
           <div className="card">
             <table className="table">
               <thead>
@@ -71,12 +115,13 @@ const UserManager = () => {
                   <th>Họ và Tên</th>
                   <th>Tên đăng nhập</th>
                   <th>Quyền</th>
-                  <th>Ngày tạo</th>
+                  <th>Trạng thái</th>
+                  <th>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map(u => (
-                  <tr key={u.id}>
+                  <tr key={u.id} style={{ opacity: u.isActive ? 1 : 0.5 }}>
                     <td>{u.name}</td>
                     <td>{u.username}</td>
                     <td>
@@ -84,11 +129,84 @@ const UserManager = () => {
                         {u.role}
                       </span>
                     </td>
-                    <td>{new Date(u.createdAt).toLocaleDateString('vi-VN')}</td>
+                    <td>
+                      {u.isActive ? (
+                        <span className="text-success">Đang hoạt động</span>
+                      ) : (
+                        <span className="text-danger">Đã khóa</span>
+                      )}
+                    </td>
+                    <td>
+                      <button className="btn btn-primary" style={{ padding: '0.2rem 0.5rem', marginRight: '5px' }} onClick={() => handleEditClick(u)}>Sửa</button>
+                      <button 
+                        className={`btn ${u.isActive ? 'btn-danger' : 'btn-primary'}`} 
+                        style={{ padding: '0.2rem 0.5rem' }} 
+                        onClick={() => toggleActive(u)}
+                        disabled={u.id === user?.id}
+                      >
+                        {u.isActive ? 'Khóa' : 'Mở khóa'}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {editingUser && (
+          <div className="card" style={{ maxWidth: '600px' }}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 style={{ margin: 0 }}>Sửa thông tin: {editingUser.username}</h3>
+              <button className="btn" style={{ backgroundColor: '#ccc' }} onClick={() => setEditingUser(null)}>Hủy</button>
+            </div>
+            
+            <form onSubmit={handleUpdate}>
+              <div className="form-group">
+                <label>Họ và Tên</label>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  value={editData.name}
+                  onChange={e => setEditData({...editData, name: e.target.value})}
+                  required
+                />
+              </div>
+              <div className="form-group">
+                <label>Mật khẩu mới (Để trống nếu không đổi)</label>
+                <input 
+                  type="password" 
+                  className="form-control" 
+                  value={editData.password}
+                  onChange={e => setEditData({...editData, password: e.target.value})}
+                />
+              </div>
+              <div className="form-group">
+                <label>Phân quyền</label>
+                <select 
+                  className="form-control"
+                  value={editData.role}
+                  onChange={e => setEditData({...editData, role: e.target.value})}
+                  disabled={editingUser.id === user?.id && editingUser.role === 'ADMIN'}
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="MANAGER">Quản lý</option>
+                  <option value="EXAMINER">Giám khảo</option>
+                </select>
+              </div>
+              <div className="form-group" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <input 
+                  type="checkbox" 
+                  id="isActive"
+                  checked={editData.isActive}
+                  onChange={e => setEditData({...editData, isActive: e.target.checked})}
+                  disabled={editingUser.id === user?.id}
+                />
+                <label htmlFor="isActive" style={{ margin: 0 }}>Tài khoản đang hoạt động</label>
+              </div>
+              
+              <button type="submit" className="btn btn-primary">Lưu Thay Đổi</button>
+            </form>
           </div>
         )}
 
