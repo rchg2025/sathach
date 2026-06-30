@@ -204,7 +204,7 @@ h1, h2, h3, h4, h5, h6 {
 .admin-layout {
   display: flex;
   min-height: 100vh;
-  background-color: #f0f4f8; /* Nh�n m�u n?n xanh r?t nh?t gi?ng ?nh */
+  background-color: #f0f4f8; /* Nhìn màu nền xanh rất nhạt giống ảnh */
 }
 
 .sidebar {
@@ -302,7 +302,6 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 2rem;
 }
 
-
 /* Tabs */
 .tabs {
   display: flex;
@@ -342,4 +341,3 @@ h1, h2, h3, h4, h5, h6 {
 .btn-view { color: #28a745; background: rgba(40, 167, 69, 0.1); }
 .btn-edit { color: #007bff; background: rgba(0, 123, 255, 0.1); }
 .btn-delete { color: #dc3545; background: rgba(220, 53, 69, 0.1); }
-
