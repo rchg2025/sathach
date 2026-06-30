@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
+import multer from 'multer';
+import { uploadFileToDrive } from '../utils/drive';
+
+const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
@@ -145,6 +149,19 @@ router.post('/settings', async (req, res) => {
     await Promise.all(updatePromises);
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const fileUrl = await uploadFileToDrive(req.file);
+    res.json({ url: fileUrl });
+  } catch (error: any) {
+    console.error('Upload Error:', error.message);
+    res.status(500).json({ error: error.message || 'Server error during file upload' });
+  }
 });
 
 export default router;

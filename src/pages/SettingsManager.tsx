@@ -63,7 +63,7 @@ const SettingsManager = () => {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, fieldName: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -73,12 +73,23 @@ const SettingsManager = () => {
       return;
     }
     
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const base64 = evt.target?.result as string;
-      setSettings(prev => ({ ...prev, [fieldName]: base64 }));
-    };
-    reader.readAsDataURL(file);
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadPromise = axios.post(`${API_BASE_URL}/api/manager/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+
+    toast.promise(uploadPromise, {
+      loading: 'Đang tải ảnh lên Google Drive...',
+      success: (res) => {
+        setSettings(prev => ({ ...prev, [fieldName]: res.data.url }));
+        return 'Tải ảnh lên thành công!';
+      },
+      error: (err) => `Lỗi tải ảnh: ${err.response?.data?.error || err.message}`
+    });
   };
 
   if (!user) return <AdminLayout user={null}><div>Đang tải...</div></AdminLayout>;
