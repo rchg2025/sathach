@@ -74,6 +74,7 @@ router.post('/assignments', async (req, res) => {
 router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
+      where: { username: { not: 'quantri' } },
       select: { id: true, username: true, role: true, name: true, phone: true, email: true, isActive: true, createdAt: true },
       orderBy: { createdAt: 'desc' }
     });

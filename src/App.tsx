@@ -9,11 +9,12 @@ import TestTypeManager from './pages/TestTypeManager';
 import UserManager from './pages/UserManager';
 import StudentManager from './pages/StudentManager';
 import ExaminerDashboard from './pages/ExaminerDashboard';
+import Profile from './pages/Profile';
 import './index.css';
 
 const PublicHeader = () => {
   const location = useLocation();
-  if (location.pathname === '/manager' || location.pathname === '/examiner') return null;
+  if (location.pathname.startsWith('/manager') || location.pathname.startsWith('/examiner') || location.pathname.startsWith('/profile')) return null;
   return (
     <div className="app-header">
       <div className="container">
@@ -41,6 +42,7 @@ function App() {
         <Route path="/manager/students" element={<StudentManager />} />
         <Route path="/manager/users" element={<UserManager />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
+        <Route path="/profile" element={<Profile />} />
       </Routes>
     </BrowserRouter>
   );

@@ -7,7 +7,8 @@ import {
   BookOpen, 
   Settings, 
   LogOut,
-  Shield
+  Shield,
+  UserCircle
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -62,6 +63,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <Shield size={20} /> Quản lý Thành viên
             </Link>
           )}
+          <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`}>
+            <UserCircle size={20} /> Hồ sơ cá nhân
+          </Link>
           <a className="sidebar-item">
             <Settings size={20} /> Cấu hình hệ thống
           </a>
