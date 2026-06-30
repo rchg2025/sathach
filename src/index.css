@@ -223,6 +223,48 @@ h1, h2, h3, h4, h5, h6 {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
+  transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+  width: 70px;
+}
+
+.sidebar.collapsed .sidebar-header h4,
+.sidebar.collapsed .sidebar-header p {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-avatar {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 0.5rem auto;
+}
+
+.sidebar.collapsed .sidebar-item-text {
+  display: none;
+}
+
+.sidebar.collapsed .sidebar-item {
+  justify-content: center;
+  padding: 0.75rem 0;
+}
+
+.sidebar.collapsed .sidebar-item svg {
+  margin-right: 0;
+}
+
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.sidebar-toggle-btn:hover {
+  color: var(--primary);
 }
 
 .sidebar-header {

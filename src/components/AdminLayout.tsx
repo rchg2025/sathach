@@ -10,7 +10,9 @@ import {
   UserCircle,
   Car,
   Menu,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -23,6 +25,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleLogout = () => {
     localStorage.clear();
@@ -32,6 +35,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
   const isActive = (path: string) => location.pathname === path ? 'active' : '';
 
   const closeSidebar = () => setIsSidebarOpen(false);
+  const toggleCollapse = () => setIsCollapsed(!isCollapsed);
 
   return (
     <div className="admin-layout">
@@ -49,13 +53,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
       )}
 
       {/* Sidebar */}
-      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
+      <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
+        <div className="sidebar-header" style={{ position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }} className="d-md-none">
             {isSidebarOpen && (
               <X size={24} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={closeSidebar} />
             )}
           </div>
+          <button className="sidebar-toggle-btn d-none d-md-flex" onClick={toggleCollapse} style={{ position: 'absolute', right: '-15px', top: '20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: '4px', zIndex: 10 }}>
+            {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+          </button>
+          
           <div className="sidebar-avatar" style={{ overflow: 'hidden' }}>
             {user?.avatarUrl ? (
               <img src={user.avatarUrl.startsWith('/') ? API_BASE_URL + user.avatarUrl : user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -72,35 +80,35 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
         <nav className="sidebar-nav">
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`} onClick={closeSidebar}>
-            <LayoutDashboard size={20} /> Bảng điều khiển
+            <LayoutDashboard size={20} /> <span className="sidebar-item-text">Bảng điều khiển</span>
           </Link>
           {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
             <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
-              <Car size={20} /> Sát hạch
+              <Car size={20} /> <span className="sidebar-item-text">Sát hạch</span>
             </Link>
           )}
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
             <>
               <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`} onClick={closeSidebar}>
-                <BookOpen size={20} /> Quản lý Danh mục
+                <BookOpen size={20} /> <span className="sidebar-item-text">Quản lý Danh mục</span>
               </Link>
               <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`} onClick={closeSidebar}>
-                <Users size={20} /> Quản lý Học viên
+                <Users size={20} /> <span className="sidebar-item-text">Quản lý Học viên</span>
               </Link>
               <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`} onClick={closeSidebar}>
-                <Users size={20} /> Phân công Giám khảo
+                <Users size={20} /> <span className="sidebar-item-text">Phân công Giám khảo</span>
               </Link>
               <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`} onClick={closeSidebar}>
-                <Shield size={20} /> Quản lý Thành viên
+                <Shield size={20} /> <span className="sidebar-item-text">Quản lý Thành viên</span>
               </Link>
             </>
           )}
           <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`} onClick={closeSidebar}>
-            <UserCircle size={20} /> Hồ sơ cá nhân
+            <UserCircle size={20} /> <span className="sidebar-item-text">Hồ sơ cá nhân</span>
           </Link>
           {user?.role === 'ADMIN' && (
             <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`} onClick={closeSidebar}>
-              <Settings size={20} /> Cấu hình hệ thống
+              <Settings size={20} /> <span className="sidebar-item-text">Cấu hình hệ thống</span>
             </Link>
           )}
         </nav>
