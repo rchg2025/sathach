@@ -16,7 +16,7 @@ const Login = () => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       
-      if (res.data.user.role === 'ADMIN') {
+      if (res.data.user.role === 'ADMIN' || res.data.user.role === 'MANAGER' || res.data.user.role === 'STATION_MANAGER') {
         navigate('/manager');
       } else {
         navigate('/examiner');
