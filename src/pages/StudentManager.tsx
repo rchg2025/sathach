@@ -81,6 +81,31 @@ const parseDateStr = (dateStr: string) => {
   return null;
 };
 
+const toDateInputValue = (dateStr: string) => {
+  const d = parseDateStr(dateStr);
+  if (d && !isNaN(d.getTime())) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return '';
+};
+
+const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: string) => void) => {
+  const val = e.target.value;
+  if (!val) {
+    setter('');
+    return;
+  }
+  const parts = val.split('-');
+  if (parts.length === 3) {
+    setter(`${parts[2]}/${parts[1]}/${parts[0]}`);
+  } else {
+    setter(val);
+  }
+};
+
 const StudentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
@@ -493,8 +518,8 @@ const StudentManager = () => {
               
               {/* 2. Ngày sinh */}
               <div className="form-group">
-                <label>Ngày sinh (VD: 12/01/2002)</label>
-                <input type="text" className="form-control" value={dob} onChange={e => setDob(e.target.value)} />
+                <label>Ngày sinh</label>
+                <input type="date" className="form-control" value={toDateInputValue(dob)} onChange={e => handleDateChange(e, setDob)} />
               </div>
 
               {/* 3. CCCD */}
@@ -550,19 +575,19 @@ const StudentManager = () => {
               {/* 9. Ngày cấp */}
               <div className="form-group">
                 <label>Ngày cấp</label>
-                <input type="text" className="form-control" value={licenseIssueDate} onChange={e => setLicenseIssueDate(e.target.value)} />
+                <input type="date" className="form-control" value={toDateInputValue(licenseIssueDate)} onChange={e => handleDateChange(e, setLicenseIssueDate)} />
               </div>
 
               {/* 10. Ngày hết hạn */}
               <div className="form-group">
                 <label>Ngày hết hạn</label>
-                <input type="text" className="form-control" value={licenseExpiryDate} onChange={e => setLicenseExpiryDate(e.target.value)} />
+                <input type="date" className="form-control" value={toDateInputValue(licenseExpiryDate)} onChange={e => handleDateChange(e, setLicenseExpiryDate)} />
               </div>
               
               {/* 11. Ngày trúng tuyển */}
               <div className="form-group">
                 <label>Ngày trúng tuyển</label>
-                <input type="text" className="form-control" value={passDate} onChange={e => setPassDate(e.target.value)} />
+                <input type="date" className="form-control" value={toDateInputValue(passDate)} onChange={e => handleDateChange(e, setPassDate)} />
               </div>
               
               {/* 12. Thời gian GPLX */}
