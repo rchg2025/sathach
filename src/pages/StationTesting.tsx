@@ -233,6 +233,16 @@ const StationTesting = () => {
       if (filterStatus === 'TRANSFERRED' && st !== 'Đã chuyển điểm') match = false;
     }
     return match;
+  }).sort((a, b) => {
+    const getWeight = (s: any) => {
+      const st = getStudentStatusText(s);
+      if (st === 'Đang thi') return 1;
+      if (st === 'Đã kết thúc') return 2;
+      if (st === 'Chưa thi') return 3;
+      if (st === 'Đã chuyển điểm') return 4;
+      return 5;
+    };
+    return getWeight(a) - getWeight(b);
   });
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
@@ -270,6 +280,7 @@ const StationTesting = () => {
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
+                  <th>STT</th>
                   <th>Mã ĐK</th>
                   <th>Họ và Tên</th>
                   <th>CCCD</th>
@@ -279,8 +290,9 @@ const StationTesting = () => {
                 </tr>
               </thead>
               <tbody>
-                {paginatedStudents.map(s => (
+                {paginatedStudents.map((s, index) => (
                   <tr key={s.id}>
+                    <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                     <td>{s.registrationCode}</td>
                     <td><strong>{s.name}</strong></td>
                     <td>{s.cccd}</td>
