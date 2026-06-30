@@ -8,6 +8,9 @@ import { Globe, Folder, Mail } from 'lucide-react';
 const SettingsManager = () => {
   const [user, setUser] = useState<any>(null);
   
+  // State for tabs
+  const [activeTab, setActiveTab] = useState<'seo' | 'drive' | 'smtp'>('seo');
+  
   // State for all settings
   const [settings, setSettings] = useState({
     seo_title: '',
@@ -84,8 +87,34 @@ const SettingsManager = () => {
     <AdminLayout user={user}>
       <div className="container" style={{ maxWidth: '1000px', paddingBottom: '3rem' }}>
         <h2 className="mb-4">Cấu hình Hệ thống</h2>
+
+        {/* Tabs Navigation */}
+        <div className="tabs mb-4" style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '1rem' }}>
+          <button 
+            className={`tab-btn ${activeTab === 'seo' ? 'active' : ''}`}
+            onClick={() => setActiveTab('seo')}
+            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'seo' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'seo' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'seo' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Globe size={18} /> SEO & Logo
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'drive' ? 'active' : ''}`}
+            onClick={() => setActiveTab('drive')}
+            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'drive' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'drive' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'drive' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Folder size={18} /> Google Drive
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'smtp' ? 'active' : ''}`}
+            onClick={() => setActiveTab('smtp')}
+            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'smtp' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'smtp' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'smtp' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Mail size={18} /> SMTP Gmail
+          </button>
+        </div>
         
         {/* Khối 1: Thông tin Website */}
+        {activeTab === 'seo' && (
         <div className="card" style={{ marginBottom: '2rem' }}>
           <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#007bff' }} className="mb-4">
             <Globe size={20} /> Thông tin Website (SEO & Logo)
@@ -153,8 +182,10 @@ const SettingsManager = () => {
             </button>
           </div>
         </div>
+        )}
 
         {/* Khối 2: Cấu hình Google Team Drive */}
+        {activeTab === 'drive' && (
         <div className="card" style={{ marginBottom: '2rem' }}>
           <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#f39c12' }} className="mb-4">
             <Folder size={20} /> Cấu hình Google Team Drive (Upload file)
@@ -184,8 +215,10 @@ const SettingsManager = () => {
             </button>
           </div>
         </div>
+        )}
 
         {/* Khối 3: Cấu hình SMTP Gmail */}
+        {activeTab === 'smtp' && (
         <div className="card">
           <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#6f42c1' }} className="mb-4">
             <Mail size={20} /> Cấu hình SMTP Gmail (Gửi thư thông báo)
@@ -220,6 +253,7 @@ const SettingsManager = () => {
             </button>
           </div>
         </div>
+        )}
 
       </div>
     </AdminLayout>
