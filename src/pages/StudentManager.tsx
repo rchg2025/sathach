@@ -81,6 +81,8 @@ const StudentManager = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   
+  const [viewStudent, setViewStudent] = useState<any>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchStudents = async () => {
@@ -385,6 +387,7 @@ const StudentManager = () => {
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
                     <td>
+                      <button className="action-btn" style={{ color: '#17a2b8', marginRight: '5px' }} onClick={() => setViewStudent(student)}>Xem</button>
                       <button className="action-btn btn-edit" onClick={() => handleEdit(student)}>Sửa</button>
                       <button className="action-btn btn-delete" onClick={() => handleDelete(student.id)}>Xóa</button>
                     </td>
@@ -528,6 +531,48 @@ const StudentManager = () => {
             </div>
             <button type="submit" className="btn btn-primary mt-4">Lưu Học viên</button>
           </form>
+        </div>
+      )}
+
+      {/* Modal Xem chi tiết */}
+      {viewStudent && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }} onClick={() => setViewStudent(null)}>
+          <div style={{
+            backgroundColor: 'white', padding: '2rem', borderRadius: '8px',
+            minWidth: '500px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto'
+          }} onClick={e => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h3 style={{ margin: 0 }}>Chi tiết Học viên</h3>
+              <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={() => setViewStudent(null)}>Đóng</button>
+            </div>
+            <table className="table" style={{ width: '100%' }}>
+              <tbody>
+                <tr><td width="30%"><strong>Họ tên:</strong></td><td>{viewStudent.name}</td></tr>
+                <tr><td><strong>Ngày sinh:</strong></td><td>{formatDate(viewStudent.dob)}</td></tr>
+                <tr><td><strong>CCCD:</strong></td><td>{viewStudent.cccd}</td></tr>
+                <tr><td><strong>Địa chỉ:</strong></td><td>{viewStudent.address || '-'}</td></tr>
+                <tr><td><strong>Khóa đào tạo:</strong></td><td>{viewStudent.courseName || '-'}</td></tr>
+                <tr><td><strong>Mã đăng ký:</strong></td><td>{viewStudent.registrationCode || '-'}</td></tr>
+                <tr><td><strong>Số GPLX hiện tại:</strong></td><td>{viewStudent.licenseNumber || '-'}</td></tr>
+                <tr><td><strong>Hạng GPLX:</strong></td><td>{viewStudent.licenseClass || '-'}</td></tr>
+                <tr><td><strong>Ngày cấp:</strong></td><td>{viewStudent.licenseIssueDate || '-'}</td></tr>
+                <tr><td><strong>Ngày hết hạn:</strong></td><td>{viewStudent.licenseExpiryDate || '-'}</td></tr>
+                <tr><td><strong>Ngày trúng tuyển:</strong></td><td>{viewStudent.passDate || '-'}</td></tr>
+                <tr><td><strong>Thời gian GPLX:</strong></td><td>{viewStudent.licenseDuration || '-'}</td></tr>
+              </tbody>
+            </table>
+            <div className="mt-4" style={{ textAlign: 'right' }}>
+              <button className="btn btn-primary" onClick={() => {
+                const s = viewStudent;
+                setViewStudent(null);
+                handleEdit(s);
+              }}>Sửa thông tin</button>
+            </div>
+          </div>
         </div>
       )}
     </AdminLayout>
