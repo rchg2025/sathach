@@ -106,6 +106,11 @@ const CourseManager = () => {
     const matchSearch = removeAccents(c.name).includes(keyword) || removeAccents(c.description || '').includes(keyword);
     const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'completed' ? c.isCompleted : !c.isCompleted);
     return matchSearch && matchStatus;
+  }).sort((a: any, b: any) => {
+    if (a.isCompleted !== b.isCompleted) {
+      return a.isCompleted ? 1 : -1;
+    }
+    return a.name.localeCompare(b.name, 'vi');
   });
   const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
   const displayedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -270,7 +275,7 @@ const CourseManager = () => {
               </tr>
             </thead>
             <tbody>
-              {courses.filter((c: any) => c.isCompleted).length > 0 ? courses.filter((c: any) => c.isCompleted).map((course: any, idx: number) => (
+              {courses.filter((c: any) => c.isCompleted).length > 0 ? courses.filter((c: any) => c.isCompleted).sort((a: any, b: any) => a.name.localeCompare(b.name, 'vi')).map((course: any, idx: number) => (
                 <tr key={course.id}>
                   <td>{idx + 1}</td>
                   <td><strong>{course.name}</strong></td>
