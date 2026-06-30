@@ -3,7 +3,8 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
-import { Trash2 } from 'lucide-react';
+import { Trash2, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -21,6 +22,14 @@ const AssignmentManager = () => {
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
+
+  // Filter & Pagination states
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+  const [courseFilter, setCourseFilter] = useState('all');
+  const [testTypeFilter, setTestTypeFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchData();
@@ -99,6 +108,43 @@ const AssignmentManager = () => {
     }
   };
 
+  const exportToExcel = () => {
+    if (filteredAssignments.length === 0) {
+      toast.error('Không có dữ liệu để xuất!');
+      return;
+    }
+    
+    const data = filteredAssignments.map((a, idx) => ({
+      'STT': idx + 1,
+      'Họ tên': a.examiner?.name || '',
+      'Tài khoản': a.examiner?.username || '',
+      'Vai trò': a.examiner?.role === 'STATION_MANAGER' ? 'Trưởng trạm' : 'Giám khảo',
+      'Khóa đào tạo': a.course?.name || '',
+      'Trạm thi': a.testType?.name || '',
+      'Bài thi': a.exam?.name || '',
+      'Thời gian thực hiện': a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'PhanCong');
+    XLSX.writeFile(workbook, `Danh_Sach_Phan_Cong_${new Date().getTime()}.xlsx`);
+  };
+
+  const filteredAssignments = assignments.filter(a => {
+    const matchSearch = (a.examiner?.name || '').toLowerCase().includes(searchKeyword.toLowerCase()) || 
+                        (a.examiner?.username || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
+                        (a.exam?.name || '').toLowerCase().includes(searchKeyword.toLowerCase());
+    const matchRole = roleFilter === 'all' ? true : a.examiner?.role === roleFilter;
+    const matchCourse = courseFilter === 'all' ? true : String(a.course?.id) === courseFilter;
+    const matchTestType = testTypeFilter === 'all' ? true : String(a.testType?.id) === testTypeFilter;
+    
+    return matchSearch && matchRole && matchCourse && matchTestType;
+  });
+
+  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
+  const paginatedAssignments = filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   return (
     <AdminLayout user={user}>
       <h2 style={{ marginBottom: '1.5rem', fontWeight: 600 }}>Phân công Nhiệm vụ</h2>
@@ -108,7 +154,7 @@ const AssignmentManager = () => {
           Tạo phân công mới
         </h4>
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
+          <div className="grid-cols-3-responsive">
             <div className="form-group">
               <label className="form-label">Loại phân công</label>
               <select 
@@ -205,8 +251,44 @@ const AssignmentManager = () => {
 
       <div className="card" style={{ padding: '0' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
-          <h4 style={{ margin: 0 }}>Danh sách Phân công</h4>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm tên, username, bài thi..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+              />
+              <div style={{ width: '180px' }}>
+                <select className="form-control" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
+                  <option value="all">Tất cả Vai trò</option>
+                  <option value="STATION_MANAGER">Trưởng trạm</option>
+                  <option value="EXAMINER">Giám khảo</option>
+                </select>
+              </div>
+              <div style={{ width: '180px' }}>
+                <select className="form-control" value={courseFilter} onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}>
+                  <option value="all">Tất cả Khóa đào tạo</option>
+                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div style={{ width: '180px' }}>
+                <select className="form-control" value={testTypeFilter} onChange={(e) => { setTestTypeFilter(e.target.value); setCurrentPage(1); }}>
+                  <option value="all">Tất cả Trạm thi</option>
+                  {testTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div>
+              <button className="btn btn-success flex items-center" style={{ gap: '0.5rem' }} onClick={exportToExcel}>
+                <Download size={18} /> Xuất Excel
+              </button>
+            </div>
+          </div>
         </div>
+
         <div className="table-responsive">
           <table className="table">
             <thead>
@@ -222,9 +304,9 @@ const AssignmentManager = () => {
               </tr>
             </thead>
             <tbody>
-              {assignments.length > 0 ? assignments.map((a: any, idx: number) => (
+              {paginatedAssignments.length > 0 ? paginatedAssignments.map((a: any, idx: number) => (
                 <tr key={a.id}>
-                  <td>{idx + 1}</td>
+                  <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{a.examiner?.name || 'N/A'}</strong></td>
                   <td>
                     {a.examiner?.role === 'STATION_MANAGER' ? (
@@ -246,13 +328,44 @@ const AssignmentManager = () => {
               )) : (
                 <tr>
                   <td colSpan={8} className="text-center text-muted" style={{ padding: '2rem' }}>
-                    Chưa có dữ liệu phân công
+                    Chưa có dữ liệu phân công phù hợp
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
+        
+        {/* Phân trang */}
+        {totalPages > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', borderTop: '1px solid var(--border)' }}>
+            <div style={{ display: 'flex', gap: '5px' }}>
+              <button 
+                className="btn btn-secondary" 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              >
+                Trước
+              </button>
+              {Array.from({ length: totalPages }).map((_, i) => (
+                <button
+                  key={i}
+                  className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setCurrentPage(i + 1)}
+                >
+                  {i + 1}
+                </button>
+              ))}
+              <button 
+                className="btn btn-secondary" 
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              >
+                Sau
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
