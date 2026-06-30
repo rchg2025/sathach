@@ -187,7 +187,7 @@ const StationTesting = () => {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
       let text = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
       if (inProgress.stationManager && inProgress.startTime) {
-        text += `\nBắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
+        text += ` - Bắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
       }
       return text;
     }
@@ -197,10 +197,10 @@ const StationTesting = () => {
       const v = vehicles.find(v => v.id === finished.vehicleId);
       let text = `Đã kết thúc ${v ? `(${v.name})` : ''}`;
       if (finished.stationManager) {
-        text += `\nTrưởng trạm: ${finished.stationManager.name}`;
+        text += ` - Trưởng trạm: ${finished.stationManager.name}`;
       }
-      if (finished.startTime) text += `\nBắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
-      if (finished.endTime) text += `\nKết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
+      if (finished.startTime) text += ` - Bắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
+      if (finished.endTime) text += ` - Kết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
       return text;
     }
     
@@ -209,10 +209,10 @@ const StationTesting = () => {
       const v = vehicles.find(v => v.id === transferred.vehicleId);
       let text = `Đã chuyển điểm ${v ? `(${v.name})` : ''}`;
       if (transferred.stationManager) {
-        text += `\nTrưởng trạm: ${transferred.stationManager.name}`;
+        text += ` - Trưởng trạm: ${transferred.stationManager.name}`;
       }
-      if (transferred.startTime) text += `\nBắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
-      if (transferred.endTime) text += `\nKết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
+      if (transferred.startTime) text += ` - Bắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
+      if (transferred.endTime) text += ` - Kết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
       return text;
     }
     
@@ -285,7 +285,7 @@ const StationTesting = () => {
                     <td><strong>{s.name}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
-                    <td style={{ whiteSpace: 'pre-line' }}>
+                    <td>
                       <span className={`badge ${getStudentStatus(s).includes('Đang thi') ? 'badge-primary' : (getStudentStatus(s).includes('chuyển điểm') ? 'badge-success' : 'badge-secondary')}`}>
                         {getStudentStatus(s)}
                       </span>
