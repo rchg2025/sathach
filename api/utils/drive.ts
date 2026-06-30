@@ -19,6 +19,36 @@ function formatPrivateKey(key: string) {
   return formatted;
 }
 
+async function getOrCreateFolder(drive: any, parentId: string, folderName: string): Promise<string> {
+  const query = `'${parentId}' in parents and name = '${folderName}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
+  const res = await drive.files.list({
+    q: query,
+    fields: 'files(id)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+  });
+
+  if (res.data.files && res.data.files.length > 0) {
+    return res.data.files[0].id;
+  }
+
+  // Create folder if not found
+  const folderMetadata = {
+    name: folderName,
+    mimeType: 'application/vnd.google-apps.folder',
+    parents: [parentId]
+  };
+
+  const createRes = await drive.files.create({
+    requestBody: folderMetadata,
+    fields: 'id',
+    supportsAllDrives: true,
+  });
+
+  if (!createRes.data.id) throw new Error('Failed to create folder');
+  return createRes.data.id;
+}
+
 export async function uploadFileToDrive(file: Express.Multer.File): Promise<string> {
   const settings = await prisma.setting.findMany({
     where: {
@@ -52,13 +82,21 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
   });
 
   const drive = google.drive({ version: 'v3', auth });
+  
+  // Create or get Year and Month folders
+  const date = new Date();
+  const yearStr = date.getFullYear().toString();
+  const monthStr = (date.getMonth() + 1).toString().padStart(2, '0');
+  
+  const yearFolderId = await getOrCreateFolder(drive, folderId, yearStr);
+  const targetFolderId = await getOrCreateFolder(drive, yearFolderId, monthStr);
 
   const bufferStream = new stream.PassThrough();
   bufferStream.end(file.buffer);
 
   const fileMetadata = {
     name: `${Date.now()}_${file.originalname}`,
-    parents: [folderId],
+    parents: [targetFolderId],
   };
 
   const media = {
