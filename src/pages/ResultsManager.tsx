@@ -63,17 +63,22 @@ const ResultsManager = () => {
   const exportToExcel = () => {
     if (filteredResults.length === 0) return toast.error('Không có dữ liệu để xuất');
     
-    const exportData = filteredResults.map((r, i) => ({
-      'STT': i + 1,
-      'Mã ĐK': r.student?.registrationCode || '-',
-      'Khóa đào tạo': r.student?.course?.name || r.student?.courseName || '-',
-      'Họ và Tên': r.student?.name,
-      'CCCD': r.student?.cccd,
-      'Bài thi': r.testType?.name || '-',
+    const exportData = filteredResults.map((r, i) => {
+      const currentProgress = r.progress?.find((p: any) => p.status === 'IN_PROGRESS');
+      const currentExamStr = currentProgress ? currentProgress.exam?.name : (r.status === 'PASSED' || r.status === 'FAILED' ? 'Đã hoàn thành' : '-');
+
+      return {
+        'STT': i + 1,
+        'Khóa đào tạo': r.student?.course?.name || r.student?.courseName || '-',
+        'Họ và Tên': r.student?.name,
+        'CCCD': r.student?.cccd,
+        'Trạm thi': r.testType?.name || '-',
+        'Bài thi (đang diễn ra)': currentExamStr,
       'Điểm bị trừ': Math.max(0, 100 - r.totalScore),
       'Điểm còn lại': r.totalScore,
       'Trạng thái': r.status === 'PASSED' ? 'Đạt' : r.status === 'FAILED' ? 'Trượt' : 'Đang chờ'
-    }));
+      };
+    });
     
     const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
@@ -121,25 +126,31 @@ const ResultsManager = () => {
             <thead className="table-light">
               <tr>
                 <th style={{ width: '50px' }}>STT</th>
-                <th>Mã ĐK</th>
                 <th>Khóa đào tạo</th>
                 <th>Họ và Tên</th>
                 <th>CCCD</th>
-                <th>Bài thi</th>
+                <th>Trạm thi</th>
+                <th>Bài thi (đang diễn ra)</th>
                 <th style={{ color: 'var(--danger)', textAlign: 'center' }}>Điểm bị trừ</th>
                 <th style={{ color: 'var(--success)', textAlign: 'center' }}>Điểm còn lại</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody>
-              {displayedResults.length > 0 ? displayedResults.map((r, idx) => (
-                <tr key={r.id}>
-                  <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                  <td>{r.student?.registrationCode || '-'}</td>
-                  <td><span className="badge badge-info">{r.student?.course?.name || r.student?.courseName || '-'}</span></td>
-                  <td><strong>{r.student?.name}</strong></td>
-                  <td>{r.student?.cccd}</td>
-                  <td>{r.testType?.name}</td>
+              {displayedResults.length > 0 ? displayedResults.map((r, idx) => {
+                const currentProgress = r.progress?.find((p: any) => p.status === 'IN_PROGRESS');
+                const currentExamStr = currentProgress ? currentProgress.exam?.name : (r.status === 'PASSED' || r.status === 'FAILED' ? 'Đã hoàn thành' : '-');
+                
+                return (
+                  <tr key={r.id}>
+                    <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                    <td><span className="badge badge-info">{r.student?.course?.name || r.student?.courseName || '-'}</span></td>
+                    <td><strong>{r.student?.name}</strong></td>
+                    <td>{r.student?.cccd}</td>
+                    <td>{r.testType?.name}</td>
+                    <td>
+                      {currentProgress ? <span className="badge badge-primary">{currentExamStr}</span> : currentExamStr}
+                    </td>
                   <td style={{ color: 'var(--danger)', fontWeight: 'bold', textAlign: 'center' }}>{Math.max(0, 100 - r.totalScore)}</td>
                   <td style={{ color: 'var(--success)', fontWeight: 'bold', textAlign: 'center', fontSize: '1.1rem' }}>{r.totalScore}</td>
                   <td>
@@ -148,7 +159,8 @@ const ResultsManager = () => {
                      <span className="badge badge-warning">Đang chờ</span>}
                   </td>
                 </tr>
-              )) : (
+                );
+              }) : (
                 <tr>
                   <td colSpan={9} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu kết quả phù hợp.

@@ -803,7 +803,12 @@ router.get('/results', async (req, res) => {
             course: true
           }
         },
-        testType: true
+        testType: true,
+        progress: {
+          include: {
+            exam: true
+          }
+        }
       },
       orderBy: {
         updatedAt: 'desc'
