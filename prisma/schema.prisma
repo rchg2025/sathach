@@ -54,6 +54,8 @@ model VehicleType {
   seats       Int?
   brand       String?
   owner       String?
+  manufacturingYear Int?
+  inspectionExpiry  DateTime?
   contractStart DateTime?
   contractEnd   DateTime?
   isActive    Boolean  @default(true)

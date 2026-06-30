@@ -44,12 +44,14 @@ router.get('/vehicle-types', async (req, res) => {
 });
 
 router.post('/vehicle-types', async (req, res) => {
-  const { name, description, seats, brand, owner, contractStart, contractEnd } = req.body;
+  const { name, description, seats, brand, owner, manufacturingYear, inspectionExpiry, contractStart, contractEnd } = req.body;
   try {
     const data: any = { name, description };
     if (seats) data.seats = Number(seats);
     if (brand) data.brand = brand;
     if (owner) data.owner = owner;
+    if (manufacturingYear) data.manufacturingYear = Number(manufacturingYear);
+    if (inspectionExpiry) data.inspectionExpiry = new Date(inspectionExpiry);
     if (contractStart) data.contractStart = new Date(contractStart);
     if (contractEnd) data.contractEnd = new Date(contractEnd);
     
@@ -60,10 +62,12 @@ router.post('/vehicle-types', async (req, res) => {
 
 router.put('/vehicle-types/:id', async (req, res) => {
   const { id } = req.params;
-  const { isActive } = req.body;
+  const { isActive, manufacturingYear, inspectionExpiry } = req.body;
   try {
     const data: any = {};
     if (isActive !== undefined) data.isActive = isActive;
+    if (manufacturingYear) data.manufacturingYear = Number(manufacturingYear);
+    if (inspectionExpiry) data.inspectionExpiry = new Date(inspectionExpiry);
     const vehicleType = await prisma.vehicleType.update({ where: { id: Number(id) }, data });
     res.json(vehicleType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }

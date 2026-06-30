@@ -15,6 +15,8 @@ const VehicleTypeManager = () => {
   const [owner, setOwner] = useState('');
   const [contractStart, setContractStart] = useState('');
   const [contractEnd, setContractEnd] = useState('');
+  const [manufacturingYear, setManufacturingYear] = useState('');
+  const [inspectionExpiry, setInspectionExpiry] = useState('');
 
   const fetchVehicleTypes = async () => {
     try {
@@ -33,7 +35,7 @@ const VehicleTypeManager = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, {
-        name, description, seats, brand, owner, contractStart, contractEnd
+        name, description, seats, brand, owner, contractStart, contractEnd, manufacturingYear, inspectionExpiry
       });
       toast.success('Thêm xe thành công!');
       setName('');
@@ -43,6 +45,8 @@ const VehicleTypeManager = () => {
       setOwner('');
       setContractStart('');
       setContractEnd('');
+      setManufacturingYear('');
+      setInspectionExpiry('');
       fetchVehicleTypes();
       setActiveTab('list');
     } catch (err) {
@@ -60,6 +64,32 @@ const VehicleTypeManager = () => {
     } catch (err) {
       toast.error('Lỗi khi cập nhật trạng thái');
     }
+  };
+
+  const renderDateWithWarning = (dateStr: string) => {
+    if (!dateStr) return '-';
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diffTime = d.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const dateFormatted = d.toLocaleDateString('vi-VN');
+    
+    if (diffDays < 0) {
+      return (
+        <div style={{ color: 'var(--danger)', fontWeight: 'bold' }}>
+          {dateFormatted} <br/><span className="badge badge-danger" style={{ fontSize: '0.7rem' }}>🚨 Đã quá hạn</span>
+        </div>
+      );
+    }
+    if (diffDays <= 15) {
+      return (
+        <div style={{ color: '#d97706', fontWeight: 'bold' }}>
+          {dateFormatted} <br/><span className="badge badge-warning" style={{ fontSize: '0.7rem' }}>⚠️ Còn {diffDays} ngày</span>
+        </div>
+      );
+    }
+    return dateFormatted;
   };
 
   return (
@@ -97,7 +127,9 @@ const VehicleTypeManager = () => {
                 <th>Số chỗ</th>
                 <th>Hãng xe</th>
                 <th>Chủ xe</th>
-                <th>Thời hạn HĐ</th>
+                <th>Năm SX</th>
+                <th>Hạn GĐK</th>
+                <th>Hạn Hợp Đồng</th>
                 <th>Trạng thái</th>
                 <th>Hành động</th>
               </tr>
@@ -109,7 +141,9 @@ const VehicleTypeManager = () => {
                   <td>{v.seats || '-'}</td>
                   <td>{v.brand || '-'}</td>
                   <td>{v.owner || '-'}</td>
-                  <td>{v.contractStart ? new Date(v.contractStart).toLocaleDateString() : '-'} - {v.contractEnd ? new Date(v.contractEnd).toLocaleDateString() : '-'}</td>
+                  <td>{v.manufacturingYear || '-'}</td>
+                  <td>{renderDateWithWarning(v.inspectionExpiry)}</td>
+                  <td>{renderDateWithWarning(v.contractEnd)}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <label className="toggle-switch">
@@ -157,9 +191,15 @@ const VehicleTypeManager = () => {
               </div>
             </div>
             
-            <div className="form-group">
-              <label>Chủ xe</label>
-              <input type="text" className="form-control" value={owner} onChange={e => setOwner(e.target.value)} />
+            <div className="flex" style={{ gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Chủ xe</label>
+                <input type="text" className="form-control" value={owner} onChange={e => setOwner(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Năm sản xuất</label>
+                <input type="number" className="form-control" value={manufacturingYear} onChange={e => setManufacturingYear(e.target.value)} placeholder="VD: 2023" />
+              </div>
             </div>
 
             <div className="flex" style={{ gap: '1rem' }}>
@@ -170,6 +210,10 @@ const VehicleTypeManager = () => {
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Đến ngày (HĐ)</label>
                 <input type="date" className="form-control" value={contractEnd} onChange={e => setContractEnd(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Ngày hết hạn GĐK</label>
+                <input type="date" className="form-control" value={inspectionExpiry} onChange={e => setInspectionExpiry(e.target.value)} />
               </div>
             </div>
 
