@@ -24,6 +24,22 @@ router.post('/courses', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Vehicle Types CRUD
+router.get('/vehicle-types', async (req, res) => {
+  try {
+    const vehicleTypes = await prisma.vehicleType.findMany();
+    res.json(vehicleTypes);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/vehicle-types', async (req, res) => {
+  const { name, description } = req.body;
+  try {
+    const vehicleType = await prisma.vehicleType.create({ data: { name, description } });
+    res.json(vehicleType);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // Test Types CRUD
 router.get('/test-types', async (req, res) => {
   try {

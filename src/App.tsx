@@ -6,6 +6,7 @@ import StudentSearch from './pages/StudentSearch';
 import ManagerDashboard from './pages/ManagerDashboard';
 import CourseManager from './pages/CourseManager';
 import TestTypeManager from './pages/TestTypeManager';
+import CategoryManager from './pages/CategoryManager';
 import UserManager from './pages/UserManager';
 import StudentManager from './pages/StudentManager';
 import ExaminerDashboard from './pages/ExaminerDashboard';
@@ -38,6 +39,8 @@ function App() {
         <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />
         <Route path="/login" element={<div className="container mt-4"><Login /></div>} />
         <Route path="/manager" element={<ManagerDashboard />} />
+        <Route path="/manager/categories" element={<CategoryManager />} />
+        {/* Kept for backward compatibility if needed, though they aren't in sidebar anymore */}
         <Route path="/manager/courses" element={<CourseManager />} />
         <Route path="/manager/test-types" element={<TestTypeManager />} />
         <Route path="/manager/students" element={<StudentManager />} />

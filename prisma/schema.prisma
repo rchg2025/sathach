@@ -46,6 +46,14 @@ model Course {
   updatedAt   DateTime @updatedAt
 }
 
+model VehicleType {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model TestType {
   id          Int      @id @default(autoincrement())
   name        String

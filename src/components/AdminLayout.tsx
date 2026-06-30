@@ -51,11 +51,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`}>
             <LayoutDashboard size={20} /> Bảng điều khiển
           </Link>
-          <Link to="/manager/courses" className={`sidebar-item ${isActive('/manager/courses')}`}>
-            <BookOpen size={20} /> Quản lý Khóa học
-          </Link>
-          <Link to="/manager/test-types" className={`sidebar-item ${isActive('/manager/test-types')}`}>
-            <ClipboardList size={20} /> Loại Sát hạch
+          <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`}>
+            <BookOpen size={20} /> Quản lý Danh mục
           </Link>
           <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`}>
             <Users size={20} /> Quản lý Học viên

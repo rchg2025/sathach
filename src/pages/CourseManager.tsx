@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import AdminLayout from '../components/AdminLayout';
+// import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
@@ -14,7 +14,7 @@ const CourseManager = () => {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   
-  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  // const user = JSON.parse(localStorage.getItem('user') || '{}'); // No longer needed here
 
   const fetchCourses = async () => {
     try {
@@ -48,7 +48,7 @@ const CourseManager = () => {
   };
 
   return (
-    <AdminLayout user={user}>
+    <div>
       <div className="tabs">
         <div 
           className={`tab ${activeTab === 'list' ? 'active' : ''}`}
@@ -136,7 +136,7 @@ const CourseManager = () => {
           </form>
         </div>
       )}
-    </AdminLayout>
+    </div>
   );
 };
 

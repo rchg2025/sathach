@@ -1,42 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-// import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
-const TestTypeManager = () => {
+const VehicleTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
-  const [testTypes, setTestTypes] = useState([]);
+  const [vehicleTypes, setVehicleTypes] = useState([]);
   
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  
-  // const user = JSON.parse(localStorage.getItem('user') || '{}'); // No longer needed here
 
-  const fetchTestTypes = async () => {
+  const fetchVehicleTypes = async () => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/manager/test-types`);
-      setTestTypes(res.data);
+      const res = await axios.get(`${API_BASE_URL}/api/manager/vehicle-types`);
+      setVehicleTypes(res.data);
     } catch (err) {
       console.error(err);
     }
   };
 
   useEffect(() => {
-    fetchTestTypes();
+    fetchVehicleTypes();
   }, []);
 
-  const handleAddTestType = async (e: React.FormEvent) => {
+  const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/test-types`, {
+      await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, {
         name, description
       });
-      toast.success('Thêm loại sát hạch thành công!');
+      toast.success('Thêm loại xe thành công!');
       setName('');
       setDescription('');
-      fetchTestTypes();
+      fetchVehicleTypes();
       setActiveTab('list');
     } catch (err) {
       toast.error('Có lỗi xảy ra!');
@@ -50,13 +47,13 @@ const TestTypeManager = () => {
           className={`tab ${activeTab === 'list' ? 'active' : ''}`}
           onClick={() => setActiveTab('list')}
         >
-          Quản lý loại sát hạch
+          Danh sách Loại xe
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
-          Thêm loại mới
+          Thêm Loại xe mới
         </div>
       </div>
 
@@ -66,7 +63,7 @@ const TestTypeManager = () => {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="🔍 Tìm kiếm..." 
+              placeholder="🔍 Tìm kiếm loại xe..." 
               style={{ maxWidth: '300px' }}
             />
           </div>
@@ -74,20 +71,19 @@ const TestTypeManager = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Tên loại sát hạch</th>
+                <th>Tên loại xe</th>
                 <th>Mô tả</th>
-                <th>Số lượng tiêu chí</th>
+                <th>Ngày tạo</th>
                 <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
-              {testTypes.length > 0 ? testTypes.map((type: any) => (
-                <tr key={type.id}>
-                  <td><strong>{type.name}</strong></td>
-                  <td>{type.description || '-'}</td>
-                  <td><span className="badge badge-warning">{type.criteria?.length || 0}</span></td>
+              {vehicleTypes.length > 0 ? vehicleTypes.map((v: any) => (
+                <tr key={v.id}>
+                  <td><strong>{v.name}</strong></td>
+                  <td>{v.description || '-'}</td>
+                  <td>{new Date(v.createdAt).toLocaleDateString()}</td>
                   <td>
-                    <button className="action-btn btn-view">Xem/Thêm tiêu chí</button>
                     <button className="action-btn btn-edit">Sửa</button>
                     <button className="action-btn btn-delete">Xóa</button>
                   </td>
@@ -95,7 +91,7 @@ const TestTypeManager = () => {
               )) : (
                 <tr>
                   <td colSpan={4} className="text-center text-muted" style={{ padding: '2rem' }}>
-                    Chưa có dữ liệu.
+                    Chưa có loại xe nào.
                   </td>
                 </tr>
               )}
@@ -106,17 +102,17 @@ const TestTypeManager = () => {
 
       {activeTab === 'add' && (
         <div className="card" style={{ maxWidth: '600px' }}>
-          <h3 className="mb-4">Thêm loại sát hạch mới</h3>
-          <form onSubmit={handleAddTestType}>
+          <h3 className="mb-4">Thêm Loại xe mới</h3>
+          <form onSubmit={handleAdd}>
             <div className="form-group">
-              <label>Tên loại sát hạch (VD: Sa hình, Đường trường)</label>
+              <label>Tên loại xe (VD: B1, B2, C...)</label>
               <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
             </div>
             <div className="form-group">
-              <label>Mô tả chi tiết</label>
-              <textarea className="form-control" value={description} onChange={e => setDescription(e.target.value)} rows={4}></textarea>
+              <label>Mô tả</label>
+              <textarea className="form-control" value={description} onChange={e => setDescription(e.target.value)} rows={3}></textarea>
             </div>
-            <button type="submit" className="btn btn-primary mt-4">Lưu lại</button>
+            <button type="submit" className="btn btn-primary mt-4">Lưu loại xe</button>
           </form>
         </div>
       )}
@@ -124,4 +120,4 @@ const TestTypeManager = () => {
   );
 };
 
-export default TestTypeManager;
+export default VehicleTypeManager;
