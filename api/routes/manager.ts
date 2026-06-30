@@ -2,7 +2,7 @@ import { Router } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
-import { uploadFileToDrive } from '../utils/drive';
+import { uploadFileToDrive, testDriveConnection } from '../utils/drive';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -161,6 +161,20 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   } catch (error: any) {
     console.error('Upload Error:', error.message);
     res.status(500).json({ error: error.message || 'Server error during file upload' });
+  }
+});
+
+router.post('/test-drive', async (req, res) => {
+  const { clientEmail, privateKey, folderId } = req.body;
+  if (!clientEmail || !privateKey || !folderId) {
+    return res.status(400).json({ error: 'Thiếu thông tin cấu hình' });
+  }
+  
+  try {
+    await testDriveConnection(clientEmail, privateKey, folderId);
+    res.json({ success: true, message: 'Kết nối Google Drive thành công!' });
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
   }
 });
 

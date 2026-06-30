@@ -86,6 +86,26 @@ const SettingsManager = () => {
     });
   };
 
+  const handleTestDrive = async () => {
+    const { drive_client_email, drive_private_key, drive_folder_id } = settings;
+    if (!drive_client_email || !drive_private_key || !drive_folder_id) {
+      toast.error('Vui lòng điền đầy đủ thông tin Cấu hình Google Drive');
+      return;
+    }
+    
+    const testPromise = axios.post(`${API_BASE_URL}/api/manager/test-drive`, {
+      clientEmail: drive_client_email,
+      privateKey: drive_private_key,
+      folderId: drive_folder_id
+    });
+
+    toast.promise(testPromise, {
+      loading: 'Đang kiểm tra kết nối với Google Team Drive...',
+      success: (res) => res.data.message || 'Kết nối thành công!',
+      error: (err) => `Lỗi kết nối: ${err.response?.data?.error || err.message}`
+    });
+  };
+
   if (!user) return <AdminLayout user={null}><div>Đang tải...</div></AdminLayout>;
 
   return (
@@ -212,7 +232,7 @@ const SettingsManager = () => {
           </div>
           
           <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button className="btn" style={{ border: '1px solid #f39c12', color: '#f39c12', background: 'white' }} onClick={() => toast.success('Kết nối Google Drive thành công!')}>
+            <button className="btn" style={{ border: '1px solid #f39c12', color: '#f39c12', background: 'white' }} onClick={handleTestDrive}>
               ⚡ Test kết nối
             </button>
             <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('Google Drive')}>

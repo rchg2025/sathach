@@ -2,6 +2,23 @@ import { google } from 'googleapis';
 import stream from 'stream';
 import prisma from '../prisma';
 
+function formatPrivateKey(key: string) {
+  let formatted = key;
+  try {
+    if (formatted.trim().startsWith('{')) {
+      const parsed = JSON.parse(formatted);
+      if (parsed.private_key) {
+        formatted = parsed.private_key;
+      }
+    }
+  } catch(e) {}
+  formatted = formatted.replace(/\\n/g, '\n');
+  if (formatted.startsWith('"') && formatted.endsWith('"')) {
+    formatted = formatted.slice(1, -1);
+  }
+  return formatted;
+}
+
 export async function uploadFileToDrive(file: Express.Multer.File): Promise<string> {
   const settings = await prisma.setting.findMany({
     where: {
@@ -24,26 +41,7 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
     throw new Error('Google Drive configuration is missing in Settings');
   }
 
-  let formattedPrivateKey = privateKey;
-  try {
-    // If user pasted the whole JSON object
-    if (formattedPrivateKey.trim().startsWith('{')) {
-      const parsed = JSON.parse(formattedPrivateKey);
-      if (parsed.private_key) {
-        formattedPrivateKey = parsed.private_key;
-      }
-    }
-  } catch(e) {
-    // ignore
-  }
-
-  // Handle potentially escaped newlines in private key
-  formattedPrivateKey = formattedPrivateKey.replace(/\\n/g, '\n');
-  
-  // also, if it's enclosed in quotes, remove them
-  if (formattedPrivateKey.startsWith('"') && formattedPrivateKey.endsWith('"')) {
-    formattedPrivateKey = formattedPrivateKey.slice(1, -1);
-  }
+  const formattedPrivateKey = formatPrivateKey(privateKey);
 
   const auth = new google.auth.GoogleAuth({
     credentials: {
@@ -72,6 +70,7 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
     requestBody: fileMetadata,
     media: media,
     fields: 'id, webViewLink, webContentLink',
+    supportsAllDrives: true, // Required for Team Drives (Shared Drives)
   });
 
   const fileId = driveRes.data.id;
@@ -84,11 +83,41 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
       role: 'reader',
       type: 'anyone',
     },
+    supportsAllDrives: true, // Ensure permissions can be updated on Team Drives
   });
 
-  // Google Drive preview links: replace webViewLink with a direct image link if possible,
-  // or just return the webViewLink
-  const webViewLink = driveRes.data.webViewLink || '';
-  
-  return webViewLink;
+  return driveRes.data.webViewLink || driveRes.data.webContentLink || '';
+}
+
+export async function testDriveConnection(clientEmail: string, privateKey: string, folderId: string): Promise<boolean> {
+  const formattedPrivateKey = formatPrivateKey(privateKey);
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: clientEmail,
+      private_key: formattedPrivateKey,
+    },
+    // Adding drive.readonly to check folder existence
+    scopes: ['https://www.googleapis.com/auth/drive.file', 'https://www.googleapis.com/auth/drive.readonly'],
+  });
+
+  const drive = google.drive({ version: 'v3', auth });
+
+  try {
+    // Attempt to get the folder metadata
+    const response = await drive.files.get({
+      fileId: folderId,
+      fields: 'id, name, mimeType',
+      supportsAllDrives: true,
+    });
+    
+    // Check if it's actually a folder
+    if (response.data.mimeType !== 'application/vnd.google-apps.folder') {
+      throw new Error('The specified ID is not a folder.');
+    }
+    
+    return true;
+  } catch (error: any) {
+    throw new Error(error.message || 'Lỗi kết nối tới Google Drive API');
+  }
 }
