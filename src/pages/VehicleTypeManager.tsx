@@ -330,6 +330,7 @@ const VehicleTypeManager = () => {
               <tr>
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Tên / Biển số</th>
+                <th>Mô tả</th>
                 <th>Số chỗ</th>
                 <th>Hãng xe</th>
                 <th>Chủ xe</th>
@@ -345,6 +346,7 @@ const VehicleTypeManager = () => {
                 <tr key={v.id}>
                   <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{v.name}</strong></td>
+                  <td>{v.description || '-'}</td>
                   <td>{v.seats || '-'}</td>
                   <td>{v.brand || '-'}</td>
                   <td>{v.owner || '-'}</td>
