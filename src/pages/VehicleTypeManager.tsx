@@ -10,6 +10,11 @@ const VehicleTypeManager = () => {
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [seats, setSeats] = useState('');
+  const [brand, setBrand] = useState('');
+  const [owner, setOwner] = useState('');
+  const [contractStart, setContractStart] = useState('');
+  const [contractEnd, setContractEnd] = useState('');
 
   const fetchVehicleTypes = async () => {
     try {
@@ -28,11 +33,16 @@ const VehicleTypeManager = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, {
-        name, description
+        name, description, seats, brand, owner, contractStart, contractEnd
       });
-      toast.success('Thêm loại xe thành công!');
+      toast.success('Thêm xe thành công!');
       setName('');
       setDescription('');
+      setSeats('');
+      setBrand('');
+      setOwner('');
+      setContractStart('');
+      setContractEnd('');
       fetchVehicleTypes();
       setActiveTab('list');
     } catch (err) {
@@ -47,13 +57,13 @@ const VehicleTypeManager = () => {
           className={`tab ${activeTab === 'list' ? 'active' : ''}`}
           onClick={() => setActiveTab('list')}
         >
-          Danh sách Loại xe
+          Danh sách Xe
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
           onClick={() => setActiveTab('add')}
         >
-          Thêm Loại xe mới
+          Thêm Xe mới
         </div>
       </div>
 
@@ -71,9 +81,11 @@ const VehicleTypeManager = () => {
           <table className="table">
             <thead>
               <tr>
-                <th>Tên loại xe</th>
-                <th>Mô tả</th>
-                <th>Ngày tạo</th>
+                <th>Tên / Biển số</th>
+                <th>Số chỗ</th>
+                <th>Hãng xe</th>
+                <th>Chủ xe</th>
+                <th>Thời hạn HĐ</th>
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -81,8 +93,10 @@ const VehicleTypeManager = () => {
               {vehicleTypes.length > 0 ? vehicleTypes.map((v: any) => (
                 <tr key={v.id}>
                   <td><strong>{v.name}</strong></td>
-                  <td>{v.description || '-'}</td>
-                  <td>{new Date(v.createdAt).toLocaleDateString()}</td>
+                  <td>{v.seats || '-'}</td>
+                  <td>{v.brand || '-'}</td>
+                  <td>{v.owner || '-'}</td>
+                  <td>{v.contractStart ? new Date(v.contractStart).toLocaleDateString() : '-'} - {v.contractEnd ? new Date(v.contractEnd).toLocaleDateString() : '-'}</td>
                   <td>
                     <button className="action-btn btn-edit">Sửa</button>
                     <button className="action-btn btn-delete">Xóa</button>
@@ -102,17 +116,44 @@ const VehicleTypeManager = () => {
 
       {activeTab === 'add' && (
         <div className="card" style={{ maxWidth: '600px' }}>
-          <h3 className="mb-4">Thêm Loại xe mới</h3>
+          <h3 className="mb-4">Thêm Xe mới</h3>
           <form onSubmit={handleAdd}>
-            <div className="form-group">
-              <label>Tên loại xe (VD: B1, B2, C...)</label>
-              <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
+            <div className="flex" style={{ gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Tên / Biển số xe</label>
+                <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Hãng xe</label>
+                <input type="text" className="form-control" value={brand} onChange={e => setBrand(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Số chỗ</label>
+                <input type="number" className="form-control" value={seats} onChange={e => setSeats(e.target.value)} />
+              </div>
             </div>
+            
             <div className="form-group">
-              <label>Mô tả</label>
+              <label>Chủ xe</label>
+              <input type="text" className="form-control" value={owner} onChange={e => setOwner(e.target.value)} />
+            </div>
+
+            <div className="flex" style={{ gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Từ ngày (HĐ)</label>
+                <input type="date" className="form-control" value={contractStart} onChange={e => setContractStart(e.target.value)} />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Đến ngày (HĐ)</label>
+                <input type="date" className="form-control" value={contractEnd} onChange={e => setContractEnd(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Ghi chú / Mô tả</label>
               <textarea className="form-control" value={description} onChange={e => setDescription(e.target.value)} rows={3}></textarea>
             </div>
-            <button type="submit" className="btn btn-primary mt-4">Lưu loại xe</button>
+            <button type="submit" className="btn btn-primary mt-4">Lưu thông tin xe</button>
           </form>
         </div>
       )}

@@ -33,9 +33,16 @@ router.get('/vehicle-types', async (req, res) => {
 });
 
 router.post('/vehicle-types', async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, seats, brand, owner, contractStart, contractEnd } = req.body;
   try {
-    const vehicleType = await prisma.vehicleType.create({ data: { name, description } });
+    const data: any = { name, description };
+    if (seats) data.seats = Number(seats);
+    if (brand) data.brand = brand;
+    if (owner) data.owner = owner;
+    if (contractStart) data.contractStart = new Date(contractStart);
+    if (contractEnd) data.contractEnd = new Date(contractEnd);
+    
+    const vehicleType = await prisma.vehicleType.create({ data });
     res.json(vehicleType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });

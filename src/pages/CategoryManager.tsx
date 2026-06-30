@@ -22,7 +22,7 @@ const CategoryManager = () => {
           className={`tab ${activeCategory === 'vehicles' ? 'active' : ''}`}
           onClick={() => setActiveCategory('vehicles')}
         >
-          Loại xe
+          Quản lý Xe
         </div>
         <div 
           className={`tab ${activeCategory === 'tests' ? 'active' : ''}`}
