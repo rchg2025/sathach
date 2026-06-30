@@ -36,10 +36,12 @@ const PublicHeader = () => {
   return (
     <div className="app-header">
       <div className="container">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain', background: 'white', padding: '2px', borderRadius: '5px' }} />}
-          <h1 style={{ margin: 0 }}>Hệ Thống Chấm Thi Thực Hành</h1>
-        </div>
+        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain', background: 'white', padding: '2px', borderRadius: '5px' }} />}
+            <h1 style={{ margin: 0 }}>Hệ Thống Chấm Thi Thực Hành</h1>
+          </div>
+        </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
             <Search size={18} /> Tra cứu Điểm

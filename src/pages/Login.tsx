@@ -129,7 +129,7 @@ const Login = () => {
       alignItems: 'center', 
       justifyContent: 'center', 
       padding: '2rem 1rem',
-      backgroundImage: `url('https://drive.google.com/uc?export=view&id=1cBozJO0fofk1lclCQTOcJ1wTykCHDqtn')`,
+      backgroundImage: `url('/login-bg.jpg')`,
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundRepeat: 'no-repeat',
