@@ -90,7 +90,7 @@ router.delete('/vehicle-types/:id', async (req, res) => {
 // Test Types CRUD
 router.get('/test-types', async (req, res) => {
   try {
-    const testTypes = await prisma.testType.findMany({ include: { criteria: true } });
+    const testTypes = await prisma.testType.findMany({ orderBy: { id: 'desc' } });
     res.json(testTypes);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -109,7 +109,7 @@ router.post('/test-types', async (req, res) => {
 // Criteria CRUD
 router.get('/criteria', async (req, res) => {
   try {
-    const criteria = await prisma.criterion.findMany({ include: { exam: { include: { testType: true } } } });
+    const criteria = await prisma.criterion.findMany({ include: { exam: { include: { testType: true } } }, orderBy: { id: 'desc' } });
     res.json(criteria);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -144,7 +144,7 @@ router.delete('/criteria/:id', async (req, res) => {
 // Exams CRUD
 router.get('/exams', async (req, res) => {
   try {
-    const exams = await prisma.exam.findMany({ include: { testType: true, criteria: true } });
+    const exams = await prisma.exam.findMany({ include: { testType: true, criteria: true }, orderBy: { id: 'desc' } });
     res.json(exams);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
