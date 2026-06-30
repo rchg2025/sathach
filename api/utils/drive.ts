@@ -86,7 +86,8 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
     supportsAllDrives: true, // Ensure permissions can be updated on Team Drives
   });
 
-  return driveRes.data.webViewLink || driveRes.data.webContentLink || '';
+  // Return a direct image link format so it can be embedded in <img> tags
+  return `https://drive.google.com/uc?export=view&id=${fileId}`;
 }
 
 export async function testDriveConnection(clientEmail: string, privateKey: string, folderId: string): Promise<boolean> {
