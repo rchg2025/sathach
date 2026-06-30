@@ -16,8 +16,12 @@ const Login = () => {
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       
-      // Tạm thời cho tất cả các quyền vào trang quản lý
-      navigate('/manager');
+      // Điều hướng theo quyền
+      if (res.data.user.role === 'EXAMINER') {
+        navigate('/examiner');
+      } else {
+        navigate('/manager');
+      }
     } catch (err: any) {
       if (err.response && err.response.data && err.response.data.error) {
         const errMsg = err.response.data.error;
