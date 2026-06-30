@@ -182,6 +182,7 @@ const StudentManager = () => {
   const availableCourses = Array.from(uniqueCoursesMap.values());
 
   const uniqueLicenseMap = new Map();
+  uniqueLicenseMap.set('A1', 'A1'); // Ensure A1 is always available
   students.forEach((s: any) => {
     if (s.licenseClass) uniqueLicenseMap.set(s.licenseClass, s.licenseClass);
   });
@@ -439,19 +440,31 @@ const StudentManager = () => {
           <h3 className="mb-4">{editingId ? 'Cập nhật Học viên' : 'Thêm Học viên mới'}</h3>
           <form onSubmit={handleAddStudent}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+              {/* 1. Họ tên */}
               <div className="form-group">
                 <label>Họ tên (*)</label>
                 <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
               </div>
+              
+              {/* 2. Ngày sinh */}
+              <div className="form-group">
+                <label>Ngày sinh (VD: 12/01/2002)</label>
+                <input type="text" className="form-control" value={dob} onChange={e => setDob(e.target.value)} />
+              </div>
+
+              {/* 3. CCCD */}
               <div className="form-group">
                 <label>CCCD (*)</label>
                 <input type="text" className="form-control" value={cccd} onChange={e => setCccd(e.target.value)} required />
               </div>
               
+              {/* 4. Địa chỉ */}
               <div className="form-group">
-                <label>Mã Đăng ký</label>
-                <input type="text" className="form-control" value={registrationCode} onChange={e => setRegistrationCode(e.target.value)} />
+                <label>Địa chỉ</label>
+                <input type="text" className="form-control" value={address} onChange={e => setAddress(e.target.value)} />
               </div>
+
+              {/* 5. Khóa đào tạo */}
               <div className="form-group">
                 <label>Khóa đào tạo</label>
                 <CreatableSelect
@@ -463,11 +476,20 @@ const StudentManager = () => {
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
                 />
               </div>
-              
+
+              {/* 6. Mã Đăng ký */}
               <div className="form-group">
-                <label>Ngày sinh (VD: 12/01/2002)</label>
-                <input type="text" className="form-control" value={dob} onChange={e => setDob(e.target.value)} />
+                <label>Mã Đăng ký</label>
+                <input type="text" className="form-control" value={registrationCode} onChange={e => setRegistrationCode(e.target.value)} />
               </div>
+              
+              {/* 7. Số GPLX hiện tại */}
+              <div className="form-group">
+                <label>Số GPLX hiện tại</label>
+                <input type="text" className="form-control" value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} />
+              </div>
+
+              {/* 8. Hạng GPLX */}
               <div className="form-group">
                 <label>Hạng GPLX</label>
                 <CreatableSelect
@@ -480,32 +502,28 @@ const StudentManager = () => {
                 />
               </div>
 
-              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                <label>Địa chỉ</label>
-                <input type="text" className="form-control" value={address} onChange={e => setAddress(e.target.value)} />
-              </div>
-
-              <div className="form-group">
-                <label>Số GPLX hiện tại</label>
-                <input type="text" className="form-control" value={licenseNumber} onChange={e => setLicenseNumber(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label>Thời gian GPLX</label>
-                <input type="text" className="form-control" value={licenseDuration} onChange={e => setLicenseDuration(e.target.value)} />
-              </div>
-
+              {/* 9. Ngày cấp */}
               <div className="form-group">
                 <label>Ngày cấp</label>
                 <input type="text" className="form-control" value={licenseIssueDate} onChange={e => setLicenseIssueDate(e.target.value)} />
               </div>
+
+              {/* 10. Ngày hết hạn */}
               <div className="form-group">
                 <label>Ngày hết hạn</label>
                 <input type="text" className="form-control" value={licenseExpiryDate} onChange={e => setLicenseExpiryDate(e.target.value)} />
               </div>
               
+              {/* 11. Ngày trúng tuyển */}
               <div className="form-group">
                 <label>Ngày trúng tuyển</label>
                 <input type="text" className="form-control" value={passDate} onChange={e => setPassDate(e.target.value)} />
+              </div>
+              
+              {/* 12. Thời gian GPLX */}
+              <div className="form-group">
+                <label>Thời gian GPLX</label>
+                <input type="text" className="form-control" value={licenseDuration} onChange={e => setLicenseDuration(e.target.value)} />
               </div>
             </div>
             <button type="submit" className="btn btn-primary mt-4">Lưu Học viên</button>
