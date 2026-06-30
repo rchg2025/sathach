@@ -13,6 +13,8 @@ const TestTypeManager = () => {
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [maxScore, setMaxScore] = useState(100);
+  const [passingScore, setPassingScore] = useState(80);
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -37,7 +39,7 @@ const TestTypeManager = () => {
   const handleAddTestType = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const payload = { name, description };
+      const payload = { name, description, maxScore, passingScore };
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/test-types/${editingId}`, payload);
         toast.success('Cập nhật thành công!');
@@ -56,6 +58,8 @@ const TestTypeManager = () => {
   const resetForm = () => {
     setName('');
     setDescription('');
+    setMaxScore(100);
+    setPassingScore(80);
     setEditingId(null);
   };
 
@@ -63,6 +67,8 @@ const TestTypeManager = () => {
     setEditingId(testType.id);
     setName(testType.name);
     setDescription(testType.description || '');
+    setMaxScore(testType.maxScore || 100);
+    setPassingScore(testType.passingScore || 80);
     setActiveTab('add');
   };
 
@@ -87,7 +93,8 @@ const TestTypeManager = () => {
       'STT': index + 1,
       'Tên loại sát hạch': t.name,
       'Mô tả': t.description || '',
-      'Số lượng tiêu chí': t.criteria?.length || 0,
+      'Điểm tối đa': t.maxScore || 100,
+      'Điểm đạt': t.passingScore || 80,
       'Ngày tạo': new Date(t.createdAt).toLocaleDateString('vi-VN')
     }));
     
@@ -136,6 +143,8 @@ const TestTypeManager = () => {
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Tên Trạm thi</th>
                 <th>Mô tả</th>
+                <th>Điểm tối đa</th>
+                <th>Điểm đạt</th>
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -145,6 +154,8 @@ const TestTypeManager = () => {
                   <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{type.name}</strong></td>
                   <td>{type.description || '-'}</td>
+                  <td><span className="badge badge-info">{type.maxScore || 100}</span></td>
+                  <td><span className="badge badge-success">{type.passingScore || 80}</span></td>
                   <td>
                     <button className="action-btn btn-edit" onClick={() => handleEdit(type)}>Sửa</button>
                     <button className="action-btn btn-delete" onClick={() => handleDelete(type.id)}>Xóa</button>
@@ -152,7 +163,7 @@ const TestTypeManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu.
                   </td>
                 </tr>
@@ -207,7 +218,17 @@ const TestTypeManager = () => {
               <label>Mô tả chi tiết</label>
               <textarea className="form-control" value={description} onChange={e => setDescription(e.target.value)} rows={4}></textarea>
             </div>
-            <button type="submit" className="btn btn-primary mt-4">Lưu lại</button>
+            <div className="flex" style={{ gap: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Điểm tối đa</label>
+                <input type="number" className="form-control" value={maxScore} onChange={e => setMaxScore(Number(e.target.value))} required min={1} />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Điểm đạt</label>
+                <input type="number" className="form-control" value={passingScore} onChange={e => setPassingScore(Number(e.target.value))} required min={1} />
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary mt-4">Lưu Trạm thi</button>
           </form>
         </div>
       )}

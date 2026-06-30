@@ -67,6 +67,8 @@ model TestType {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
+  maxScore    Int      @default(100)
+  passingScore Int     @default(80)
   exams       Exam[]
   assignments TestAssignment[]
   testResults TestResult[]

@@ -96,9 +96,12 @@ router.get('/test-types', async (req, res) => {
 });
 
 router.post('/test-types', async (req, res) => {
-  const { name, description } = req.body;
+  const { name, description, maxScore, passingScore } = req.body;
   try {
-    const testType = await prisma.testType.create({ data: { name, description } });
+    const data: any = { name, description };
+    if (maxScore !== undefined) data.maxScore = Number(maxScore);
+    if (passingScore !== undefined) data.passingScore = Number(passingScore);
+    const testType = await prisma.testType.create({ data });
     res.json(testType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -262,11 +265,14 @@ router.delete('/users/:id', async (req, res) => {
 
 router.put('/test-types/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, description } = req.body;
+  const { name, description, maxScore, passingScore } = req.body;
   try {
+    const data: any = { name, description };
+    if (maxScore !== undefined) data.maxScore = Number(maxScore);
+    if (passingScore !== undefined) data.passingScore = Number(passingScore);
     const testType = await prisma.testType.update({
       where: { id: Number(id) },
-      data: { name, description }
+      data
     });
     res.json(testType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
