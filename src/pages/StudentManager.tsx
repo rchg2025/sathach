@@ -186,7 +186,10 @@ const StudentManager = () => {
   const uniqueLicenseMap = new Map();
   uniqueLicenseMap.set('A1', 'A1'); // Ensure A1 is always available
   students.forEach((s: any) => {
-    if (s.licenseClass) uniqueLicenseMap.set(s.licenseClass, s.licenseClass);
+    const cls = s.licenseClass?.trim();
+    if (cls && cls !== 'A2' && cls !== 'A.01') {
+      uniqueLicenseMap.set(cls, cls);
+    }
   });
   const availableLicenseClasses = Array.from(uniqueLicenseMap.values());
 
