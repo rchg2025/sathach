@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 // import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
@@ -11,6 +12,11 @@ const TestTypeManager = () => {
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  
+  // Pagination & Search
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // const user = JSON.parse(localStorage.getItem('user') || '{}'); // No longer needed here
 
@@ -43,6 +49,25 @@ const TestTypeManager = () => {
     }
   };
 
+  const filteredTestTypes = testTypes.filter((t: any) => t.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const totalPages = Math.ceil(filteredTestTypes.length / itemsPerPage);
+  const displayedTestTypes = filteredTestTypes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const exportToExcel = () => {
+    const dataToExport = filteredTestTypes.map((t: any, index: number) => ({
+      'STT': index + 1,
+      'Tên loại sát hạch': t.name,
+      'Mô tả': t.description || '',
+      'Số lượng tiêu chí': t.criteria?.length || 0,
+      'Ngày tạo': new Date(t.createdAt).toLocaleDateString('vi-VN')
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'LoaiSatHach');
+    XLSX.writeFile(workbook, 'danh-sach-loai-sat-hach.xlsx');
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -67,13 +92,19 @@ const TestTypeManager = () => {
               type="text" 
               className="form-control" 
               placeholder="🔍 Tìm kiếm..." 
+              value={searchKeyword}
+              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
               style={{ maxWidth: '300px' }}
             />
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📥 Xuất Excel</span>
+            </button>
           </div>
           
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '60px' }}>STT</th>
                 <th>Tên loại sát hạch</th>
                 <th>Mô tả</th>
                 <th>Số lượng tiêu chí</th>
@@ -81,8 +112,9 @@ const TestTypeManager = () => {
               </tr>
             </thead>
             <tbody>
-              {testTypes.length > 0 ? testTypes.map((type: any) => (
+              {displayedTestTypes.length > 0 ? displayedTestTypes.map((type: any, idx: number) => (
                 <tr key={type.id}>
+                  <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{type.name}</strong></td>
                   <td>{type.description || '-'}</td>
                   <td><span className="badge badge-warning">{type.criteria?.length || 0}</span></td>
@@ -94,13 +126,46 @@ const TestTypeManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={5} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-muted">
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredTestTypes.length)} trong tổng số {filteredTestTypes.length}
+              </span>
+              <div className="pagination flex" style={{ gap: '0.5rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === 1} 
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                >
+                  Trước
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page} 
+                    className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === totalPages} 
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

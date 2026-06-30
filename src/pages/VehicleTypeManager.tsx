@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
@@ -17,6 +18,11 @@ const VehicleTypeManager = () => {
   const [contractEnd, setContractEnd] = useState('');
   const [manufacturingYear, setManufacturingYear] = useState('');
   const [inspectionExpiry, setInspectionExpiry] = useState('');
+
+  // Pagination & Search
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const fetchVehicleTypes = async () => {
     try {
@@ -92,6 +98,31 @@ const VehicleTypeManager = () => {
     return dateFormatted;
   };
 
+  const filteredVehicles = vehicleTypes.filter((v: any) => v.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
+  const displayedVehicles = filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const exportToExcel = () => {
+    const dataToExport = filteredVehicles.map((v: any, index: number) => ({
+      'STT': index + 1,
+      'Tên / Biển số': v.name,
+      'Số chỗ': v.seats || '',
+      'Hãng xe': v.brand || '',
+      'Chủ xe': v.owner || '',
+      'Năm SX': v.manufacturingYear || '',
+      'Hạn GĐK': v.inspectionExpiry ? new Date(v.inspectionExpiry).toLocaleDateString('vi-VN') : '',
+      'Hạn HĐ (Từ)': v.contractStart ? new Date(v.contractStart).toLocaleDateString('vi-VN') : '',
+      'Hạn HĐ (Đến)': v.contractEnd ? new Date(v.contractEnd).toLocaleDateString('vi-VN') : '',
+      'Trạng thái': v.isActive ? 'Hoạt động' : 'Tạm ngưng',
+      'Ghi chú': v.description || ''
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'QuanLyXe');
+    XLSX.writeFile(workbook, 'danh-sach-xe.xlsx');
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -115,14 +146,20 @@ const VehicleTypeManager = () => {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="🔍 Tìm kiếm loại xe..." 
+              placeholder="🔍 Tìm kiếm xe..." 
+              value={searchKeyword}
+              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
               style={{ maxWidth: '300px' }}
             />
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📥 Xuất Excel</span>
+            </button>
           </div>
           
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '60px' }}>STT</th>
                 <th>Tên / Biển số</th>
                 <th>Số chỗ</th>
                 <th>Hãng xe</th>
@@ -135,8 +172,9 @@ const VehicleTypeManager = () => {
               </tr>
             </thead>
             <tbody>
-              {vehicleTypes.length > 0 ? vehicleTypes.map((v: any) => (
+              {displayedVehicles.length > 0 ? displayedVehicles.map((v: any, idx: number) => (
                 <tr key={v.id}>
+                  <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{v.name}</strong></td>
                   <td>{v.seats || '-'}</td>
                   <td>{v.brand || '-'}</td>
@@ -162,13 +200,46 @@ const VehicleTypeManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={4} className="text-center text-muted" style={{ padding: '2rem' }}>
-                    Chưa có loại xe nào.
+                  <td colSpan={10} className="text-center text-muted" style={{ padding: '2rem' }}>
+                    Chưa có xe nào.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-muted">
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredVehicles.length)} trong tổng số {filteredVehicles.length}
+              </span>
+              <div className="pagination flex" style={{ gap: '0.5rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === 1} 
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                >
+                  Trước
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page} 
+                    className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === totalPages} 
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

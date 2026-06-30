@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 // import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
@@ -13,6 +14,11 @@ const CourseManager = () => {
   const [description, setDescription] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  
+  // Pagination & Search
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // const user = JSON.parse(localStorage.getItem('user') || '{}'); // No longer needed here
 
@@ -59,6 +65,27 @@ const CourseManager = () => {
     }
   };
 
+  const filteredCourses = courses.filter((c: any) => c.name.toLowerCase().includes(searchKeyword.toLowerCase()));
+  const totalPages = Math.ceil(filteredCourses.length / itemsPerPage);
+  const displayedCourses = filteredCourses.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const exportToExcel = () => {
+    const dataToExport = filteredCourses.map((c: any, index: number) => ({
+      'STT': index + 1,
+      'Tên khóa học': c.name,
+      'Mô tả': c.description || '',
+      'Ngày bắt đầu': new Date(c.startDate).toLocaleDateString('vi-VN'),
+      'Ngày kết thúc': new Date(c.endDate).toLocaleDateString('vi-VN'),
+      'Trạng thái': c.isCompleted ? 'Hoàn thành' : 'Chưa hoàn thành',
+      'Ngày tạo': new Date(c.createdAt).toLocaleDateString('vi-VN')
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'KhoaHoc');
+    XLSX.writeFile(workbook, 'danh-sach-khoa-hoc.xlsx');
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -83,13 +110,19 @@ const CourseManager = () => {
               type="text" 
               className="form-control" 
               placeholder="🔍 Tìm kiếm tên khóa học..." 
+              value={searchKeyword}
+              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
               style={{ maxWidth: '300px' }}
             />
+            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span>📥 Xuất Excel</span>
+            </button>
           </div>
           
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '60px' }}>STT</th>
                 <th>Tên khóa học</th>
                 <th>Mô tả</th>
                 <th>Ngày bắt đầu</th>
@@ -99,8 +132,9 @@ const CourseManager = () => {
               </tr>
             </thead>
             <tbody>
-              {courses.length > 0 ? courses.map((course: any) => (
+              {displayedCourses.length > 0 ? displayedCourses.map((course: any, idx: number) => (
                 <tr key={course.id}>
+                  <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{course.name}</strong></td>
                   <td>{course.description || '-'}</td>
                   <td>{new Date(course.startDate).toLocaleDateString()}</td>
@@ -124,13 +158,46 @@ const CourseManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={7} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có khóa học nào.
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
+
+          {totalPages > 1 && (
+            <div className="flex justify-between items-center mt-4">
+              <span className="text-muted">
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredCourses.length)} trong tổng số {filteredCourses.length}
+              </span>
+              <div className="pagination flex" style={{ gap: '0.5rem' }}>
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === 1} 
+                  onClick={() => setCurrentPage(prev => prev - 1)}
+                >
+                  Trước
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page} 
+                    className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setCurrentPage(page)}
+                  >
+                    {page}
+                  </button>
+                ))}
+                <button 
+                  className="btn btn-outline" 
+                  disabled={currentPage === totalPages} 
+                  onClick={() => setCurrentPage(prev => prev + 1)}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
