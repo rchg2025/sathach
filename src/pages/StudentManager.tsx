@@ -535,7 +535,8 @@ const StudentManager = () => {
           </div>
           
           <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ minWidth: '1000px' }}>
+            <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ minWidth: '1000px' }}>
               <thead>
                 <tr>
                   <th style={{ width: '40px', textAlign: 'center' }}>
@@ -589,6 +590,7 @@ const StudentManager = () => {
                 )}
               </tbody>
             </table>
+</div>
           </div>
 
           {totalPages > 1 && (
@@ -737,7 +739,8 @@ const StudentManager = () => {
               <h3 style={{ margin: 0 }}>Chi tiết Học viên</h3>
               <button className="btn btn-outline" style={{ padding: '4px 8px' }} onClick={() => setViewStudent(null)}>Đóng</button>
             </div>
-            <table className="table" style={{ width: '100%' }}>
+            <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ width: '100%' }}>
               <tbody>
                 <tr><td width="30%"><strong>Họ tên:</strong></td><td>{viewStudent.name}</td></tr>
                 <tr><td><strong>Ngày sinh:</strong></td><td>{formatDate(viewStudent.dob)}</td></tr>
@@ -753,6 +756,7 @@ const StudentManager = () => {
                 <tr><td><strong>Thời gian GPLX:</strong></td><td>{viewStudent.licenseDuration || '-'}</td></tr>
               </tbody>
             </table>
+</div>
             <div className="mt-4" style={{ textAlign: 'right' }}>
               <button className="btn btn-primary" onClick={() => {
                 const s = viewStudent;

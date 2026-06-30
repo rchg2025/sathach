@@ -148,7 +148,8 @@ const ManagerDashboard = () => {
             <h4 style={{ margin: 0 }}>Học viên thi gần đây</h4>
             <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
           </div>
-          <table className="table" style={{ fontSize: '0.875rem' }}>
+          <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ fontSize: '0.875rem' }}>
             <thead>
               <tr>
                 <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Tên Học Viên</th>
@@ -165,6 +166,7 @@ const ManagerDashboard = () => {
               </tr>
             </tbody>
           </table>
+</div>
         </div>
 
         <div className="card" style={{ marginBottom: 0 }}>
@@ -172,7 +174,8 @@ const ManagerDashboard = () => {
             <h4 style={{ margin: 0 }}>Giám khảo hoạt động nhiều nhất</h4>
             <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
           </div>
-          <table className="table" style={{ fontSize: '0.875rem' }}>
+          <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ fontSize: '0.875rem' }}>
             <thead>
               <tr>
                 <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Họ và tên</th>
@@ -198,6 +201,7 @@ const ManagerDashboard = () => {
               </tr>
             </tbody>
           </table>
+</div>
         </div>
       </div>
     </AdminLayout>

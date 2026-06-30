@@ -277,7 +277,8 @@ const StationTesting = () => {
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
-            <table className="table" style={{ margin: 0 }}>
+            <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
                   <th>STT</th>
@@ -350,6 +351,7 @@ const StationTesting = () => {
                 )}
               </tbody>
             </table>
+</div>
           </div>
           
           {totalPages > 1 && (

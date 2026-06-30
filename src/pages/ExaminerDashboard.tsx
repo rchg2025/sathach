@@ -118,7 +118,8 @@ const ExaminerDashboard = () => {
             </select>
           </div>
           
-          <table className="table mt-4" style={{ fontSize: '0.9rem' }}>
+          <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table mt-4" style={{ fontSize: '0.9rem' }}>
             <thead>
               <tr>
                 <th>CCCD</th>
@@ -150,6 +151,7 @@ const ExaminerDashboard = () => {
               })}
             </tbody>
           </table>
+</div>
         </div>
       ) : (
         <div className="card mt-4" style={{ border: '2px solid var(--primary)' }}>

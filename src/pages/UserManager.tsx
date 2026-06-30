@@ -285,7 +285,8 @@ const UserManager = () => {
             </div>
 
             <div style={{ overflowX: 'auto' }}>
-              <table className="table" style={{ minWidth: '800px', margin: 0 }}>
+              <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table" style={{ minWidth: '800px', margin: 0 }}>
                 <thead>
                   <tr>
                     <th>Họ và Tên</th>
@@ -337,6 +338,7 @@ const UserManager = () => {
                   )}
                 </tbody>
               </table>
+</div>
             </div>
 
             {/* Pagination Controls */}

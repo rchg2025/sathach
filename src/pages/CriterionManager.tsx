@@ -196,7 +196,8 @@ const CriterionManager = () => {
             </button>
           </div>
           
-          <table className="table">
+          <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+<table className="table">
             <thead>
               <tr>
                 <th style={{ width: '60px' }}>STT</th>
@@ -233,6 +234,7 @@ const CriterionManager = () => {
               )}
             </tbody>
           </table>
+</div>
 
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-4">
