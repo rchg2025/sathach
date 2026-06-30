@@ -8,6 +8,7 @@ import CreatableSelect from 'react-select/creatable';
 import { removeAccents } from '../utils/stringUtils';
 import AdminLayout from '../components/AdminLayout';
 import { Eye, Edit, Trash2 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -108,6 +109,7 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: 
 };
 
 const StudentManager = () => {
+  const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [students, setStudents] = useState([]);
@@ -160,6 +162,14 @@ const StudentManager = () => {
     fetchStudents();
     fetchDbCourses();
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const course = params.get('course');
+    if (course) {
+      setCourseFilter(course);
+    }
+  }, [location.search]);
 
   useEffect(() => {
     if (licenseIssueDate && licenseExpiryDate) {

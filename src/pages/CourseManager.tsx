@@ -5,10 +5,12 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, Users } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const CourseManager = () => {
-  const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<'list' | 'add' | 'completed'>('list');
   const [courses, setCourses] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   
@@ -135,6 +137,12 @@ const CourseManager = () => {
           Quản lý khóa học
         </div>
         <div 
+          className={`tab ${activeTab === 'completed' ? 'active' : ''}`}
+          onClick={() => setActiveTab('completed')}
+        >
+          Khóa học đã hoàn thành
+        </div>
+        <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
           onClick={() => { resetForm(); setActiveTab('add'); }}
         >
@@ -244,6 +252,43 @@ const CourseManager = () => {
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'completed' && (
+        <div className="card">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{ width: '60px' }}>STT</th>
+                <th>Tên khóa học</th>
+                <th>Mô tả</th>
+                <th>Ngày bắt đầu</th>
+                <th>Ngày kết thúc</th>
+                <th>Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              {courses.filter((c: any) => c.isCompleted).length > 0 ? courses.filter((c: any) => c.isCompleted).map((course: any, idx: number) => (
+                <tr key={course.id}>
+                  <td>{idx + 1}</td>
+                  <td><strong>{course.name}</strong></td>
+                  <td>{course.description || '-'}</td>
+                  <td>{new Date(course.startDate).toLocaleDateString()}</td>
+                  <td>{new Date(course.endDate).toLocaleDateString()}</td>
+                  <td>
+                    <button className="action-btn btn-view" title="Xem danh sách học viên" onClick={() => navigate('/manager/students?course=' + encodeURIComponent(course.name))}><Users size={16} /></button>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
+                    Chưa có khóa học nào đã hoàn thành.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       )}
 
