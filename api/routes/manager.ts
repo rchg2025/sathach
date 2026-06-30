@@ -319,7 +319,10 @@ router.put('/assignments/:id', async (req, res) => {
       data
     });
     res.json(assignment);
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+  } catch (error) { 
+    console.error('Update assignment error:', error);
+    res.status(500).json({ error: 'Server error' }); 
+  }
 });
 
 router.delete('/assignments/:id', async (req, res) => {
