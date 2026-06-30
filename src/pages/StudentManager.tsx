@@ -9,6 +9,7 @@ import { removeAccents } from '../utils/stringUtils';
 import AdminLayout from '../components/AdminLayout';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -138,6 +139,8 @@ const StudentManager = () => {
   
   const [viewStudent, setViewStudent] = useState<any>(null);
   
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchStudents = async () => {
@@ -250,15 +253,20 @@ const StudentManager = () => {
     setActiveTab('add');
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa Học viên này không? Các bài thi liên quan cũng sẽ bị xóa.')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/api/manager/students/${id}`);
-        toast.success('Xóa Học viên thành công!');
-        fetchStudents();
-      } catch (err) {
-        toast.error('Lỗi khi xóa Học viên');
-      }
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.id === null) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/students/${deleteModal.id}`);
+      toast.success('Xóa Học viên thành công!');
+      fetchStudents();
+    } catch (err) {
+      toast.error('Lỗi khi xóa Học viên');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -693,6 +701,14 @@ const StudentManager = () => {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa Học viên này không? Các bài thi liên quan cũng sẽ bị xóa."
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
     </AdminLayout>
   );
 };

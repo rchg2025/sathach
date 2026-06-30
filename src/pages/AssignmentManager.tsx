@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../config';
 import { Trash2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
+import ConfirmModal from '../components/ConfirmModal';
 
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -23,6 +24,9 @@ const AssignmentManager = () => {
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [assignmentDate, setAssignmentDate] = useState('');
+
+  // Delete modal state
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({ isOpen: false, id: null });
 
   // Filter & Pagination states
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -97,15 +101,20 @@ const AssignmentManager = () => {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa phân công này?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/api/manager/assignments/${id}`);
-        toast.success('Đã xóa phân công!');
-        fetchData();
-      } catch (err) {
-        toast.error('Lỗi khi xóa phân công');
-      }
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.id === null) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/assignments/${deleteModal.id}`);
+      toast.success('Đã xóa phân công!');
+      fetchData();
+    } catch (err) {
+      toast.error('Lỗi khi xóa phân công');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -378,6 +387,14 @@ const AssignmentManager = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa phân công này không?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
     </AdminLayout>
   );
 };

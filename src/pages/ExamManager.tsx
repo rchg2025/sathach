@@ -6,12 +6,14 @@ import { API_BASE_URL } from '../config';
 import Select from 'react-select';
 import { removeAccents } from '../utils/stringUtils';
 import { Edit, Trash2 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ExamManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [exams, setExams] = useState([]);
   const [testTypes, setTestTypes] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
   
   // Form state
   const [name, setName] = useState('');
@@ -86,15 +88,20 @@ const ExamManager = () => {
     setActiveTab('add');
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa bài thi này không?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/api/manager/exams/${id}`);
-        toast.success('Xóa bài thi thành công!');
-        fetchExams();
-      } catch (err) {
-        toast.error('Lỗi khi xóa bài thi');
-      }
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.id === null) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/exams/${deleteModal.id}`);
+      toast.success('Xóa bài thi thành công!');
+      fetchExams();
+    } catch (err) {
+      toast.error('Lỗi khi xóa bài thi');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -239,6 +246,14 @@ const ExamManager = () => {
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa bài thi này không?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
 
       {activeTab === 'add' && (
         <div className="card">

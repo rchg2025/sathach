@@ -5,11 +5,13 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
 import { Edit, Trash2 } from 'lucide-react';
+import ConfirmModal from '../components/ConfirmModal';
 
 const VehicleTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [vehicleTypes, setVehicleTypes] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
   
   // Form state
   const [name, setName] = useState('');
@@ -92,15 +94,20 @@ const VehicleTypeManager = () => {
     setActiveTab('add');
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa xe này không?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/api/manager/vehicle-types/${id}`);
-        toast.success('Xóa xe thành công!');
-        fetchVehicleTypes();
-      } catch (err) {
-        toast.error('Lỗi khi xóa xe');
-      }
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.id === null) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/vehicle-types/${deleteModal.id}`);
+      toast.success('Xóa xe thành công!');
+      fetchVehicleTypes();
+    } catch (err) {
+      toast.error('Lỗi khi xóa xe');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -314,6 +321,14 @@ const VehicleTypeManager = () => {
         </div>
       )}
 
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa xe này không?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
+      
       {activeTab === 'add' && (
         <div className="card">
           <h3 className="mb-4">{editingId ? 'Cập nhật thông tin xe' : 'Thêm Xe mới'}</h3>

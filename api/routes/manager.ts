@@ -269,9 +269,23 @@ router.post('/assignments', async (req, res) => {
         ...baseData,
         examId: Number(eId)
       }));
+
+      for (const record of records) {
+        const existing = await prisma.testAssignment.findFirst({ where: record });
+        if (existing) {
+          const exam = await prisma.exam.findUnique({ where: { id: record.examId } });
+          return res.status(400).json({ error: `Bài thi "${exam?.name || 'này'}" đã được phân công cho người này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.` });
+        }
+      }
+
       await prisma.testAssignment.createMany({ data: records });
       res.json({ success: true, count: records.length });
     } else {
+      const existing = await prisma.testAssignment.findFirst({ where: baseData });
+      if (existing) {
+        return res.status(400).json({ error: 'Người này đã được phân công ở trạm này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.' });
+      }
+
       const assignment = await prisma.testAssignment.create({ data: baseData });
       res.json(assignment);
     }

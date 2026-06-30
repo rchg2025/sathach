@@ -7,12 +7,14 @@ import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
 import { Edit, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ConfirmModal from '../components/ConfirmModal';
 
 const CourseManager = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'list' | 'add' | 'completed'>('list');
   const [courses, setCourses] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
   
   // Form state
   const [name, setName] = useState('');
@@ -77,15 +79,20 @@ const CourseManager = () => {
     setActiveTab('add');
   };
 
-  const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này không?')) {
-      try {
-        await axios.delete(`${API_BASE_URL}/api/manager/courses/${id}`);
-        toast.success('Xóa khóa học thành công!');
-        fetchCourses();
-      } catch (err) {
-        toast.error('Lỗi khi xóa khóa học');
-      }
+  const handleDelete = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDelete = async () => {
+    if (deleteModal.id === null) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/courses/${deleteModal.id}`);
+      toast.success('Xóa khóa học thành công!');
+      fetchCourses();
+    } catch (err) {
+      toast.error('Lỗi khi xóa khóa học');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -260,6 +267,14 @@ const CourseManager = () => {
           )}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận xóa"
+        message="Bạn có chắc chắn muốn xóa khóa học này không?"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
 
       {activeTab === 'completed' && (
         <div className="card">
