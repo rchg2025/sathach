@@ -1,5 +1,6 @@
 
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Search, UserCircle } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import StudentSearch from './pages/StudentSearch';
@@ -23,10 +24,14 @@ const PublicHeader = () => {
   return (
     <div className="app-header">
       <div className="container">
-        <h1>Hệ Thống Sát Hạch Lái Xe</h1>
-        <nav>
-          <Link to="/" style={{ color: 'white', marginRight: '1rem' }}>Tra cứu Điểm</Link>
-          <Link to="/login" style={{ color: 'white' }}>Đăng nhập Cán bộ</Link>
+        <h1>Hệ Thống Chấm Thi Thực Hành</h1>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
+            <Search size={18} /> Tra cứu Điểm
+          </Link>
+          <Link to="/login" style={{ color: 'white', display: 'flex', alignItems: 'center' }} title="Đăng nhập Cán bộ">
+            <UserCircle size={24} />
+          </Link>
         </nav>
       </div>
     </div>

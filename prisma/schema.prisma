@@ -23,6 +23,8 @@ model User {
   assignments TestAssignment[]
   managedTests  TestResult[] @relation("StationManagerTests")
   examProgress  ExamProgress[]
+  resetOtp       String?
+  resetOtpExpiry DateTime?
 }
 
 model Student {

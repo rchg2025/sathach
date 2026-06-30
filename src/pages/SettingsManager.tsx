@@ -9,7 +9,7 @@ const SettingsManager = () => {
   const [user, setUser] = useState<any>(null);
   
   // State for tabs
-  const [activeTab, setActiveTab] = useState<'seo' | 'drive' | 'smtp'>('seo');
+  const [activeTab, setActiveTab] = useState<'seo' | 'drive' | 'smtp' | 'googleAuth'>('seo');
   
   // State for all settings
   const [settings, setSettings] = useState({
@@ -27,7 +27,9 @@ const SettingsManager = () => {
     smtp_port: '465',
     smtp_sender_name: '',
     smtp_user: '',
-    smtp_app_password: ''
+    smtp_app_password: '',
+
+    google_client_id: ''
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -139,6 +141,13 @@ const SettingsManager = () => {
             style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'smtp' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'smtp' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'smtp' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
           >
             <Mail size={18} /> SMTP Gmail
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'googleAuth' ? 'active' : ''}`}
+            onClick={() => setActiveTab('googleAuth')}
+            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'googleAuth' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'googleAuth' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'googleAuth' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Globe size={18} /> Login Google
           </button>
         </div>
         
@@ -281,6 +290,27 @@ const SettingsManager = () => {
               ✉️ Test gửi mail
             </button>
             <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('SMTP')}>
+              ✓ Lưu cấu hình
+            </button>
+          </div>
+        </div>
+        )}
+
+        {/* Khối 4: Cấu hình Google Login */}
+        {activeTab === 'googleAuth' && (
+        <div className="card">
+          <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#db4437' }} className="mb-4">
+            <Globe size={20} /> Cấu hình Đăng nhập Google
+          </h4>
+          
+          <div className="form-group">
+            <label>Google Client ID</label>
+            <input type="text" className="form-control" name="google_client_id" value={settings.google_client_id} onChange={handleChange} placeholder="VD: 123456789-abc.apps.googleusercontent.com" />
+            <small className="text-muted mt-1" style={{ display: 'block' }}>Lấy mã Client ID từ Google Cloud Console (OAuth 2.0 Client IDs)</small>
+          </div>
+          
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('Login Google')}>
               ✓ Lưu cấu hình
             </button>
           </div>
