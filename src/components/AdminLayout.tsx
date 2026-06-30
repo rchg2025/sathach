@@ -3,7 +3,6 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Users, 
-  ClipboardList, 
   BookOpen, 
   Settings, 
   LogOut,
