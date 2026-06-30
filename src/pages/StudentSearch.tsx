@@ -145,49 +145,48 @@ const StudentSearch = () => {
 
                   {result.progress && result.progress.length > 0 && (
                     <div className="mt-4">
-                      <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Chi tiết các bài thi:</h5>
-                      <div className="table-responsive">
-                        <table className="table table-bordered text-sm">
-                          <thead className="table-light">
-                            <tr>
-                              <th>Tên bài thi (Trạm)</th>
-                              <th>Giám khảo</th>
-                              <th>Trạng thái</th>
-                              <th>Điểm trừ</th>
-                              <th>Chi tiết lỗi</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {result.progress.map((prog: any) => {
-                              const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
-                              const pointsDeducted = examScores.reduce((sum: number, s: any) => sum + (s.criterion?.pointsToDeduct * s.timesDeducted), 0);
-                              return (
-                                <tr key={prog.id}>
-                                  <td><strong>{prog.exam?.name}</strong></td>
-                                  <td>{prog.examiner?.name || '-'}</td>
-                                  <td>
-                                    {prog.status === 'COMPLETED' ? <span className="text-success">Đã qua</span> : 
-                                     prog.status === 'IN_PROGRESS' ? <span className="text-warning">Đang thi</span> : 
-                                     <span className="text-muted">Chờ</span>}
-                                  </td>
-                                  <td className={pointsDeducted > 0 ? 'text-danger font-bold' : ''}>
-                                    {pointsDeducted > 0 ? `-${pointsDeducted}` : '0'}
-                                  </td>
-                                  <td>
-                                    {examScores.length > 0 ? (
-                                      <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                                        {examScores.map((s: any) => (
-                                          <li key={s.id}>{s.criterion?.name} (x{s.timesDeducted})</li>
-                                        ))}
-                                      </ul>
-                                    ) : '-'}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
+                      <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Chi tiết các bài thi:</h5>
+                      {result.progress.map((prog: any) => {
+                        const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
+                        const pointsDeducted = examScores.reduce((sum: number, s: any) => sum + (s.criterion?.pointsToDeduct * s.timesDeducted), 0);
+                        
+                        return (
+                          <div key={prog.id} style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                              <h6 style={{ margin: 0, color: 'var(--primary)', fontWeight: 'bold' }}>{prog.exam?.name}</h6>
+                              <div>
+                                {prog.status === 'COMPLETED' ? <span className="badge badge-success">Đã qua</span> : 
+                                 prog.status === 'IN_PROGRESS' ? <span className="badge badge-warning">Đang thi</span> : 
+                                 <span className="badge badge-secondary">Chờ</span>}
+                                {pointsDeducted > 0 && <span className="badge badge-danger" style={{ marginLeft: '0.5rem' }}>-{pointsDeducted} điểm</span>}
+                              </div>
+                            </div>
+                            
+                            {prog.examiner && (
+                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                Giám khảo: {prog.examiner.name}
+                              </div>
+                            )}
+
+                            {examScores.length > 0 ? (
+                              <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0 0', borderTop: '1px dashed var(--border)', paddingTop: '0.5rem' }}>
+                                {examScores.map((score: any) => (
+                                  <li key={score.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', fontSize: '0.9rem' }}>
+                                    <span>{score.criterion?.name} {score.timesDeducted > 1 ? `(x${score.timesDeducted})` : ''}</span>
+                                    <span className="text-danger">-{score.criterion?.pointsToDeduct * score.timesDeducted} điểm</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              prog.status === 'COMPLETED' ? (
+                                <div style={{ fontSize: '0.9rem', color: 'var(--success)', marginTop: '0.5rem', borderTop: '1px dashed var(--border)', paddingTop: '0.5rem' }}>
+                                  Không có lỗi
+                                </div>
+                              ) : null
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
