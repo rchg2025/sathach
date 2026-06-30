@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import prisma from '../prisma';
+import bcrypt from 'bcryptjs';
 
 const router = Router();
 
@@ -66,6 +67,30 @@ router.post('/assignments', async (req, res) => {
   try {
     const assignment = await prisma.testAssignment.create({ data: { examinerId, testTypeId, courseId } });
     res.json(assignment);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Users Management
+router.get('/users', async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: { id: true, username: true, role: true, name: true, createdAt: true }
+    });
+    res.json(users);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/users', async (req, res) => {
+  const { username, password, role, name } = req.body;
+  try {
+    const existing = await prisma.user.findUnique({ where: { username } });
+    if (existing) return res.status(400).json({ error: 'Tên đăng nhập đã tồn tại' });
+    
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await prisma.user.create({
+      data: { username, password: passwordHash, role, name }
+    });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 

@@ -5,6 +5,7 @@ import StudentSearch from './pages/StudentSearch';
 import ManagerDashboard from './pages/ManagerDashboard';
 import CourseManager from './pages/CourseManager';
 import TestTypeManager from './pages/TestTypeManager';
+import UserManager from './pages/UserManager';
 import ExaminerDashboard from './pages/ExaminerDashboard';
 import './index.css';
 
@@ -34,6 +35,7 @@ function App() {
         <Route path="/manager" element={<ManagerDashboard />} />
         <Route path="/manager/courses" element={<CourseManager />} />
         <Route path="/manager/test-types" element={<TestTypeManager />} />
+        <Route path="/manager/users" element={<UserManager />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
       </Routes>
     </BrowserRouter>
