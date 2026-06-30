@@ -121,8 +121,19 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2rem', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
+    <div style={{ 
+      minHeight: 'calc(100vh - 64px)', // Adjust for header height
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      padding: '2rem 1rem',
+      backgroundImage: `url('https://drive.google.com/uc?export=view&id=1cBozJO0fofk1lclCQTOcJ1wTykCHDqtn')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed'
+    }}>
+      <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '2rem', borderRadius: '15px', boxShadow: '0 10px 30px rgba(0,0,0,0.3)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
         
         {logoUrl && (
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>

@@ -60,7 +60,7 @@ function App() {
       <PublicHeader />
       <Routes>
         <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />
-        <Route path="/login" element={<div className="container mt-4"><Login /></div>} />
+        <Route path="/login" element={<Login />} />
         <Route path="/manager" element={<ManagerDashboard />} />
         <Route path="/manager/categories" element={<CategoryManager />} />
         {/* Kept for backward compatibility if needed, though they aren't in sidebar anymore */}
