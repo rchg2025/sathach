@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
         <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
           <Menu size={24} />
         </button>
-        <h3 style={{ margin: 0, fontSize: '1.25rem' }}>Hệ thống Quản lý</h3>
+        <h3 style={{ margin: 0, fontSize: '1.25rem', cursor: 'pointer' }} onClick={() => window.location.reload()}>Hệ thống Quản lý</h3>
       </div>
 
       {/* Sidebar Overlay */}
@@ -61,7 +61,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <X size={24} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={closeSidebar} />
             )}
           </div>
-          <button className="sidebar-toggle-btn d-none d-md-flex" onClick={toggleCollapse} style={{ position: 'absolute', right: '-15px', top: '20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: '4px', zIndex: 10 }}>
+          <button className="sidebar-toggle-btn d-none d-md-flex" onClick={toggleCollapse} style={{ position: 'absolute', right: '-15px', top: '50%', transform: 'translateY(-50%)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: '4px', zIndex: 10 }}>
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
           

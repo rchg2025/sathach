@@ -673,9 +673,12 @@ router.get('/station/students', async (req, res) => {
   const { examinerId } = req.query;
   if (!examinerId) return res.status(400).json({ error: 'Missing examinerId' });
   try {
-    const localNow = new Date();
-    const localDateStr = localNow.getFullYear() + '-' + String(localNow.getMonth() + 1).padStart(2, '0') + '-' + String(localNow.getDate()).padStart(2, '0');
-    const todayUtcMidnight = new Date(`${localDateStr}T00:00:00.000Z`);
+    const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+    const vnTime = new Date(vnTimeString);
+    const vnYear = vnTime.getFullYear();
+    const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+    const vnDate = String(vnTime.getDate()).padStart(2, '0');
+    const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
 
     const assignments = await prisma.testAssignment.findMany({
       where: { 
