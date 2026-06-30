@@ -50,6 +50,18 @@ const VehicleTypeManager = () => {
     }
   };
 
+  const handleToggleStatus = async (v: any) => {
+    try {
+      await axios.put(`${API_BASE_URL}/api/manager/vehicle-types/${v.id}`, {
+        isActive: !v.isActive
+      });
+      fetchVehicleTypes();
+      toast.success('Cập nhật trạng thái thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi cập nhật trạng thái');
+    }
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -86,6 +98,7 @@ const VehicleTypeManager = () => {
                 <th>Hãng xe</th>
                 <th>Chủ xe</th>
                 <th>Thời hạn HĐ</th>
+                <th>Trạng thái</th>
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -97,6 +110,17 @@ const VehicleTypeManager = () => {
                   <td>{v.brand || '-'}</td>
                   <td>{v.owner || '-'}</td>
                   <td>{v.contractStart ? new Date(v.contractStart).toLocaleDateString() : '-'} - {v.contractEnd ? new Date(v.contractEnd).toLocaleDateString() : '-'}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <label className="toggle-switch">
+                        <input type="checkbox" checked={v.isActive} onChange={() => handleToggleStatus(v)} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                      <span style={{ fontSize: '0.85rem', color: v.isActive ? 'var(--success)' : 'var(--text-muted)' }}>
+                        {v.isActive ? 'Hoạt động' : 'Tạm ngưng'}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <button className="action-btn btn-edit">Sửa</button>
                     <button className="action-btn btn-delete">Xóa</button>

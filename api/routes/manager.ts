@@ -24,6 +24,17 @@ router.post('/courses', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.put('/courses/:id', async (req, res) => {
+  const { id } = req.params;
+  const { isCompleted } = req.body;
+  try {
+    const data: any = {};
+    if (isCompleted !== undefined) data.isCompleted = isCompleted;
+    const course = await prisma.course.update({ where: { id: Number(id) }, data });
+    res.json(course);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // Vehicle Types CRUD
 router.get('/vehicle-types', async (req, res) => {
   try {
@@ -43,6 +54,17 @@ router.post('/vehicle-types', async (req, res) => {
     if (contractEnd) data.contractEnd = new Date(contractEnd);
     
     const vehicleType = await prisma.vehicleType.create({ data });
+    res.json(vehicleType);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/vehicle-types/:id', async (req, res) => {
+  const { id } = req.params;
+  const { isActive } = req.body;
+  try {
+    const data: any = {};
+    if (isActive !== undefined) data.isActive = isActive;
+    const vehicleType = await prisma.vehicleType.update({ where: { id: Number(id) }, data });
     res.json(vehicleType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });

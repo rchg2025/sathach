@@ -47,6 +47,18 @@ const CourseManager = () => {
     }
   };
 
+  const handleToggleStatus = async (course: any) => {
+    try {
+      await axios.put(`${API_BASE_URL}/api/manager/courses/${course.id}`, {
+        isCompleted: !course.isCompleted
+      });
+      fetchCourses();
+      toast.success('Cập nhật trạng thái thành công!');
+    } catch (err) {
+      toast.error('Lỗi khi cập nhật trạng thái');
+    }
+  };
+
   return (
     <div>
       <div className="tabs">
@@ -82,6 +94,7 @@ const CourseManager = () => {
                 <th>Mô tả</th>
                 <th>Ngày bắt đầu</th>
                 <th>Ngày kết thúc</th>
+                <th>Trạng thái</th>
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -92,6 +105,17 @@ const CourseManager = () => {
                   <td>{course.description || '-'}</td>
                   <td>{new Date(course.startDate).toLocaleDateString()}</td>
                   <td>{new Date(course.endDate).toLocaleDateString()}</td>
+                  <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <label className="toggle-switch">
+                        <input type="checkbox" checked={course.isCompleted || false} onChange={() => handleToggleStatus(course)} />
+                        <span className="toggle-slider"></span>
+                      </label>
+                      <span style={{ fontSize: '0.85rem', color: course.isCompleted ? 'var(--success)' : 'var(--text-muted)' }}>
+                        {course.isCompleted ? 'Hoàn thành' : 'Chưa HT'}
+                      </span>
+                    </div>
+                  </td>
                   <td>
                     <button className="action-btn btn-view">Xem</button>
                     <button className="action-btn btn-edit">Sửa</button>
