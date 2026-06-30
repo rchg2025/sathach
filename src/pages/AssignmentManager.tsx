@@ -102,7 +102,7 @@ const AssignmentManager = () => {
           Tạo phân công mới
         </h4>
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-2" style={{ gap: '1.5rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.5rem' }}>
             <div className="form-group">
               <label className="form-label">Loại phân công</label>
               <select 
