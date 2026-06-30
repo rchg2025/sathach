@@ -10,7 +10,8 @@ router.get('/students', async (req, res) => {
 
   try {
     const assignments = await prisma.testAssignment.findMany({
-      where: { examinerId }
+      where: { examinerId },
+      include: { vehicles: true }
     });
     
     if (assignments.length === 0) return res.json([]);
@@ -52,6 +53,16 @@ router.get('/students', async (req, res) => {
 
       // If there is a next exam, check if the current examiner is assigned to it
       if (nextExam && nextExam.assignments.some(a => a.examinerId === examinerId)) {
+        const myAssignment = assignments.find(a => 
+          a.examinerId === examinerId && 
+          (a.examId === nextExam.id || (a.testTypeId === nextExam.testTypeId && !a.examId))
+        );
+
+        if (myAssignment && myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+          const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+          if (!hasVehicle) continue; // Skip if student's vehicle is not assigned to this examiner
+        }
+
         const currentProgress = result.progress.find((p: any) => p.examId === nextExam.id);
         const studentData = { 
           ...result.student, 
