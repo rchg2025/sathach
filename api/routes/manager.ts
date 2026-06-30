@@ -793,4 +793,27 @@ router.post('/station/transfer-score', async (req, res) => {
   }
 });
 
+// GET all results for Results page
+router.get('/results', async (req, res) => {
+  try {
+    const testResults = await prisma.testResult.findMany({
+      include: {
+        student: {
+          include: {
+            course: true
+          }
+        },
+        testType: true
+      },
+      orderBy: {
+        updatedAt: 'desc'
+      }
+    });
+    res.json(testResults);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Lỗi lấy kết quả' });
+  }
+});
+
 export default router;
