@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import { removeAccents } from '../utils/stringUtils';
 import AdminLayout from '../components/AdminLayout';
 
@@ -179,6 +180,12 @@ const StudentManager = () => {
     if (s.courseName) uniqueCoursesMap.set(s.courseName, s.courseName);
   });
   const availableCourses = Array.from(uniqueCoursesMap.values());
+
+  const uniqueLicenseMap = new Map();
+  students.forEach((s: any) => {
+    if (s.licenseClass) uniqueLicenseMap.set(s.licenseClass, s.licenseClass);
+  });
+  const availableLicenseClasses = Array.from(uniqueLicenseMap.values());
 
   const filteredStudents = students.filter((s: any) => {
     const keyword = removeAccents(searchKeyword);
@@ -431,7 +438,7 @@ const StudentManager = () => {
         <div className="card">
           <h3 className="mb-4">{editingId ? 'Cập nhật Học viên' : 'Thêm Học viên mới'}</h3>
           <form onSubmit={handleAddStudent}>
-            <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
               <div className="form-group">
                 <label>Họ tên (*)</label>
                 <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
@@ -447,7 +454,14 @@ const StudentManager = () => {
               </div>
               <div className="form-group">
                 <label>Khóa đào tạo</label>
-                <input type="text" className="form-control" value={courseName} onChange={e => setCourseName(e.target.value)} />
+                <CreatableSelect
+                  isClearable
+                  placeholder="Chọn hoặc nhập Khóa mới..."
+                  options={availableCourses.map((c: any) => ({ value: c, label: c }))}
+                  value={courseName ? { value: courseName, label: courseName } : null}
+                  onChange={(selected: any) => setCourseName(selected ? selected.value : '')}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
               </div>
               
               <div className="form-group">
@@ -456,7 +470,14 @@ const StudentManager = () => {
               </div>
               <div className="form-group">
                 <label>Hạng GPLX</label>
-                <input type="text" className="form-control" value={licenseClass} onChange={e => setLicenseClass(e.target.value)} />
+                <CreatableSelect
+                  isClearable
+                  placeholder="Chọn hoặc nhập Hạng GPLX..."
+                  options={availableLicenseClasses.map((c: any) => ({ value: c, label: c }))}
+                  value={licenseClass ? { value: licenseClass, label: licenseClass } : null}
+                  onChange={(selected: any) => setLicenseClass(selected ? selected.value : '')}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
               </div>
 
               <div className="form-group" style={{ gridColumn: '1 / -1' }}>
