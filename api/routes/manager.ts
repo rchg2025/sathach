@@ -362,4 +362,123 @@ router.get('/drive/image/:fileId', async (req, res) => {
   }
 });
 
+// Students CRUD
+router.get('/students', async (req, res) => {
+  try {
+    const students = await prisma.student.findMany({
+      orderBy: { id: 'desc' },
+      include: { course: true }
+    });
+    res.json(students);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/students', async (req, res) => {
+  const { 
+    registrationCode, name, dob, cccd, address, licenseNumber, 
+    licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
+    licenseDuration, courseName, courseId 
+  } = req.body;
+  try {
+    const student = await prisma.student.create({ 
+      data: {
+        registrationCode, name, dob, cccd, address, licenseNumber, 
+        licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
+        licenseDuration, courseName, courseId: courseId ? Number(courseId) : null
+      } 
+    });
+    res.json(student);
+  } catch (error: any) { 
+    if (error.code === 'P2002') return res.status(400).json({ error: 'CCCD đã tồn tại' });
+    res.status(500).json({ error: 'Server error' }); 
+  }
+});
+
+router.put('/students/:id', async (req, res) => {
+  const { id } = req.params;
+  const { 
+    registrationCode, name, dob, cccd, address, licenseNumber, 
+    licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
+    licenseDuration, courseName, courseId 
+  } = req.body;
+  try {
+    const data: any = {
+      registrationCode, name, dob, cccd, address, licenseNumber, 
+      licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
+      licenseDuration, courseName
+    };
+    if (courseId !== undefined) data.courseId = courseId ? Number(courseId) : null;
+    const student = await prisma.student.update({ where: { id: Number(id) }, data });
+    res.json(student);
+  } catch (error: any) { 
+    if (error.code === 'P2002') return res.status(400).json({ error: 'CCCD đã tồn tại' });
+    res.status(500).json({ error: 'Server error' }); 
+  }
+});
+
+router.delete('/students/:id', async (req, res) => {
+  try {
+    await prisma.student.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/students/bulk', async (req, res) => {
+  const { students } = req.body;
+  if (!Array.isArray(students)) return res.status(400).json({ error: 'Invalid data format' });
+  
+  try {
+    let imported = 0;
+    let skipped = 0;
+    for (const s of students) {
+      if (!s.cccd || !s.name) continue;
+      const existing = await prisma.student.findUnique({ where: { cccd: String(s.cccd) } });
+      const courseId = s.courseId ? Number(s.courseId) : null;
+      if (existing) {
+        await prisma.student.update({
+          where: { id: existing.id },
+          data: {
+            registrationCode: s.registrationCode,
+            name: s.name,
+            dob: s.dob,
+            address: s.address,
+            licenseNumber: s.licenseNumber,
+            licenseClass: s.licenseClass,
+            licenseIssueDate: s.licenseIssueDate,
+            passDate: s.passDate,
+            licenseExpiryDate: s.licenseExpiryDate,
+            licenseDuration: s.licenseDuration,
+            courseName: s.courseName,
+            courseId: courseId !== null ? courseId : existing.courseId,
+          }
+        });
+        skipped++;
+      } else {
+        await prisma.student.create({
+          data: {
+            registrationCode: s.registrationCode,
+            name: s.name,
+            dob: s.dob,
+            cccd: String(s.cccd),
+            address: s.address,
+            licenseNumber: s.licenseNumber,
+            licenseClass: s.licenseClass,
+            licenseIssueDate: s.licenseIssueDate,
+            passDate: s.passDate,
+            licenseExpiryDate: s.licenseExpiryDate,
+            licenseDuration: s.licenseDuration,
+            courseName: s.courseName,
+            courseId,
+          }
+        });
+        imported++;
+      }
+    }
+    res.json({ imported, updated: skipped });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi khi nhập dữ liệu' });
+  }
+});
+
 export default router;
