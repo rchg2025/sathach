@@ -8,6 +8,47 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const router = Router();
 
+// Dashboard Stats
+router.get('/dashboard/stats', async (req, res) => {
+  try {
+    const totalStudents = await prisma.student.count();
+    const totalCourses = await prisma.course.count();
+    const totalTestTypes = await prisma.testType.count();
+    const activeExaminers = await prisma.user.count({
+      where: { role: 'EXAMINER', isActive: true }
+    });
+
+    const passed = await prisma.testResult.count({ where: { status: 'PASSED' } });
+    const failed = await prisma.testResult.count({ where: { status: 'FAILED' } });
+
+    const allStudents = await prisma.student.findMany({ select: { createdAt: true } });
+    const monthlyData: Record<string, number> = {};
+    allStudents.forEach(s => {
+      const month = s.createdAt.getMonth() + 1;
+      const year = s.createdAt.getFullYear();
+      const monthYear = `Th${month}/${year.toString().slice(2)}`;
+      monthlyData[monthYear] = (monthlyData[monthYear] || 0) + 1;
+    });
+    
+    const traffic = Object.entries(monthlyData).map(([name, value]) => ({ name, value })).slice(-6);
+
+    res.json({
+      totalStudents,
+      totalCourses,
+      totalTestTypes,
+      activeExaminers,
+      passFail: [
+        { name: 'Đậu (Passed)', value: passed },
+        { name: 'Rớt (Failed)', value: failed }
+      ],
+      traffic
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Courses CRUD
 router.get('/courses', async (req, res) => {
   try {
