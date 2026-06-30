@@ -67,9 +67,20 @@ model TestType {
   id          Int      @id @default(autoincrement())
   name        String
   description String?
-  criteria    Criterion[]
+  exams       Exam[]
   assignments TestAssignment[]
   testResults TestResult[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Exam {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  testTypeId  Int
+  testType    TestType @relation(fields: [testTypeId], references: [id])
+  criteria    Criterion[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -78,8 +89,8 @@ model Criterion {
   id             Int      @id @default(autoincrement())
   name           String
   pointsToDeduct Int      @default(5)
-  testTypeId     Int
-  testType       TestType @relation(fields: [testTypeId], references: [id])
+  examId         Int
+  exam           Exam     @relation(fields: [examId], references: [id])
   scores         Score[]
 }
 

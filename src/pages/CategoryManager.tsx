@@ -3,9 +3,11 @@ import AdminLayout from '../components/AdminLayout';
 import CourseManager from './CourseManager';
 import VehicleTypeManager from './VehicleTypeManager';
 import TestTypeManager from './TestTypeManager';
+import ExamManager from './ExamManager';
+import CriterionManager from './CriterionManager';
 
 const CategoryManager = () => {
-  const [activeCategory, setActiveCategory] = useState<'courses' | 'vehicles' | 'tests'>('courses');
+  const [activeCategory, setActiveCategory] = useState<'courses' | 'vehicles' | 'stations' | 'exams' | 'criteria'>('courses');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   return (
@@ -25,17 +27,31 @@ const CategoryManager = () => {
           Quản lý Xe
         </div>
         <div 
-          className={`tab ${activeCategory === 'tests' ? 'active' : ''}`}
-          onClick={() => setActiveCategory('tests')}
+          className={`tab ${activeCategory === 'stations' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('stations')}
         >
-          Bài thi (Sát hạch)
+          Trạm thi
+        </div>
+        <div 
+          className={`tab ${activeCategory === 'exams' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('exams')}
+        >
+          Bài thi
+        </div>
+        <div 
+          className={`tab ${activeCategory === 'criteria' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('criteria')}
+        >
+          Tiêu chí
         </div>
       </div>
 
       <div className="category-content">
         {activeCategory === 'courses' && <CourseManager />}
         {activeCategory === 'vehicles' && <VehicleTypeManager />}
-        {activeCategory === 'tests' && <TestTypeManager />}
+        {activeCategory === 'stations' && <TestTypeManager />}
+        {activeCategory === 'exams' && <ExamManager />}
+        {activeCategory === 'criteria' && <CriterionManager />}
       </div>
     </AdminLayout>
   );

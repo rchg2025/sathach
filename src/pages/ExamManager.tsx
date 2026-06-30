@@ -1,25 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-// import AdminLayout from '../components/AdminLayout';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
-const TestTypeManager = () => {
+const ExamManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
+  const [exams, setExams] = useState([]);
   const [testTypes, setTestTypes] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [testTypeId, setTestTypeId] = useState('');
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  
-  // const user = JSON.parse(localStorage.getItem('user') || '{}'); // No longer needed here
+
+  const fetchExams = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/exams`);
+      setExams(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const fetchTestTypes = async () => {
     try {
@@ -31,22 +39,28 @@ const TestTypeManager = () => {
   };
 
   useEffect(() => {
+    fetchExams();
     fetchTestTypes();
   }, []);
 
-  const handleAddTestType = async (e: React.FormEvent) => {
+  const handleAddExam = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!testTypeId) {
+      toast.error('Vui lòng chọn Trạm thi');
+      return;
+    }
+    
     try {
-      const payload = { name, description };
+      const payload = { name, description, testTypeId };
       if (editingId) {
-        await axios.put(`${API_BASE_URL}/api/manager/test-types/${editingId}`, payload);
+        await axios.put(`${API_BASE_URL}/api/manager/exams/${editingId}`, payload);
         toast.success('Cập nhật thành công!');
       } else {
-        await axios.post(`${API_BASE_URL}/api/manager/test-types`, payload);
-        toast.success('Thêm loại sát hạch thành công!');
+        await axios.post(`${API_BASE_URL}/api/manager/exams`, payload);
+        toast.success('Thêm Bài thi thành công!');
       }
       resetForm();
-      fetchTestTypes();
+      fetchExams();
       setActiveTab('list');
     } catch (err) {
       toast.error('Có lỗi xảy ra!');
@@ -56,45 +70,48 @@ const TestTypeManager = () => {
   const resetForm = () => {
     setName('');
     setDescription('');
+    setTestTypeId('');
     setEditingId(null);
   };
 
-  const handleEdit = (testType: any) => {
-    setEditingId(testType.id);
-    setName(testType.name);
-    setDescription(testType.description || '');
+  const handleEdit = (exam: any) => {
+    setEditingId(exam.id);
+    setName(exam.name);
+    setDescription(exam.description || '');
+    setTestTypeId(exam.testTypeId.toString());
     setActiveTab('add');
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa loại sát hạch này không?')) {
+    if (window.confirm('Bạn có chắc chắn muốn xóa bài thi này không?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/api/manager/test-types/${id}`);
-        toast.success('Xóa loại sát hạch thành công!');
-        fetchTestTypes();
+        await axios.delete(`${API_BASE_URL}/api/manager/exams/${id}`);
+        toast.success('Xóa bài thi thành công!');
+        fetchExams();
       } catch (err) {
-        toast.error('Lỗi khi xóa loại sát hạch');
+        toast.error('Lỗi khi xóa bài thi');
       }
     }
   };
 
-  const filteredTestTypes = testTypes.filter((t: any) => t.name.toLowerCase().includes(searchKeyword.toLowerCase()));
-  const totalPages = Math.ceil(filteredTestTypes.length / itemsPerPage);
-  const displayedTestTypes = filteredTestTypes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const filteredExams = exams.filter((e: any) => e.name.toLowerCase().includes(searchKeyword.toLowerCase()) || (e.testType?.name || '').toLowerCase().includes(searchKeyword.toLowerCase()));
+  const totalPages = Math.ceil(filteredExams.length / itemsPerPage);
+  const displayedExams = filteredExams.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   const exportToExcel = () => {
-    const dataToExport = filteredTestTypes.map((t: any, index: number) => ({
+    const dataToExport = filteredExams.map((e: any, index: number) => ({
       'STT': index + 1,
-      'Tên loại sát hạch': t.name,
-      'Mô tả': t.description || '',
-      'Số lượng tiêu chí': t.criteria?.length || 0,
-      'Ngày tạo': new Date(t.createdAt).toLocaleDateString('vi-VN')
+      'Tên Bài thi': e.name,
+      'Thuộc Trạm thi': e.testType?.name || '',
+      'Mô tả': e.description || '',
+      'Số lượng tiêu chí': e.criteria?.length || 0,
+      'Ngày tạo': new Date(e.createdAt).toLocaleDateString('vi-VN')
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'LoaiSatHach');
-    XLSX.writeFile(workbook, 'danh-sach-loai-sat-hach.xlsx');
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'BaiThi');
+    XLSX.writeFile(workbook, 'danh-sach-bai-thi.xlsx');
   };
 
   return (
@@ -104,13 +121,13 @@ const TestTypeManager = () => {
           className={`tab ${activeTab === 'list' ? 'active' : ''}`}
           onClick={() => setActiveTab('list')}
         >
-          Danh sách Trạm thi
+          Danh sách Bài thi
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
           onClick={() => { resetForm(); setActiveTab('add'); }}
         >
-          {editingId ? 'Sửa Trạm thi' : 'Thêm Trạm thi mới'}
+          {editingId ? 'Sửa Bài thi' : 'Thêm Bài thi mới'}
         </div>
       </div>
 
@@ -120,7 +137,7 @@ const TestTypeManager = () => {
             <input 
               type="text" 
               className="form-control" 
-              placeholder="🔍 Tìm kiếm..." 
+              placeholder="🔍 Tìm kiếm bài thi..." 
               value={searchKeyword}
               onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
               style={{ maxWidth: '300px' }}
@@ -134,26 +151,30 @@ const TestTypeManager = () => {
             <thead>
               <tr>
                 <th style={{ width: '60px' }}>STT</th>
-                <th>Tên Trạm thi</th>
+                <th>Tên Bài thi</th>
+                <th>Thuộc Trạm thi</th>
                 <th>Mô tả</th>
+                <th>Số lượng tiêu chí</th>
                 <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
-              {displayedTestTypes.length > 0 ? displayedTestTypes.map((type: any, idx: number) => (
-                <tr key={type.id}>
+              {displayedExams.length > 0 ? displayedExams.map((exam: any, idx: number) => (
+                <tr key={exam.id}>
                   <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                  <td><strong>{type.name}</strong></td>
-                  <td>{type.description || '-'}</td>
+                  <td><strong>{exam.name}</strong></td>
+                  <td><span className="badge badge-info">{exam.testType?.name}</span></td>
+                  <td>{exam.description || '-'}</td>
+                  <td><span className="badge badge-warning">{exam.criteria?.length || 0}</span></td>
                   <td>
-                    <button className="action-btn btn-edit" onClick={() => handleEdit(type)}>Sửa</button>
-                    <button className="action-btn btn-delete" onClick={() => handleDelete(type.id)}>Xóa</button>
+                    <button className="action-btn btn-edit" onClick={() => handleEdit(exam)}>Sửa</button>
+                    <button className="action-btn btn-delete" onClick={() => handleDelete(exam.id)}>Xóa</button>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="text-center text-muted" style={{ padding: '2rem' }}>
-                    Chưa có dữ liệu.
+                  <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
+                    Chưa có bài thi nào.
                   </td>
                 </tr>
               )}
@@ -163,7 +184,7 @@ const TestTypeManager = () => {
           {totalPages > 1 && (
             <div className="flex justify-between items-center mt-4">
               <span className="text-muted">
-                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredTestTypes.length)} trong tổng số {filteredTestTypes.length}
+                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredExams.length)} trong tổng số {filteredExams.length}
               </span>
               <div className="pagination flex" style={{ gap: '0.5rem' }}>
                 <button 
@@ -197,17 +218,26 @@ const TestTypeManager = () => {
 
       {activeTab === 'add' && (
         <div className="card">
-          <h3 className="mb-4">{editingId ? 'Cập nhật Trạm thi' : 'Thêm Trạm thi mới'}</h3>
-          <form onSubmit={handleAddTestType}>
+          <h3 className="mb-4">{editingId ? 'Cập nhật Bài thi' : 'Thêm Bài thi mới'}</h3>
+          <form onSubmit={handleAddExam}>
             <div className="form-group">
-              <label>Tên Trạm thi (VD: Sa hình, Đường trường)</label>
+              <label>Thuộc Trạm thi</label>
+              <select className="form-control" value={testTypeId} onChange={e => setTestTypeId(e.target.value)} required>
+                <option value="">-- Chọn Trạm thi --</option>
+                {testTypes.map((t: any) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Tên Bài thi (VD: Xuất phát, Lùi chuồng)</label>
               <input type="text" className="form-control" value={name} onChange={e => setName(e.target.value)} required />
             </div>
             <div className="form-group">
               <label>Mô tả chi tiết</label>
               <textarea className="form-control" value={description} onChange={e => setDescription(e.target.value)} rows={4}></textarea>
             </div>
-            <button type="submit" className="btn btn-primary mt-4">Lưu lại</button>
+            <button type="submit" className="btn btn-primary mt-4">Lưu Bài thi</button>
           </form>
         </div>
       )}
@@ -215,4 +245,4 @@ const TestTypeManager = () => {
   );
 };
 
-export default TestTypeManager;
+export default ExamManager;

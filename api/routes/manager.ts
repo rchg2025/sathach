@@ -104,11 +104,73 @@ router.post('/test-types', async (req, res) => {
 });
 
 // Criteria CRUD
-router.post('/criteria', async (req, res) => {
-  const { name, pointsToDeduct, testTypeId } = req.body;
+router.get('/criteria', async (req, res) => {
   try {
-    const criterion = await prisma.criterion.create({ data: { name, pointsToDeduct: Number(pointsToDeduct), testTypeId: Number(testTypeId) } });
+    const criteria = await prisma.criterion.findMany({ include: { exam: { include: { testType: true } } } });
+    res.json(criteria);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/criteria', async (req, res) => {
+  const { name, pointsToDeduct, examId } = req.body;
+  try {
+    const criterion = await prisma.criterion.create({ data: { name, pointsToDeduct: Number(pointsToDeduct), examId: Number(examId) } });
     res.json(criterion);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/criteria/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, pointsToDeduct, examId } = req.body;
+  try {
+    const criterion = await prisma.criterion.update({
+      where: { id: Number(id) },
+      data: { name, pointsToDeduct: Number(pointsToDeduct), examId: Number(examId) }
+    });
+    res.json(criterion);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.delete('/criteria/:id', async (req, res) => {
+  try {
+    await prisma.criterion.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// Exams CRUD
+router.get('/exams', async (req, res) => {
+  try {
+    const exams = await prisma.exam.findMany({ include: { testType: true, criteria: true } });
+    res.json(exams);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/exams', async (req, res) => {
+  const { name, description, testTypeId } = req.body;
+  try {
+    const exam = await prisma.exam.create({ data: { name, description, testTypeId: Number(testTypeId) } });
+    res.json(exam);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/exams/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description, testTypeId } = req.body;
+  try {
+    const exam = await prisma.exam.update({
+      where: { id: Number(id) },
+      data: { name, description, testTypeId: Number(testTypeId) }
+    });
+    res.json(exam);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.delete('/exams/:id', async (req, res) => {
+  try {
+    await prisma.criterion.deleteMany({ where: { examId: Number(req.params.id) } });
+    await prisma.exam.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -212,9 +274,13 @@ router.put('/test-types/:id', async (req, res) => {
 
 router.delete('/test-types/:id', async (req, res) => {
   try {
-    // Delete related criteria first if needed (Prisma cascade delete should handle this if configured, but let's do manual to be safe)
-    await prisma.evaluationCriteria.deleteMany({ where: { testTypeId: Number(req.params.id) }});
-    await prisma.testType.delete({ where: { id: Number(req.params.id) } });
+    const testTypeId = Number(req.params.id);
+    const exams = await prisma.exam.findMany({ where: { testTypeId } });
+    for (const exam of exams) {
+      await prisma.criterion.deleteMany({ where: { examId: exam.id } });
+    }
+    await prisma.exam.deleteMany({ where: { testTypeId } });
+    await prisma.testType.delete({ where: { id: testTypeId } });
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
