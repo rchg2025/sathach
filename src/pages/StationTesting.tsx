@@ -6,6 +6,11 @@ import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 
+const toTitleCase = (str: string) => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
 const StationTesting = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -282,11 +287,11 @@ const StationTesting = () => {
               <thead>
                 <tr>
                   <th>STT</th>
-                  <th>Mã ĐK</th>
                   <th>Họ và Tên</th>
                   <th>CCCD</th>
                   <th>Khóa đào tạo</th>
                   <th>Trạng thái</th>
+                  <th style={{ textAlign: 'center' }}>Điểm thi</th>
                   <th style={{ textAlign: 'right' }}>Thao tác</th>
                 </tr>
               </thead>
@@ -294,14 +299,16 @@ const StationTesting = () => {
                 {paginatedStudents.map((s, index) => (
                   <tr key={s.id}>
                     <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td>{s.registrationCode}</td>
-                    <td><strong>{s.name}</strong></td>
+                    <td><strong>{toTitleCase(s.name)}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     <td>
                       <span className={`badge ${getStudentStatus(s).includes('Đang thi') ? 'badge-primary' : (getStudentStatus(s).includes('chuyển điểm') ? 'badge-success' : 'badge-secondary')}`}>
                         {getStudentStatus(s)}
                       </span>
+                    </td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>
+                      {s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.totalScore ?? '-'}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {!getStudentStatus(s).includes('Đang thi') && !getStudentStatus(s).includes('Đã kết thúc') && !getStudentStatus(s).includes('chuyển điểm') && (
