@@ -71,6 +71,7 @@ model VehicleType {
   contractStart DateTime?
   contractEnd   DateTime?
   isActive    Boolean  @default(true)
+  testResults TestResult[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -130,6 +131,8 @@ model TestResult {
   student     Student  @relation(fields: [studentId], references: [id])
   testTypeId  Int
   testType    TestType @relation(fields: [testTypeId], references: [id])
+  vehicleId   Int?
+  vehicle     VehicleType? @relation(fields: [vehicleId], references: [id])
   totalScore  Int      @default(100)
   status      String   @default("PENDING") // PENDING, PASSED, FAILED
   scores      Score[]

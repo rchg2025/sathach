@@ -13,6 +13,7 @@ import AssignmentManager from './pages/AssignmentManager';
 import ExaminerDashboard from './pages/ExaminerDashboard';
 import Profile from './pages/Profile';
 import SettingsManager from './pages/SettingsManager';
+import StationTesting from './pages/StationTesting';
 import './index.css';
 
 const PublicHeader = () => {
@@ -47,6 +48,7 @@ function App() {
         <Route path="/manager/assignments" element={<AssignmentManager />} />
         <Route path="/manager/users" element={<UserManager />} />
         <Route path="/manager/settings" element={<SettingsManager />} />
+        <Route path="/manager/testing" element={<StationTesting />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>

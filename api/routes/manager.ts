@@ -587,4 +587,58 @@ router.post('/students/bulk', async (req, res) => {
   }
 });
 
+// Station Testing
+router.get('/station/students', async (req, res) => {
+  const { examinerId } = req.query;
+  if (!examinerId) return res.status(400).json({ error: 'Missing examinerId' });
+  try {
+    const assignments = await prisma.testAssignment.findMany({
+      where: { examinerId: Number(examinerId) },
+      include: { testType: true }
+    });
+    
+    const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
+    if (courseIds.length === 0) {
+      return res.json({ students: [], assignments });
+    }
+
+    const students = await prisma.student.findMany({
+      where: { courseId: { in: courseIds } },
+      include: { course: true, testResults: true }
+    });
+
+    res.json({ students, assignments });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/station/start-test', async (req, res) => {
+  const { studentId, testTypeId, vehicleId } = req.body;
+  try {
+    let testResult = await prisma.testResult.findUnique({
+      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    });
+    
+    if (testResult) {
+      testResult = await prisma.testResult.update({
+        where: { id: testResult.id },
+        data: { status: 'IN_PROGRESS', vehicleId: Number(vehicleId) }
+      });
+    } else {
+      testResult = await prisma.testResult.create({
+        data: { 
+          studentId: Number(studentId), 
+          testTypeId: Number(testTypeId),
+          status: 'IN_PROGRESS',
+          vehicleId: Number(vehicleId)
+        }
+      });
+    }
+    res.json(testResult);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

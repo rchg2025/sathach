@@ -7,7 +7,8 @@ import {
   Settings, 
   LogOut,
   Shield,
-  UserCircle
+  UserCircle,
+  Car
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -50,6 +51,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`}>
             <LayoutDashboard size={20} /> Bảng điều khiển
           </Link>
+          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`}>
+              <Car size={20} /> Sát hạch
+            </Link>
+          )}
           <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`}>
             <BookOpen size={20} /> Quản lý Danh mục
           </Link>
