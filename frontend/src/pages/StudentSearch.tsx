@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { API_BASE_URL } from '../config';
 
 const StudentSearch = () => {
   const [cccd, setCccd] = useState('');
@@ -9,7 +10,7 @@ const StudentSearch = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.get(`http://localhost:5000/api/student/lookup/${cccd}`);
+      const res = await axios.get(`${API_BASE_URL}/api/student/lookup/${cccd}`);
       setStudent(res.data);
       setError('');
     } catch (err) {
