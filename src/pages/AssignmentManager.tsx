@@ -5,6 +5,7 @@ import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import { Trash2, Download } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import Select from 'react-select';
 
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -185,16 +186,26 @@ const AssignmentManager = () => {
 
             <div className="form-group">
               <label className="form-label">Khóa đào tạo (Tùy chọn)</label>
-              <select 
-                className="form-control" 
-                value={selectedCourse} 
-                onChange={(e) => setSelectedCourse(e.target.value)}
-              >
-                <option value="">-- Chọn Khóa đào tạo --</option>
-                {courses.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+              <Select
+                options={[{ value: '', label: '-- Chọn Khóa đào tạo --' }, ...courses.map(c => ({ value: c.id, label: c.name }))]}
+                value={
+                  selectedCourse 
+                    ? { value: selectedCourse, label: courses.find(c => String(c.id) === String(selectedCourse))?.name || '' } 
+                    : { value: '', label: '-- Chọn Khóa đào tạo --' }
+                }
+                onChange={(selected: any) => setSelectedCourse(selected ? selected.value : '')}
+                placeholder="Tìm kiếm khóa đào tạo..."
+                isClearable
+                styles={{ 
+                  control: (base: any) => ({ 
+                    ...base, 
+                    borderColor: '#d1d5db', 
+                    borderRadius: '6px', 
+                    minHeight: '38px',
+                    boxShadow: 'none' 
+                  }) 
+                }}
+              />
             </div>
 
             <div className="form-group">
