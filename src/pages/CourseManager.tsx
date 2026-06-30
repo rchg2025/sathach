@@ -5,7 +5,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
-import { Eye, Edit, Trash2, Users } from 'lucide-react';
+import { Edit, Trash2, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const CourseManager = () => {

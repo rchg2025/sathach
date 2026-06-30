@@ -303,7 +303,7 @@ const UserManager = () => {
                       <td>{u.username}</td>
                       <td>
                         <span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : u.role === 'STATION_MANAGER' ? 'badge-info' : u.role === 'MANAGER' ? 'badge-success' : 'badge-warning'}`}>
-                          {u.role === 'STATION_MANAGER' ? 'Trưởng trạm' : u.role}
+                          {u.role === 'STATION_MANAGER' ? 'Trưởng trạm' : u.role === 'ADMIN' ? 'Quản trị' : u.role === 'MANAGER' ? 'Quản lý' : u.role === 'EXAMINER' ? 'Giám khảo' : u.role}
                         </span>
                       </td>
                       <td>
