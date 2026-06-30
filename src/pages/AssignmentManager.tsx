@@ -320,21 +320,11 @@ const AssignmentManager = () => {
             <div className="form-group">
               <label className="form-label">Số xe</label>
               <Select
-                isMulti={roleType === 'STATION_MANAGER'}
+                isMulti
                 options={vehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
-                value={
-                  roleType === 'STATION_MANAGER' 
-                    ? vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))
-                    : vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))[0] || null
-                }
+                value={vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
                 onChange={(selected: any) => {
-                  if (!selected) {
-                    setSelectedVehicles([]);
-                  } else if (Array.isArray(selected)) {
-                    setSelectedVehicles(selected.map((s: any) => s.value));
-                  } else {
-                    setSelectedVehicles([selected.value]);
-                  }
+                  setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
                 }}
                 placeholder="Tìm chọn số xe..."
                 styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
