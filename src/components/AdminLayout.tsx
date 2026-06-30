@@ -66,9 +66,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`}>
             <UserCircle size={20} /> Hồ sơ cá nhân
           </Link>
-          <a className="sidebar-item">
-            <Settings size={20} /> Cấu hình hệ thống
-          </a>
+          {user?.role === 'ADMIN' && (
+            <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`}>
+              <Settings size={20} /> Cấu hình hệ thống
+            </Link>
+          )}
         </nav>
       </aside>
 

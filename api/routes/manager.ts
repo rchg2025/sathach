@@ -120,4 +120,31 @@ router.delete('/users/:id', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// Settings
+router.get('/settings', async (req, res) => {
+  try {
+    const settings = await prisma.setting.findMany();
+    const settingsMap = settings.reduce((acc: any, setting) => {
+      acc[setting.key] = setting.value;
+      return acc;
+    }, {});
+    res.json(settingsMap);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.post('/settings', async (req, res) => {
+  const data = req.body; // Expect an object of key-value pairs
+  try {
+    const updatePromises = Object.entries(data).map(([key, value]) => {
+      return prisma.setting.upsert({
+        where: { key },
+        update: { value: String(value) },
+        create: { key, value: String(value) },
+      });
+    });
+    await Promise.all(updatePromises);
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 export default router;
