@@ -652,7 +652,15 @@ router.get('/station/students', async (req, res) => {
       }
     });
 
-    res.json({ students, assignments });
+    const assignedTestTypeIds = assignments.map(a => a.testTypeId);
+    const availableStudents = students.filter(s => {
+      const busyAtOtherStation = s.testResults.some(tr => 
+        tr.status === 'IN_PROGRESS' && !assignedTestTypeIds.includes(tr.testTypeId)
+      );
+      return !busyAtOtherStation;
+    });
+
+    res.json({ students: availableStudents, assignments });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -703,7 +711,29 @@ router.post('/station/end-test', async (req, res) => {
     if (testResult) {
       await prisma.testResult.update({
         where: { id: testResult.id },
-        data: { status: 'FINISHED' }
+        data: { 
+          status: 'FINISHED',
+          endTime: new Date()
+        }
+      });
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/station/transfer-score', async (req, res) => {
+  const { studentId, testTypeId } = req.body;
+  try {
+    const testResult = await prisma.testResult.findUnique({
+      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    });
+    
+    if (testResult) {
+      await prisma.testResult.update({
+        where: { id: testResult.id },
+        data: { status: 'TRANSFERRED' }
       });
     }
     res.json({ success: true });

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Play, Car, CheckCircle } from 'lucide-react';
+import { Play, Car, CheckCircle, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -20,6 +20,8 @@ const StationTesting = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -135,26 +137,72 @@ const StationTesting = () => {
     }
   };
 
+  const handleTransferScore = async (student: any) => {
+    const studentAssignment = assignments.find(a => 
+      a.courseId === student.courseId || 
+      (a.course && a.course.name === student.courseName)
+    );
+    if (!studentAssignment) return toast.error('Không tìm thấy bài thi phân công');
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/station/transfer-score`, {
+        studentId: student.id,
+        testTypeId: studentAssignment.testType?.id
+      });
+      toast.success('Chuyển điểm thành công.');
+      
+      // Update local state to reflect TRANSFERRED
+      setStudents(prev => prev.map(s => {
+        if (s.id === student.id) {
+          const newTestResults = [...(s.testResults || [])];
+          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === studentAssignment.testType?.id);
+          if (trIndex > -1) {
+            newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'TRANSFERRED' };
+          }
+          return { ...s, testResults: newTestResults };
+        }
+        return s;
+      }));
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi khi chuyển điểm');
+    }
+  };
+
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
+    const tr = student.testResults[student.testResults.length - 1]; // Assume latest
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
-    return 'Đã kết thúc';
+    const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
+    if (finished) return 'Đã kết thúc';
+    const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
+    if (transferred) return 'Đã chuyển điểm';
+    return 'Chưa thi';
   };
 
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
-    // For simplicity, just check if any is IN_PROGRESS
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
       let text = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
       if (inProgress.stationManager && inProgress.startTime) {
-        text += ` - Bắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
+        text += `\nBắt đầu: ${new Date(inProgress.startTime).toLocaleTimeString()}`;
       }
       return text;
     }
-    return 'Đã kết thúc / Đang chờ';
+    const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
+    if (finished) {
+      let text = `Đã kết thúc`;
+      if (finished.startTime) text += `\nBắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
+      if (finished.endTime) text += `\nKết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
+      return text;
+    }
+    const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
+    if (transferred) {
+      return `Đã chuyển điểm`;
+    }
+    return 'Đang chờ';
   };
 
   const filteredStudents = students.filter(s => {
@@ -168,9 +216,13 @@ const StationTesting = () => {
       if (filterStatus === 'NOT_STARTED' && st !== 'Chưa thi') match = false;
       if (filterStatus === 'IN_PROGRESS' && st !== 'Đang thi') match = false;
       if (filterStatus === 'FINISHED' && st !== 'Đã kết thúc') match = false;
+      if (filterStatus === 'TRANSFERRED' && st !== 'Đã chuyển điểm') match = false;
     }
     return match;
   });
+
+  const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
+  const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
   return (
     <AdminLayout user={user}>
@@ -196,6 +248,7 @@ const StationTesting = () => {
                 <option value="NOT_STARTED">Chưa thi</option>
                 <option value="IN_PROGRESS">Đang thi</option>
                 <option value="FINISHED">Đã kết thúc</option>
+                <option value="TRANSFERRED">Đã chuyển điểm</option>
               </select>
             </div>
           </div>
@@ -212,19 +265,19 @@ const StationTesting = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map(s => (
+                {paginatedStudents.map(s => (
                   <tr key={s.id}>
                     <td>{s.registrationCode}</td>
                     <td><strong>{s.name}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
-                    <td>
-                      <span className={`badge ${getStudentStatus(s).includes('Đang thi') ? 'badge-primary' : 'badge-secondary'}`}>
+                    <td style={{ whiteSpace: 'pre-line' }}>
+                      <span className={`badge ${getStudentStatus(s).includes('Đang thi') ? 'badge-primary' : (getStudentStatus(s).includes('chuyển điểm') ? 'badge-success' : 'badge-secondary')}`}>
                         {getStudentStatus(s)}
                       </span>
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {!getStudentStatus(s).includes('Đang thi') && (
+                      {!getStudentStatus(s).includes('Đang thi') && !getStudentStatus(s).includes('Đã kết thúc') && !getStudentStatus(s).includes('chuyển điểm') && (
                         <button 
                           className="btn btn-primary" 
                           style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
@@ -246,6 +299,19 @@ const StationTesting = () => {
                           <CheckCircle size={16} /> Kết thúc
                         </button>
                       )}
+                      {getStudentStatus(s).includes('Đã kết thúc') && (
+                        <button 
+                          className="btn" 
+                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
+                          onClick={() => {
+                            if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
+                              handleTransferScore(s);
+                            }
+                          }}
+                        >
+                          <Send size={16} /> Chuyển điểm
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -259,6 +325,28 @@ const StationTesting = () => {
               </tbody>
             </table>
           </div>
+          
+          {totalPages > 1 && (
+            <div style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
+              <button 
+                className="btn" 
+                style={{ padding: '0.3rem 0.8rem', background: '#f3f4f6' }}
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              >
+                Trước
+              </button>
+              <span style={{ padding: '0.3rem 0.8rem' }}>Trang {currentPage} / {totalPages}</span>
+              <button 
+                className="btn" 
+                style={{ padding: '0.3rem 0.8rem', background: '#f3f4f6' }}
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              >
+                Sau
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Modal Start Test */}

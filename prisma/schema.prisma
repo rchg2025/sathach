@@ -139,6 +139,7 @@ model TestResult {
   totalScore  Int      @default(100)
   status      String   @default("PENDING") // PENDING, PASSED, FAILED
   startTime   DateTime?
+  endTime     DateTime?
   stationManagerId Int?
   stationManager   User?   @relation("StationManagerTests", fields: [stationManagerId], references: [id])
   scores      Score[]
