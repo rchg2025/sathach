@@ -45,7 +45,10 @@ const StationTesting = () => {
 
   const openStartTestModal = (student: any) => {
     // Determine the testType based on assignments matching this student's course
-    const studentAssignment = assignments.find(a => a.courseId === student.courseId);
+    const studentAssignment = assignments.find(a => 
+      a.courseId === student.courseId || 
+      (a.course && a.course.name === student.courseName)
+    );
     if (!studentAssignment) {
       toast.error('Không tìm thấy bài thi được phân công cho khóa này');
       return;

@@ -594,7 +594,7 @@ router.get('/station/students', async (req, res) => {
   try {
     const assignments = await prisma.testAssignment.findMany({
       where: { examinerId: Number(examinerId) },
-      include: { testType: true }
+      include: { testType: true, course: true }
     });
     
     const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
@@ -602,8 +602,18 @@ router.get('/station/students', async (req, res) => {
       return res.json({ students: [], assignments });
     }
 
+    const courses = await prisma.course.findMany({
+      where: { id: { in: courseIds } }
+    });
+    const courseNames = courses.map(c => c.name);
+
     const students = await prisma.student.findMany({
-      where: { courseId: { in: courseIds } },
+      where: { 
+        OR: [
+          { courseId: { in: courseIds } },
+          { courseName: { in: courseNames } }
+        ]
+      },
       include: { course: true, testResults: true }
     });
 
