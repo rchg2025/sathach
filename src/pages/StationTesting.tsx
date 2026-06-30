@@ -181,26 +181,41 @@ const StationTesting = () => {
 
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
+    
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
       let text = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
       if (inProgress.stationManager && inProgress.startTime) {
-        text += `\nBắt đầu: ${new Date(inProgress.startTime).toLocaleTimeString()}`;
+        text += `\nBắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
       }
       return text;
     }
+    
     const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
     if (finished) {
-      let text = `Đã kết thúc`;
+      const v = vehicles.find(v => v.id === finished.vehicleId);
+      let text = `Đã kết thúc ${v ? `(${v.name})` : ''}`;
+      if (finished.stationManager) {
+        text += `\nTrưởng trạm: ${finished.stationManager.name}`;
+      }
       if (finished.startTime) text += `\nBắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
       if (finished.endTime) text += `\nKết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
       return text;
     }
+    
     const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
     if (transferred) {
-      return `Đã chuyển điểm`;
+      const v = vehicles.find(v => v.id === transferred.vehicleId);
+      let text = `Đã chuyển điểm ${v ? `(${v.name})` : ''}`;
+      if (transferred.stationManager) {
+        text += `\nTrưởng trạm: ${transferred.stationManager.name}`;
+      }
+      if (transferred.startTime) text += `\nBắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
+      if (transferred.endTime) text += `\nKết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
+      return text;
     }
+    
     return 'Đang chờ';
   };
 
