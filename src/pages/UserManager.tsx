@@ -263,6 +263,7 @@ const UserManager = () => {
                 <select className="form-control" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
                   <option value="ALL">Tất cả Quyền</option>
                   <option value="ADMIN">Admin</option>
+                  <option value="STATION_MANAGER">Trưởng trạm</option>
                   <option value="MANAGER">Quản lý</option>
                   <option value="EXAMINER">Giám khảo</option>
                 </select>
@@ -300,8 +301,8 @@ const UserManager = () => {
                       </td>
                       <td>{u.username}</td>
                       <td>
-                        <span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : u.role === 'MANAGER' ? 'badge-success' : 'badge-warning'}`}>
-                          {u.role}
+                        <span className={`badge ${u.role === 'ADMIN' ? 'badge-danger' : u.role === 'STATION_MANAGER' ? 'badge-info' : u.role === 'MANAGER' ? 'badge-success' : 'badge-warning'}`}>
+                          {u.role === 'STATION_MANAGER' ? 'Trưởng trạm' : u.role}
                         </span>
                       </td>
                       <td>
@@ -365,7 +366,7 @@ const UserManager = () => {
                  <div className="form-group">
                    <label>Phân quyền</label>
                    <select className="form-control" value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} disabled={editingUser.id === user?.id && editingUser.role === 'ADMIN'}>
-                     <option value="ADMIN">Admin</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
+                      <option value="ADMIN">Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
                    </select>
                  </div>
                  <div className="form-group" style={{ display: 'flex', alignItems: 'center' }}>
@@ -391,7 +392,7 @@ const UserManager = () => {
                 <div className="form-group"><label>Họ và Tên *</label><input type="text" className="form-control" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required/></div>
                 <div className="form-group"><label>Phân quyền *</label>
                   <select className="form-control" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                    <option value="ADMIN">Admin</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
+                    <option value="ADMIN">Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
                   </select>
                 </div>
                 <div className="form-group"><label>Tên đăng nhập *</label><input type="text" className="form-control" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} required/></div>
