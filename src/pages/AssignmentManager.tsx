@@ -167,30 +167,37 @@ const AssignmentManager = () => {
           <div className="grid-cols-3-responsive">
             <div className="form-group">
               <label className="form-label">Loại phân công</label>
-              <select 
-                className="form-control" 
-                value={roleType} 
-                onChange={(e) => setRoleType(e.target.value as any)}
-              >
-                <option value="STATION_MANAGER">Phân công cho Trưởng trạm</option>
-                <option value="EXAMINER">Phân công cho Giám khảo</option>
-              </select>
+              <Select 
+                options={[
+                  { value: 'STATION_MANAGER', label: 'Phân công cho Trưởng trạm' },
+                  { value: 'EXAMINER', label: 'Phân công cho Giám khảo' }
+                ]}
+                value={[
+                  { value: 'STATION_MANAGER', label: 'Phân công cho Trưởng trạm' },
+                  { value: 'EXAMINER', label: 'Phân công cho Giám khảo' }
+                ].find(opt => opt.value === roleType)}
+                onChange={(selected: any) => setRoleType(selected ? selected.value : 'EXAMINER')}
+                isClearable={false}
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+              />
             </div>
             
             <div className="form-group">
               <label className="form-label">
                 Người được phân công ({roleType === 'STATION_MANAGER' ? 'Trưởng trạm' : 'Giám khảo'})
               </label>
-              <select 
-                className="form-control" 
-                value={selectedUser} 
-                onChange={(e) => setSelectedUser(e.target.value)}
-              >
-                <option value="">-- Chọn thành viên --</option>
-                {filteredUsers.map(u => (
-                  <option key={u.id} value={u.id}>{u.name} ({u.username})</option>
-                ))}
-              </select>
+              <Select 
+                options={[{ value: '', label: '-- Chọn thành viên --' }, ...filteredUsers.map(u => ({ value: String(u.id), label: `${u.name} (${u.username})` }))]}
+                value={
+                  selectedUser 
+                    ? { value: selectedUser, label: filteredUsers.find(u => String(u.id) === String(selectedUser)) ? `${filteredUsers.find(u => String(u.id) === String(selectedUser))?.name} (${filteredUsers.find(u => String(u.id) === String(selectedUser))?.username})` : '-- Chọn thành viên --' }
+                    : { value: '', label: '-- Chọn thành viên --' }
+                }
+                onChange={(selected: any) => setSelectedUser(selected ? selected.value : '')}
+                placeholder="Tìm thành viên..."
+                isClearable
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+              />
             </div>
 
             <div className="form-group">
@@ -219,16 +226,18 @@ const AssignmentManager = () => {
 
             <div className="form-group">
               <label className="form-label">Trạm thi</label>
-              <select 
-                className="form-control" 
-                value={selectedTestType} 
-                onChange={(e) => setSelectedTestType(e.target.value)}
-              >
-                <option value="">-- Chọn Trạm thi --</option>
-                {testTypes.map(tt => (
-                  <option key={tt.id} value={tt.id}>{tt.name}</option>
-                ))}
-              </select>
+              <Select 
+                options={[{ value: '', label: '-- Chọn Trạm thi --' }, ...testTypes.map(tt => ({ value: String(tt.id), label: tt.name }))]}
+                value={
+                  selectedTestType 
+                    ? { value: selectedTestType, label: testTypes.find(tt => String(tt.id) === String(selectedTestType))?.name || '-- Chọn Trạm thi --' }
+                    : { value: '', label: '-- Chọn Trạm thi --' }
+                }
+                onChange={(selected: any) => setSelectedTestType(selected ? selected.value : '')}
+                placeholder="Tìm trạm thi..."
+                isClearable
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+              />
             </div>
 
             {roleType === 'EXAMINER' && (
@@ -281,24 +290,43 @@ const AssignmentManager = () => {
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
                 style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
               />
-              <div style={{ width: '180px' }}>
-                <select className="form-control" value={roleFilter} onChange={(e) => { setRoleFilter(e.target.value); setCurrentPage(1); }}>
-                  <option value="all">Tất cả Vai trò</option>
-                  <option value="STATION_MANAGER">Trưởng trạm</option>
-                  <option value="EXAMINER">Giám khảo</option>
-                </select>
+              <div style={{ width: '220px' }}>
+                <Select 
+                  options={[
+                    { value: 'all', label: 'Tất cả Vai trò' },
+                    { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
+                    { value: 'EXAMINER', label: 'Giám khảo' }
+                  ]}
+                  value={[
+                    { value: 'all', label: 'Tất cả Vai trò' },
+                    { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
+                    { value: 'EXAMINER', label: 'Giám khảo' }
+                  ].find(opt => opt.value === roleFilter)}
+                  onChange={(selected: any) => { setRoleFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc Vai trò..."
+                  isClearable={false}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                />
               </div>
-              <div style={{ width: '180px' }}>
-                <select className="form-control" value={courseFilter} onChange={(e) => { setCourseFilter(e.target.value); setCurrentPage(1); }}>
-                  <option value="all">Tất cả Khóa đào tạo</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+              <div style={{ width: '220px' }}>
+                <Select 
+                  options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))]}
+                  value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))].find((opt: any) => opt.value === courseFilter)}
+                  onChange={(selected: any) => { setCourseFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc Khóa đào tạo..."
+                  isClearable={false}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                />
               </div>
-              <div style={{ width: '180px' }}>
-                <select className="form-control" value={testTypeFilter} onChange={(e) => { setTestTypeFilter(e.target.value); setCurrentPage(1); }}>
-                  <option value="all">Tất cả Trạm thi</option>
-                  {testTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
+              <div style={{ width: '220px' }}>
+                <Select 
+                  options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))]}
+                  value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))].find((opt: any) => opt.value === testTypeFilter)}
+                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                  placeholder="Lọc Trạm thi..."
+                  isClearable={false}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                />
               </div>
             </div>
             <div>
