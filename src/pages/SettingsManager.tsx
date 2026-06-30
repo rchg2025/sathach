@@ -247,7 +247,10 @@ const SettingsManager = () => {
             </div>
           </div>
           
-          <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+            <button className="btn" style={{ border: '1px solid #6f42c1', color: '#6f42c1', background: 'white' }} onClick={() => toast.success('Gửi email test thành công! (Mô phỏng)')}>
+              ✉️ Test gửi mail
+            </button>
             <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('SMTP')}>
               ✓ Lưu cấu hình
             </button>
