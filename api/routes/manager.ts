@@ -35,6 +35,13 @@ router.put('/courses/:id', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.delete('/courses/:id', async (req, res) => {
+  try {
+    await prisma.course.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // Vehicle Types CRUD
 router.get('/vehicle-types', async (req, res) => {
   try {
@@ -70,6 +77,13 @@ router.put('/vehicle-types/:id', async (req, res) => {
     if (inspectionExpiry) data.inspectionExpiry = new Date(inspectionExpiry);
     const vehicleType = await prisma.vehicleType.update({ where: { id: Number(id) }, data });
     res.json(vehicleType);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.delete('/vehicle-types/:id', async (req, res) => {
+  try {
+    await prisma.vehicleType.delete({ where: { id: Number(req.params.id) } });
+    res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
@@ -180,6 +194,27 @@ router.delete('/users/:id', async (req, res) => {
   const { id } = req.params;
   try {
     await prisma.user.delete({ where: { id: Number(id) } });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.put('/test-types/:id', async (req, res) => {
+  const { id } = req.params;
+  const { name, description } = req.body;
+  try {
+    const testType = await prisma.testType.update({
+      where: { id: Number(id) },
+      data: { name, description }
+    });
+    res.json(testType);
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.delete('/test-types/:id', async (req, res) => {
+  try {
+    // Delete related criteria first if needed (Prisma cascade delete should handle this if configured, but let's do manual to be safe)
+    await prisma.evaluationCriteria.deleteMany({ where: { testTypeId: Number(req.params.id) }});
+    await prisma.testType.delete({ where: { id: Number(req.params.id) } });
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });

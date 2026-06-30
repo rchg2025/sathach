@@ -7,6 +7,7 @@ import { API_BASE_URL } from '../config';
 const VehicleTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [vehicleTypes, setVehicleTypes] = useState([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
   const [name, setName] = useState('');
@@ -40,23 +41,62 @@ const VehicleTypeManager = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, {
+      const payload = {
         name, description, seats, brand, owner, contractStart, contractEnd, manufacturingYear, inspectionExpiry
-      });
-      toast.success('Thêm xe thành công!');
-      setName('');
-      setDescription('');
-      setSeats('');
-      setBrand('');
-      setOwner('');
-      setContractStart('');
-      setContractEnd('');
-      setManufacturingYear('');
-      setInspectionExpiry('');
+      };
+      
+      if (editingId) {
+        await axios.put(`${API_BASE_URL}/api/manager/vehicle-types/${editingId}`, payload);
+        toast.success('Cập nhật xe thành công!');
+      } else {
+        await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, payload);
+        toast.success('Thêm xe thành công!');
+      }
+      
+      resetForm();
       fetchVehicleTypes();
       setActiveTab('list');
     } catch (err) {
       toast.error('Có lỗi xảy ra!');
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setSeats('');
+    setBrand('');
+    setOwner('');
+    setContractStart('');
+    setContractEnd('');
+    setManufacturingYear('');
+    setInspectionExpiry('');
+    setEditingId(null);
+  };
+
+  const handleEdit = (v: any) => {
+    setEditingId(v.id);
+    setName(v.name);
+    setDescription(v.description || '');
+    setSeats(v.seats?.toString() || '');
+    setBrand(v.brand || '');
+    setOwner(v.owner || '');
+    setContractStart(v.contractStart ? v.contractStart.split('T')[0] : '');
+    setContractEnd(v.contractEnd ? v.contractEnd.split('T')[0] : '');
+    setManufacturingYear(v.manufacturingYear?.toString() || '');
+    setInspectionExpiry(v.inspectionExpiry ? v.inspectionExpiry.split('T')[0] : '');
+    setActiveTab('add');
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa xe này không?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/manager/vehicle-types/${id}`);
+        toast.success('Xóa xe thành công!');
+        fetchVehicleTypes();
+      } catch (err) {
+        toast.error('Lỗi khi xóa xe');
+      }
     }
   };
 
@@ -134,9 +174,9 @@ const VehicleTypeManager = () => {
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => setActiveTab('add')}
+          onClick={() => { resetForm(); setActiveTab('add'); }}
         >
-          Thêm Xe mới
+          {editingId ? 'Sửa Xe' : 'Thêm Xe mới'}
         </div>
       </div>
 
@@ -194,8 +234,8 @@ const VehicleTypeManager = () => {
                     </div>
                   </td>
                   <td>
-                    <button className="action-btn btn-edit">Sửa</button>
-                    <button className="action-btn btn-delete">Xóa</button>
+                    <button className="action-btn btn-edit" onClick={() => handleEdit(v)}>Sửa</button>
+                    <button className="action-btn btn-delete" onClick={() => handleDelete(v.id)}>Xóa</button>
                   </td>
                 </tr>
               )) : (
@@ -244,8 +284,8 @@ const VehicleTypeManager = () => {
       )}
 
       {activeTab === 'add' && (
-        <div className="card" style={{ maxWidth: '600px' }}>
-          <h3 className="mb-4">Thêm Xe mới</h3>
+        <div className="card">
+          <h3 className="mb-4">{editingId ? 'Cập nhật thông tin xe' : 'Thêm Xe mới'}</h3>
           <form onSubmit={handleAdd}>
             <div className="flex" style={{ gap: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>

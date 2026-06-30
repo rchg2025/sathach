@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../config';
 const TestTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [testTypes, setTestTypes] = useState([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
   const [name, setName] = useState('');
@@ -36,16 +37,44 @@ const TestTypeManager = () => {
   const handleAddTestType = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/test-types`, {
-        name, description
-      });
-      toast.success('Thêm loại sát hạch thành công!');
-      setName('');
-      setDescription('');
+      const payload = { name, description };
+      if (editingId) {
+        await axios.put(`${API_BASE_URL}/api/manager/test-types/${editingId}`, payload);
+        toast.success('Cập nhật thành công!');
+      } else {
+        await axios.post(`${API_BASE_URL}/api/manager/test-types`, payload);
+        toast.success('Thêm loại sát hạch thành công!');
+      }
+      resetForm();
       fetchTestTypes();
       setActiveTab('list');
     } catch (err) {
       toast.error('Có lỗi xảy ra!');
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setEditingId(null);
+  };
+
+  const handleEdit = (testType: any) => {
+    setEditingId(testType.id);
+    setName(testType.name);
+    setDescription(testType.description || '');
+    setActiveTab('add');
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa loại sát hạch này không?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/manager/test-types/${id}`);
+        toast.success('Xóa loại sát hạch thành công!');
+        fetchTestTypes();
+      } catch (err) {
+        toast.error('Lỗi khi xóa loại sát hạch');
+      }
     }
   };
 
@@ -79,9 +108,9 @@ const TestTypeManager = () => {
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => setActiveTab('add')}
+          onClick={() => { resetForm(); setActiveTab('add'); }}
         >
-          Thêm loại mới
+          {editingId ? 'Sửa loại sát hạch' : 'Thêm loại mới'}
         </div>
       </div>
 
@@ -120,8 +149,8 @@ const TestTypeManager = () => {
                   <td><span className="badge badge-warning">{type.criteria?.length || 0}</span></td>
                   <td>
                     <button className="action-btn btn-view">Xem/Thêm tiêu chí</button>
-                    <button className="action-btn btn-edit">Sửa</button>
-                    <button className="action-btn btn-delete">Xóa</button>
+                    <button className="action-btn btn-edit" onClick={() => handleEdit(type)}>Sửa</button>
+                    <button className="action-btn btn-delete" onClick={() => handleDelete(type.id)}>Xóa</button>
                   </td>
                 </tr>
               )) : (
@@ -170,8 +199,8 @@ const TestTypeManager = () => {
       )}
 
       {activeTab === 'add' && (
-        <div className="card" style={{ maxWidth: '600px' }}>
-          <h3 className="mb-4">Thêm loại sát hạch mới</h3>
+        <div className="card">
+          <h3 className="mb-4">{editingId ? 'Cập nhật loại sát hạch' : 'Thêm loại sát hạch mới'}</h3>
           <form onSubmit={handleAddTestType}>
             <div className="form-group">
               <label>Tên loại sát hạch (VD: Sa hình, Đường trường)</label>

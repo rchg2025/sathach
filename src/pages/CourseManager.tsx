@@ -8,6 +8,7 @@ import { API_BASE_URL } from '../config';
 const CourseManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [courses, setCourses] = useState([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
   const [name, setName] = useState('');
@@ -38,18 +39,48 @@ const CourseManager = () => {
   const handleAddCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/courses`, {
-        name, description, startDate, endDate
-      });
-      toast.success('Thêm khóa học thành công!');
-      setName('');
-      setDescription('');
-      setStartDate('');
-      setEndDate('');
+      const payload = { name, description, startDate, endDate };
+      if (editingId) {
+        await axios.put(`${API_BASE_URL}/api/manager/courses/${editingId}`, payload);
+        toast.success('Cập nhật khóa học thành công!');
+      } else {
+        await axios.post(`${API_BASE_URL}/api/manager/courses`, payload);
+        toast.success('Thêm khóa học thành công!');
+      }
+      resetForm();
       fetchCourses();
       setActiveTab('list');
     } catch (err) {
       toast.error('Có lỗi xảy ra!');
+    }
+  };
+
+  const resetForm = () => {
+    setName('');
+    setDescription('');
+    setStartDate('');
+    setEndDate('');
+    setEditingId(null);
+  };
+
+  const handleEdit = (course: any) => {
+    setEditingId(course.id);
+    setName(course.name);
+    setDescription(course.description || '');
+    setStartDate(course.startDate ? course.startDate.split('T')[0] : '');
+    setEndDate(course.endDate ? course.endDate.split('T')[0] : '');
+    setActiveTab('add');
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này không?')) {
+      try {
+        await axios.delete(`${API_BASE_URL}/api/manager/courses/${id}`);
+        toast.success('Xóa khóa học thành công!');
+        fetchCourses();
+      } catch (err) {
+        toast.error('Lỗi khi xóa khóa học');
+      }
     }
   };
 
@@ -97,9 +128,9 @@ const CourseManager = () => {
         </div>
         <div 
           className={`tab ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => setActiveTab('add')}
+          onClick={() => { resetForm(); setActiveTab('add'); }}
         >
-          Thêm khóa học mới
+          {editingId ? 'Sửa khóa học' : 'Thêm khóa học mới'}
         </div>
       </div>
 
@@ -152,8 +183,8 @@ const CourseManager = () => {
                   </td>
                   <td>
                     <button className="action-btn btn-view">Xem</button>
-                    <button className="action-btn btn-edit">Sửa</button>
-                    <button className="action-btn btn-delete">Xóa</button>
+                    <button className="action-btn btn-edit" onClick={() => handleEdit(course)}>Sửa</button>
+                    <button className="action-btn btn-delete" onClick={() => handleDelete(course.id)}>Xóa</button>
                   </td>
                 </tr>
               )) : (
@@ -202,8 +233,8 @@ const CourseManager = () => {
       )}
 
       {activeTab === 'add' && (
-        <div className="card" style={{ maxWidth: '600px' }}>
-          <h3 className="mb-4">Thêm khóa học mới</h3>
+        <div className="card">
+          <h3 className="mb-4">{editingId ? 'Cập nhật khóa học' : 'Thêm khóa học mới'}</h3>
           <form onSubmit={handleAddCourse}>
             <div className="form-group">
               <label>Tên khóa học</label>
