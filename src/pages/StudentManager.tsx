@@ -11,7 +11,6 @@ const StudentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [students, setStudents] = useState([]);
-  const [courses, setCourses] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
@@ -45,18 +44,8 @@ const StudentManager = () => {
     }
   };
 
-  const fetchCourses = async () => {
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
-      setCourses(res.data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
     fetchStudents();
-    fetchCourses();
   }, []);
 
   const handleAddStudent = async (e: React.FormEvent) => {
