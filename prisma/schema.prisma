@@ -21,6 +21,7 @@ model User {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   assignments TestAssignment[]
+  managedTests  TestResult[] @relation("StationManagerTests")
 }
 
 model Student {
@@ -135,6 +136,9 @@ model TestResult {
   vehicle     VehicleType? @relation(fields: [vehicleId], references: [id])
   totalScore  Int      @default(100)
   status      String   @default("PENDING") // PENDING, PASSED, FAILED
+  startTime   DateTime?
+  stationManagerId Int?
+  stationManager   User?   @relation("StationManagerTests", fields: [stationManagerId], references: [id])
   scores      Score[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

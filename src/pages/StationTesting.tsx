@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Play, Car } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 
@@ -13,7 +14,7 @@ const StationTesting = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  const [selectedTestType, setSelectedTestType] = useState<number | null>(null);
+  const [selectedTestType, setSelectedTestType] = useState<any>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,7 +56,7 @@ const StationTesting = () => {
     }
     
     setSelectedStudent(student);
-    setSelectedTestType(studentAssignment.testTypeId);
+    setSelectedTestType(studentAssignment.testType);
     setSelectedVehicleId(null);
     setIsModalOpen(true);
   };
@@ -68,8 +69,9 @@ const StationTesting = () => {
     try {
       await axios.post(`${API_BASE_URL}/api/manager/station/start-test`, {
         studentId: selectedStudent.id,
-        testTypeId: selectedTestType,
-        vehicleId: selectedVehicleId
+        testTypeId: selectedTestType?.id,
+        vehicleId: selectedVehicleId,
+        stationManagerId: user.id
       });
       toast.success('Bắt đầu thi thành công. Đã chuyển thông tin tới Giám khảo.');
       setIsModalOpen(false);
@@ -78,12 +80,18 @@ const StationTesting = () => {
       setStudents(prev => prev.map(s => {
         if (s.id === selectedStudent.id) {
           const newTestResults = [...(s.testResults || [])];
-          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === selectedTestType);
+          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === selectedTestType?.id);
+          const trData = {
+            testTypeId: selectedTestType?.id,
+            status: 'IN_PROGRESS',
+            vehicleId: selectedVehicleId,
+            stationManager: user,
+            startTime: new Date().toISOString()
+          };
           if (trIndex > -1) {
-            newTestResults[trIndex].status = 'IN_PROGRESS';
-            newTestResults[trIndex].vehicleId = selectedVehicleId;
+            newTestResults[trIndex] = { ...newTestResults[trIndex], ...trData };
           } else {
-            newTestResults.push({ testTypeId: selectedTestType, status: 'IN_PROGRESS', vehicleId: selectedVehicleId });
+            newTestResults.push(trData);
           }
           return { ...s, testResults: newTestResults };
         }
@@ -107,7 +115,11 @@ const StationTesting = () => {
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
-      return `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
+      let text = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
+      if (inProgress.stationManager && inProgress.startTime) {
+        text += ` - Bắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
+      }
+      return text;
     }
     return 'Đã kết thúc / Đang chờ';
   };
@@ -208,18 +220,22 @@ const StationTesting = () => {
               <h3 className="mb-4">Bắt đầu thi</h3>
               <p>Học viên: <strong>{selectedStudent?.name}</strong></p>
               
+              <div style={{ padding: '10px', background: '#f5f7fa', borderRadius: '4px', marginBottom: '15px' }}>
+                <p style={{ margin: '0 0 5px 0' }}>Trạm thi: <strong>{selectedTestType?.name}</strong></p>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-light)' }}>{selectedTestType?.description}</p>
+              </div>
+
               <div className="form-group mt-3">
-                <label>Chọn Số Xe <Car size={14} style={{ display: 'inline', marginLeft: '5px' }}/></label>
-                <select 
-                  className="form-control" 
-                  value={selectedVehicleId || ''} 
-                  onChange={e => setSelectedVehicleId(Number(e.target.value))}
-                >
-                  <option value="" disabled>-- Chọn xe --</option>
-                  {vehicles.map(v => (
-                    <option key={v.id} value={v.id}>{v.name} {v.brand ? `(${v.brand})` : ''}</option>
-                  ))}
-                </select>
+                <label>Tìm chọn Số Xe <Car size={14} style={{ display: 'inline', marginLeft: '5px' }}/></label>
+                <Select
+                  options={vehicles.map(v => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                  value={vehicles.filter(v => v.id === selectedVehicleId).map(v => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))[0] || null}
+                  onChange={(selectedOption) => setSelectedVehicleId(selectedOption ? selectedOption.value : null)}
+                  placeholder="-- Gõ để tìm xe --"
+                  isClearable
+                  isSearchable
+                  noOptionsMessage={() => "Không tìm thấy xe"}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '1.5rem' }}>

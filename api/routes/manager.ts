@@ -614,7 +614,12 @@ router.get('/station/students', async (req, res) => {
           { courseName: { in: courseNames } }
         ]
       },
-      include: { course: true, testResults: true }
+      include: { 
+        course: true, 
+        testResults: {
+          include: { stationManager: true, vehicle: true }
+        }
+      }
     });
 
     res.json({ students, assignments });
@@ -624,7 +629,7 @@ router.get('/station/students', async (req, res) => {
 });
 
 router.post('/station/start-test', async (req, res) => {
-  const { studentId, testTypeId, vehicleId } = req.body;
+  const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;
   try {
     let testResult = await prisma.testResult.findUnique({
       where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
@@ -633,15 +638,22 @@ router.post('/station/start-test', async (req, res) => {
     if (testResult) {
       testResult = await prisma.testResult.update({
         where: { id: testResult.id },
-        data: { status: 'IN_PROGRESS', vehicleId: Number(vehicleId) }
+        data: { 
+          status: 'IN_PROGRESS', 
+          vehicleId: Number(vehicleId),
+          stationManagerId: stationManagerId ? Number(stationManagerId) : null,
+          startTime: new Date()
+        }
       });
     } else {
       testResult = await prisma.testResult.create({
         data: { 
           studentId: Number(studentId), 
-          testTypeId: Number(testTypeId),
+          testTypeId: Number(testTypeId), 
+          vehicleId: Number(vehicleId),
           status: 'IN_PROGRESS',
-          vehicleId: Number(vehicleId)
+          stationManagerId: stationManagerId ? Number(stationManagerId) : null,
+          startTime: new Date()
         }
       });
     }
