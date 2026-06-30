@@ -265,6 +265,20 @@ const StudentManager = () => {
                         removeAccents(s.courseName || '').includes(keyword);
     const matchCourse = courseFilter === 'all' ? true : s.courseName === courseFilter;
     return matchSearch && matchCourse;
+  }).sort((a: any, b: any) => {
+    const getFirstName = (fullName: string) => {
+      if (!fullName) return '';
+      const parts = fullName.trim().split(' ');
+      return parts[parts.length - 1];
+    };
+    
+    const nameA = removeAccents(getFirstName(a.name)).toLowerCase();
+    const nameB = removeAccents(getFirstName(b.name)).toLowerCase();
+    
+    if (nameA < nameB) return -1;
+    if (nameA > nameB) return 1;
+    
+    return removeAccents(a.name).toLowerCase().localeCompare(removeAccents(b.name).toLowerCase());
   });
   
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
