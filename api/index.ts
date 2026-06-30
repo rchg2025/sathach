@@ -1,4 +1,3 @@
-import express from 'react'; // wait, no, this is backend
 import expressApp from 'express';
 import cors from 'cors';
 
