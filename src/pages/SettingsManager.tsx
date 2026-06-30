@@ -85,7 +85,7 @@ const SettingsManager = () => {
 
   return (
     <AdminLayout user={user}>
-      <div className="container" style={{ maxWidth: '1000px', paddingBottom: '3rem' }}>
+      <div className="container">
         <h2 className="mb-4">Cấu hình Hệ thống</h2>
 
         {/* Tabs Navigation */}

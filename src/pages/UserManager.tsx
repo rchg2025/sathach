@@ -226,7 +226,7 @@ const UserManager = () => {
 
   return (
     <AdminLayout user={user}>
-      <div className="container" style={{ maxWidth: '1200px' }}>
+      <div className="container">
         <div className="flex justify-between items-center mb-4">
           <h2 style={{ margin: 0 }}>Quản lý Thành viên</h2>
           <div style={{ display: 'flex', gap: '10px' }}>

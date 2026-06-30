@@ -254,6 +254,60 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary);
   border-right: 3px solid var(--primary);
 }
+}
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f0f4f8; /* Nhìn màu nền xanh rất nhạt giống ảnh */
+}
+
+.sidebar {
+  width: 260px;
+  background-color: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-header {
+  padding: 2rem 1rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.sidebar-avatar {
+  width: 60px;
+  height: 60px;
+  background-color: #e6f0fa;
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem auto;
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+  flex: 1;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.sidebar-item:hover, .sidebar-item.active {
+  background-color: #e6f0fa;
+  color: var(--primary);
+  border-right: 3px solid var(--primary);
+}
 
 .sidebar-item svg {
   margin-right: 1rem;
@@ -263,6 +317,13 @@ h1, h2, h3, h4, h5, h6 {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
+  width: 100%;
+}
+
+/* Ensure container inside main-content takes full width */
+.main-content .container {
+  max-width: 100%;
+  padding: 0;
 }
 
 /* Dashboard Grid */
@@ -382,4 +443,48 @@ input:disabled + .toggle-slider {
 }
 input:checked + .toggle-slider:before {
   transform: translateX(20px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .main-content {
+    padding: 1rem;
+  }
+  .dashboard-grid.grid-cols-4,
+  .dashboard-grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+  .sidebar-header {
+    padding: 1rem;
+  }
+  .sidebar-nav {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .sidebar-item {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  .tabs {
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .dashboard-grid.grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

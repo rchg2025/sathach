@@ -61,7 +61,7 @@ const Profile = () => {
 
   return (
     <AdminLayout user={user}>
-      <div className="container" style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <div className="container">
         <div className="card">
           <h2 className="mb-4" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
             Hồ sơ Cá nhân
