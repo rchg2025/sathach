@@ -124,9 +124,8 @@ export async function uploadFileToDrive(file: Express.Multer.File): Promise<stri
     supportsAllDrives: true, // Ensure permissions can be updated on Team Drives
   });
 
-  // Return a direct image link format so it can be embedded in <img> tags
-  // Using lh3.googleusercontent.com/d/ is the most reliable way to embed Drive images in 2024
-  return `https://lh3.googleusercontent.com/d/${fileId}`;
+  // Return a relative proxy URL
+  return `/api/manager/drive/image/${fileId}`;
 }
 
 export async function testDriveConnection(clientEmail: string, privateKey: string, folderId: string): Promise<boolean> {
@@ -160,4 +159,55 @@ export async function testDriveConnection(clientEmail: string, privateKey: strin
   } catch (error: any) {
     throw new Error(error.message || 'Lỗi kết nối tới Google Drive API');
   }
+}
+
+export async function getDriveFileStream(fileId: string): Promise<{ stream: any, mimeType: string }> {
+  const settings = await prisma.setting.findMany({
+    where: {
+      key: {
+        in: ['drive_client_email', 'drive_private_key']
+      }
+    }
+  });
+
+  const config = settings.reduce((acc: any, s) => {
+    acc[s.key] = s.value;
+    return acc;
+  }, {});
+
+  const clientEmail = config.drive_client_email;
+  const privateKey = config.drive_private_key;
+
+  if (!clientEmail || !privateKey) {
+    throw new Error('Google Drive configuration is missing');
+  }
+
+  const formattedPrivateKey = formatPrivateKey(privateKey);
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: clientEmail,
+      private_key: formattedPrivateKey,
+    },
+    scopes: ['https://www.googleapis.com/auth/drive.readonly'],
+  });
+
+  const drive = google.drive({ version: 'v3', auth });
+
+  const metadata = await drive.files.get({
+    fileId,
+    fields: 'mimeType',
+    supportsAllDrives: true,
+  });
+
+  const response = await drive.files.get({
+    fileId,
+    alt: 'media',
+    supportsAllDrives: true,
+  }, { responseType: 'stream' });
+
+  return {
+    stream: response.data,
+    mimeType: metadata.data.mimeType || 'image/jpeg',
+  };
 }

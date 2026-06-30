@@ -2,7 +2,7 @@ import { Router } from 'express';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
-import { uploadFileToDrive, testDriveConnection } from '../utils/drive';
+import { uploadFileToDrive, testDriveConnection, getDriveFileStream } from '../utils/drive';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -175,6 +175,23 @@ router.post('/test-drive', async (req, res) => {
     res.json({ success: true, message: 'Kết nối Google Drive thành công!' });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/drive/image/:fileId', async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { stream, mimeType } = await getDriveFileStream(fileId);
+    
+    // Set headers to cache the image and provide the correct content type
+    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    
+    // Pipe the stream directly to the response
+    stream.pipe(res);
+  } catch (error: any) {
+    console.error('Drive Image Proxy Error:', error.message);
+    res.status(404).send('Image not found');
   }
 });
 

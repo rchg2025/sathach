@@ -79,7 +79,11 @@ const SettingsManager = () => {
     toast.promise(uploadPromise, {
       loading: 'Đang tải ảnh lên Google Drive...',
       success: (res) => {
-        setSettings(prev => ({ ...prev, [fieldName]: res.data.url }));
+        let finalUrl = res.data.url;
+        if (finalUrl.startsWith('/api')) {
+          finalUrl = `${API_BASE_URL}${finalUrl}`;
+        }
+        setSettings(prev => ({ ...prev, [fieldName]: finalUrl }));
         return 'Tải ảnh lên thành công!';
       },
       error: (err) => `Lỗi tải ảnh: ${err.response?.data?.error || err.message}`
