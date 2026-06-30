@@ -196,10 +196,10 @@ const StationTesting = () => {
       }
       let line2 = inProgress.startTime ? `Lúc: ${new Date(inProgress.startTime).toLocaleTimeString()}` : '';
       return (
-        <span style={{ display: 'inline-block', textAlign: 'left' }}>
-          {line1}
-          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
+          <span>{line1}</span>
+          {line2 && <span style={{ fontSize: '0.85em', opacity: 0.9, fontWeight: 'normal' }}>{line2}</span>}
+        </div>
       );
     }
     
@@ -214,10 +214,10 @@ const StationTesting = () => {
       if (finished.startTime) line2 += `Bắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
       if (finished.endTime) line2 += ` - Kết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
       return (
-        <span style={{ display: 'inline-block', textAlign: 'left' }}>
-          {line1}
-          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
+          <span>{line1}</span>
+          {line2 && <span style={{ fontSize: '0.85em', opacity: 0.9, fontWeight: 'normal' }}>{line2}</span>}
+        </div>
       );
     }
     
@@ -232,10 +232,10 @@ const StationTesting = () => {
       if (transferred.startTime) line2 += `Bắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
       if (transferred.endTime) line2 += ` - Kết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
       return (
-        <span style={{ display: 'inline-block', textAlign: 'left' }}>
-          {line1}
-          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
-        </span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
+          <span>{line1}</span>
+          {line2 && <span style={{ fontSize: '0.85em', opacity: 0.9, fontWeight: 'normal' }}>{line2}</span>}
+        </div>
       );
     }
     
@@ -321,9 +321,9 @@ const StationTesting = () => {
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     <td>
-                      <span className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (getStudentStatusText(s) === 'Đã chuyển điểm' ? 'badge-success' : 'badge-secondary')}`}>
+                      <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (getStudentStatusText(s) === 'Đã chuyển điểm' ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
                         {getStudentStatus(s)}
-                      </span>
+                      </div>
                     </td>
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>
                       {s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.totalScore ?? '-'}
