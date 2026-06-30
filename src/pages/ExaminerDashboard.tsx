@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import io from 'socket.io-client';
+import axios from 'axios';
 import { API_BASE_URL } from '../config';
-
-const socket = io(API_BASE_URL);
 
 const ExaminerDashboard = () => {
   const navigate = useNavigate();
@@ -18,10 +16,18 @@ const ExaminerDashboard = () => {
     }
   }, [navigate]);
 
-  const handleScore = () => {
-    // Fake event
-    socket.emit('score_updated', { studentId: 1, testTypeId: 1, totalScore: 95 });
-    alert('Đã trừ 5 điểm (Fake Event)');
+  const handleScore = async () => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/examiner/score`, { 
+        studentId: 1, 
+        testTypeId: 1, 
+        score: 95,
+        note: 'Trừ 5 điểm'
+      });
+      alert('Đã cập nhật điểm lên server');
+    } catch (e) {
+      alert('Lỗi cập nhật điểm');
+    }
   };
 
   if (!user) return null;
