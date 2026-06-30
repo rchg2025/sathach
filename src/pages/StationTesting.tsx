@@ -190,35 +190,53 @@ const StationTesting = () => {
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
-      let text = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
-      if (inProgress.stationManager && inProgress.startTime) {
-        text += ` - Bắt đầu bởi ${inProgress.stationManager.name} lúc ${new Date(inProgress.startTime).toLocaleTimeString()}`;
+      let line1 = `Đang thi (${v ? v.name : 'Xe ID ' + inProgress.vehicleId})`;
+      if (inProgress.stationManager) {
+        line1 += ` - Bắt đầu bởi ${inProgress.stationManager.name}`;
       }
-      return text;
+      let line2 = inProgress.startTime ? `Lúc: ${new Date(inProgress.startTime).toLocaleTimeString()}` : '';
+      return (
+        <span style={{ display: 'inline-block', textAlign: 'left' }}>
+          {line1}
+          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
+        </span>
+      );
     }
     
     const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
     if (finished) {
       const v = vehicles.find(v => v.id === finished.vehicleId);
-      let text = `Đã kết thúc ${v ? `(${v.name})` : ''}`;
+      let line1 = `Đã kết thúc ${v ? `(${v.name})` : ''}`;
       if (finished.stationManager) {
-        text += ` - Trưởng trạm: ${finished.stationManager.name}`;
+        line1 += ` - Trưởng trạm: ${finished.stationManager.name}`;
       }
-      if (finished.startTime) text += ` - Bắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
-      if (finished.endTime) text += ` - Kết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
-      return text;
+      let line2 = '';
+      if (finished.startTime) line2 += `Bắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
+      if (finished.endTime) line2 += ` - Kết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
+      return (
+        <span style={{ display: 'inline-block', textAlign: 'left' }}>
+          {line1}
+          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
+        </span>
+      );
     }
     
     const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
     if (transferred) {
       const v = vehicles.find(v => v.id === transferred.vehicleId);
-      let text = `Đã chuyển điểm ${v ? `(${v.name})` : ''}`;
+      let line1 = `Đã chuyển điểm ${v ? `(${v.name})` : ''}`;
       if (transferred.stationManager) {
-        text += ` - Trưởng trạm: ${transferred.stationManager.name}`;
+        line1 += ` - Trưởng trạm: ${transferred.stationManager.name}`;
       }
-      if (transferred.startTime) text += ` - Bắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
-      if (transferred.endTime) text += ` - Kết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
-      return text;
+      let line2 = '';
+      if (transferred.startTime) line2 += `Bắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
+      if (transferred.endTime) line2 += ` - Kết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
+      return (
+        <span style={{ display: 'inline-block', textAlign: 'left' }}>
+          {line1}
+          {line2 && <><br /><span style={{ fontSize: '0.85em', opacity: 0.8 }}>{line2}</span></>}
+        </span>
+      );
     }
     
     return 'Đang chờ';
@@ -303,7 +321,7 @@ const StationTesting = () => {
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     <td>
-                      <span className={`badge ${getStudentStatus(s).includes('Đang thi') ? 'badge-primary' : (getStudentStatus(s).includes('chuyển điểm') ? 'badge-success' : 'badge-secondary')}`}>
+                      <span className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (getStudentStatusText(s) === 'Đã chuyển điểm' ? 'badge-success' : 'badge-secondary')}`}>
                         {getStudentStatus(s)}
                       </span>
                     </td>
@@ -311,7 +329,7 @@ const StationTesting = () => {
                       {s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.totalScore ?? '-'}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      {!getStudentStatus(s).includes('Đang thi') && !getStudentStatus(s).includes('Đã kết thúc') && !getStudentStatus(s).includes('chuyển điểm') && (
+                      {getStudentStatusText(s) === 'Chưa thi' && (
                         <button 
                           className="btn btn-primary" 
                           style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
@@ -320,7 +338,7 @@ const StationTesting = () => {
                           <Play size={16} /> Bắt đầu thi
                         </button>
                       )}
-                      {getStudentStatus(s).includes('Đang thi') && (
+                      {getStudentStatusText(s) === 'Đang thi' && (
                         <button 
                           className="btn" 
                           style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
@@ -333,7 +351,7 @@ const StationTesting = () => {
                           <CheckCircle size={16} /> Kết thúc
                         </button>
                       )}
-                      {getStudentStatus(s).includes('Đã kết thúc') && (
+                      {getStudentStatusText(s) === 'Đã kết thúc' && (
                         <button 
                           className="btn" 
                           style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
