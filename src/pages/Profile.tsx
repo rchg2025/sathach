@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
@@ -10,20 +10,43 @@ const Profile = () => {
     name: '',
     phone: '',
     email: '',
-    password: ''
+    password: '',
+    avatarUrl: ''
   });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const u = localStorage.getItem('user');
     if (u) {
       const parsed = JSON.parse(u);
-      setUser(parsed);
-      setFormData({
-        name: parsed.name || '',
-        phone: parsed.phone || '',
-        email: parsed.email || '',
-        password: ''
-      });
+      
+      // Fetch latest from server
+      axios.get(`${API_BASE_URL}/api/manager/users/${parsed.id}`)
+        .then(res => {
+          const freshUser = { ...parsed, ...res.data };
+          localStorage.setItem('user', JSON.stringify(freshUser));
+          setUser(freshUser);
+          setFormData({
+            name: freshUser.name || '',
+            phone: freshUser.phone || '',
+            email: freshUser.email || '',
+            password: '',
+            avatarUrl: freshUser.avatarUrl || ''
+          });
+        })
+        .catch(err => {
+          console.error('Lỗi lấy thông tin mới nhất', err);
+          // Fallback to local storage if API fails
+          setUser(parsed);
+          setFormData({
+            name: parsed.name || '',
+            phone: parsed.phone || '',
+            email: parsed.email || '',
+            password: '',
+            avatarUrl: parsed.avatarUrl || ''
+          });
+        });
     }
   }, []);
 
@@ -35,7 +58,8 @@ const Profile = () => {
       const payload: any = {
         name: formData.name,
         phone: formData.phone,
-        email: formData.email
+        email: formData.email,
+        avatarUrl: formData.avatarUrl
       };
       if (formData.password) {
         payload.password = formData.password;
@@ -66,6 +90,47 @@ const Profile = () => {
           <h2 className="mb-4" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
             Hồ sơ Cá nhân
           </h2>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '2rem' }}>
+            <div 
+              style={{ width: '120px', height: '120px', borderRadius: '50%', backgroundColor: '#f0f4f8', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', overflow: 'hidden', border: '2px dashed #007bff', position: 'relative' }}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {formData.avatarUrl ? (
+                <img src={formData.avatarUrl.startsWith('/') ? API_BASE_URL + formData.avatarUrl : formData.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              ) : (
+                <span style={{ color: '#007bff', fontSize: '2rem' }}>👤</span>
+              )}
+              <div style={{ position: 'absolute', bottom: 0, background: 'rgba(0,0,0,0.5)', width: '100%', textAlign: 'center', color: 'white', fontSize: '0.8rem', padding: '2px 0' }}>Tải ảnh</div>
+            </div>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{ display: 'none' }} 
+              accept="image/*" 
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const uploadData = new FormData();
+                uploadData.append('file', file);
+                const uploadPromise = axios.post(`${API_BASE_URL}/api/manager/upload`, uploadData, {
+                  headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                toast.promise(uploadPromise, {
+                  loading: 'Đang tải ảnh...',
+                  success: (res) => {
+                    let finalUrl = res.data.url;
+                    if (finalUrl.startsWith('/api')) {
+                      finalUrl = `${API_BASE_URL}${finalUrl}`;
+                    }
+                    setFormData(prev => ({ ...prev, avatarUrl: finalUrl }));
+                    return 'Tải ảnh lên thành công!';
+                  },
+                  error: 'Lỗi tải ảnh'
+                });
+              }} 
+            />
+          </div>
           
           <form onSubmit={handleSubmit}>
             <div className="dashboard-grid grid-cols-2">

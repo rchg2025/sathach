@@ -10,6 +10,7 @@ import {
   Shield,
   UserCircle
 } from 'lucide-react';
+import { API_BASE_URL } from '../config';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -32,8 +33,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
       {/* Sidebar */}
       <aside className="sidebar">
         <div className="sidebar-header">
-          <div className="sidebar-avatar">
-            <Shield size={32} />
+          <div className="sidebar-avatar" style={{ overflow: 'hidden' }}>
+            {user?.avatarUrl ? (
+              <img src={user.avatarUrl.startsWith('/') ? API_BASE_URL + user.avatarUrl : user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <Shield size={32} />
+            )}
           </div>
           <h4 style={{ margin: 0 }}>{user?.name || 'Nguyễn Văn Luyện'}</h4>
           <p className="text-muted" style={{ fontSize: '0.875rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>

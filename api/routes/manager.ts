@@ -79,7 +79,7 @@ router.get('/users', async (req, res) => {
   try {
     const users = await prisma.user.findMany({
       where: { username: { not: 'quantri' } },
-      select: { id: true, username: true, role: true, name: true, phone: true, email: true, isActive: true, createdAt: true },
+      select: { id: true, username: true, role: true, name: true, phone: true, email: true, isActive: true, avatarUrl: true, createdAt: true },
       orderBy: { createdAt: 'desc' }
     });
     res.json(users);
@@ -87,24 +87,35 @@ router.get('/users', async (req, res) => {
 });
 
 router.post('/users', async (req, res) => {
-  const { username, password, role, name, phone, email } = req.body;
+  const { username, password, role, name, phone, email, avatarUrl } = req.body;
   try {
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) return res.status(400).json({ error: 'Tên đăng nhập đã tồn tại' });
     
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { username, password: passwordHash, role, name, phone, email }
+      data: { username, password: passwordHash, role, name, phone, email, avatarUrl }
     });
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive, avatarUrl: user.avatarUrl });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
+router.get('/users/:id', async (req, res) => {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: Number(req.params.id) },
+      select: { id: true, username: true, role: true, name: true, phone: true, email: true, isActive: true, avatarUrl: true, createdAt: true }
+    });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json(user);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
 router.put('/users/:id', async (req, res) => {
   const { id } = req.params;
-  const { name, role, isActive, password, phone, email } = req.body;
+  const { name, role, isActive, password, phone, email, avatarUrl } = req.body;
   try {
-    const data: any = { name, role, isActive, phone, email };
+    const data: any = { name, role, isActive, phone, email, avatarUrl };
     if (password) {
       data.password = await bcrypt.hash(password, 10);
     }
@@ -112,7 +123,7 @@ router.put('/users/:id', async (req, res) => {
       where: { id: Number(id) },
       data
     });
-    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive });
+    res.json({ id: user.id, username: user.username, role: user.role, name: user.name, phone: user.phone, email: user.email, isActive: user.isActive, avatarUrl: user.avatarUrl });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
