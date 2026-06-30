@@ -42,6 +42,21 @@ const ExaminerDashboard = () => {
     }
   };
 
+  const startExam = async (student: any) => {
+    try {
+      await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, {
+        studentId: student.id,
+        testTypeId: student.testResults[0].testTypeId,
+        examId: student.currentExam.id,
+        examinerId: user.id
+      });
+      toast.success('Đã bắt đầu chấm bài thi');
+      fetchData(user.id, false);
+    } catch (e) {
+      toast.error('Lỗi khi bắt đầu chấm');
+    }
+  };
+
   const openGradingModal = async (student: any) => {
     setSelectedStudent(student);
     setErrors({});
@@ -138,39 +153,64 @@ const ExaminerDashboard = () => {
             <thead className="table-light">
               <tr>
                 <th style={{ width: '5%' }}>STT</th>
-                <th style={{ width: '20%' }}>Họ và Tên</th>
-                <th style={{ width: '15%' }}>CCCD</th>
+                <th style={{ width: '15%' }}>Họ và Tên</th>
+                <th style={{ width: '10%' }}>CCCD</th>
+                <th style={{ width: '10%' }}>Số xe</th>
                 <th style={{ width: '15%' }}>Khóa đào tạo</th>
-                <th style={{ width: '20%' }}>Bài thi hiện tại</th>
-                <th style={{ width: '10%' }}>Điểm thi</th>
-                <th style={{ width: '15%', textAlign: 'center' }} className="sticky-col-right">Thao tác</th>
+                <th style={{ width: '15%' }}>Bài thi hiện tại</th>
+                <th style={{ width: '15%' }}>Trạng thái</th>
+                <th style={{ width: '5%' }}>Điểm thi</th>
+                <th style={{ width: '10%', textAlign: 'center' }} className="sticky-col-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
               {filteredStudents.length === 0 ? (
-                <tr><td colSpan={7} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
+                <tr><td colSpan={9} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
               ) : filteredStudents.map((s: any, index: number) => {
                 const tr = s.testResults?.find((r: any) => r.id === s.testResultId);
                 const score = tr ? tr.totalScore : 100;
+                
+                let statusInfo = <span className="text-muted">Đang chờ chấm...</span>;
+                if (s.currentProgress && s.currentProgress.status === 'IN_PROGRESS') {
+                  const startTimeStr = s.currentProgress.startTime ? new Date(s.currentProgress.startTime).toLocaleTimeString() : '';
+                  statusInfo = (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: '1.2' }}>
+                      <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Đang chấm</span>
+                      {startTimeStr && <span style={{ fontSize: '0.85em', opacity: 0.9 }}>Bắt đầu: {startTimeStr}</span>}
+                    </div>
+                  );
+                }
+                
                 return (
                   <tr key={s.id}>
                     <td>{index + 1}</td>
                     <td style={{ fontWeight: '600' }}>{s.name}</td>
                     <td>{s.cccd}</td>
+                    <td><span className="badge badge-info">{s.vehicle?.name || '-'}</span></td>
                     <td>{s.course?.name || s.courseName || '-'}</td>
                     <td>
                       <div className="badge badge-primary" style={{ display: 'inline-flex', padding: '0.4rem 0.6rem', fontSize: '0.9rem' }}>
                         {s.currentExam?.name || '-'}
                       </div>
                     </td>
+                    <td>{statusInfo}</td>
                     <td style={{ fontWeight: 'bold' }}>{score}</td>
                     <td className="sticky-col-right" style={{ textAlign: 'center' }}>
-                      <button 
-                        className="btn btn-primary btn-sm rounded-pill px-3"
-                        onClick={() => openGradingModal(s)}
-                      >
-                        <Play size={16} className="me-1" /> Chấm điểm
-                      </button>
+                      {(!s.currentProgress || s.currentProgress.status === 'PENDING') ? (
+                        <button 
+                          className="btn btn-warning btn-sm rounded-pill px-3"
+                          onClick={() => startExam(s)}
+                        >
+                          Bắt đầu chấm
+                        </button>
+                      ) : (
+                        <button 
+                          className="btn btn-primary btn-sm rounded-pill px-3"
+                          onClick={() => openGradingModal(s)}
+                        >
+                          <Play size={16} className="me-1" /> Chấm điểm
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

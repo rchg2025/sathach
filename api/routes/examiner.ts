@@ -35,7 +35,8 @@ router.get('/students', async (req, res) => {
       },
       include: {
         student: { include: { testResults: true, course: true } },
-        progress: true
+        progress: true,
+        vehicle: true
       }
     });
 
@@ -51,8 +52,14 @@ router.get('/students', async (req, res) => {
 
       // If there is a next exam, check if the current examiner is assigned to it
       if (nextExam && nextExam.assignments.some(a => a.examinerId === examinerId)) {
-        // We append the `nextExam` info to the student object so the frontend knows WHICH exam to grade.
-        const studentData = { ...result.student, currentExam: nextExam, testResultId: result.id };
+        const currentProgress = result.progress.find((p: any) => p.examId === nextExam.id);
+        const studentData = { 
+          ...result.student, 
+          currentExam: nextExam, 
+          testResultId: result.id,
+          vehicle: result.vehicle,
+          currentProgress 
+        };
         studentsForExaminer.push(studentData);
       }
     }
@@ -74,6 +81,42 @@ router.get('/criteria/:examId', async (req, res) => {
   } catch (error) { 
     console.error(error);
     res.status(500).json({ error: 'Server error' }); 
+  }
+});
+
+// Start exam grading
+router.post('/start-exam', async (req, res) => {
+  const { studentId, testTypeId, examId, examinerId } = req.body;
+  try {
+    let result = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) }
+    });
+    if (!result) return res.status(404).json({ error: 'TestResult not found' });
+
+    const progress = await prisma.examProgress.upsert({
+      where: {
+        testResultId_examId: {
+          testResultId: result.id,
+          examId: Number(examId)
+        }
+      },
+      update: {
+        status: 'IN_PROGRESS',
+        examinerId: Number(examinerId),
+        startTime: new Date()
+      },
+      create: {
+        testResultId: result.id,
+        examId: Number(examId),
+        examinerId: Number(examinerId),
+        status: 'IN_PROGRESS',
+        startTime: new Date()
+      }
+    });
+    res.json({ success: true, progress });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -99,13 +142,15 @@ router.post('/submit-exam', async (req, res) => {
       },
       update: {
         status: 'COMPLETED',
-        examinerId: Number(examinerId)
+        examinerId: Number(examinerId),
+        endTime: new Date()
       },
       create: {
         testResultId: result.id,
         examId: Number(examId),
         examinerId: Number(examinerId),
-        status: 'COMPLETED'
+        status: 'COMPLETED',
+        endTime: new Date()
       }
     });
 

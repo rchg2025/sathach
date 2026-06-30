@@ -176,7 +176,9 @@ model ExamProgress {
   exam         Exam       @relation(fields: [examId], references: [id])
   examinerId   Int
   examiner     User       @relation(fields: [examinerId], references: [id])
-  status       String     @default("PENDING") // PENDING, COMPLETED
+  status       String     @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  startTime    DateTime?
+  endTime      DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
   
