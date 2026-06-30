@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
@@ -149,6 +149,85 @@ const VehicleTypeManager = () => {
     return dateFormatted;
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleDownloadSample = () => {
+    const data = [
+      {
+        "Biển số/Tên xe": "51G-123.45",
+        "Mô tả": "Xe thi bằng B2",
+        "Số chỗ ngồi": "5",
+        "Hãng xe": "Toyota Vios",
+        "Chủ sở hữu": "TT Đào tạo Lái xe",
+        "Năm sản xuất": "2020",
+        "Ngày bắt đầu HĐ (YYYY-MM-DD)": "2023-01-01",
+        "Ngày kết thúc HĐ (YYYY-MM-DD)": "2028-12-31",
+        "Hạn kiểm định (YYYY-MM-DD)": "2024-10-15"
+      }
+    ];
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "DanhSachXe");
+    XLSX.writeFile(wb, "Mau_Nhap_Xe.xlsx");
+  };
+
+  const handleImportExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const data = XLSX.utils.sheet_to_json(ws);
+
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const row of data as any[]) {
+          const name = row['Biển số/Tên xe'] || row['Biển số'] || row['Tên xe'];
+          if (!name) {
+            errorCount++;
+            continue;
+          }
+
+          const payload = {
+            name: String(name),
+            description: row['Mô tả'] || '',
+            seats: row['Số chỗ ngồi']?.toString() || '',
+            brand: row['Hãng xe'] || '',
+            owner: row['Chủ sở hữu'] || '',
+            manufacturingYear: row['Năm sản xuất']?.toString() || '',
+            contractStart: row['Ngày bắt đầu HĐ (YYYY-MM-DD)'] || '',
+            contractEnd: row['Ngày kết thúc HĐ (YYYY-MM-DD)'] || '',
+            inspectionExpiry: row['Hạn kiểm định (YYYY-MM-DD)'] || '',
+          };
+
+          try {
+            await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, payload);
+            successCount++;
+          } catch (err) {
+            errorCount++;
+          }
+        }
+
+        toast.success(`Import thành công ${successCount} xe. Lỗi: ${errorCount}`);
+        fetchVehicleTypes();
+      } catch (err) {
+        toast.error('Lỗi khi đọc file Excel');
+      }
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
+  };
+
+
   const filteredVehicles = vehicleTypes.filter((v: any) => {
     const keyword = removeAccents(searchKeyword);
     const matchSearch = removeAccents(v.name).includes(keyword) || 
@@ -227,9 +306,24 @@ const VehicleTypeManager = () => {
                 <option value="45">45 chỗ</option>
               </select>
             </div>
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
-              <span>📥 Xuất Excel</span>
-            </button>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <input 
+                type="file" 
+                accept=".xlsx, .xls" 
+                style={{ display: 'none' }} 
+                ref={fileInputRef}
+                onChange={handleImportExcel}
+              />
+              <button className="btn" style={{ background: '#10b981', color: 'white' }} onClick={() => fileInputRef.current?.click()}>
+                Nhập Excel
+              </button>
+              <button className="btn" style={{ background: '#6366f1', color: 'white' }} onClick={handleDownloadSample}>
+                Tải file mẫu
+              </button>
+              <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>📥 Xuất Excel</span>
+              </button>
+            </div>
           </div>
           
           <table className="table">
