@@ -18,7 +18,7 @@ router.get('/students', async (req, res) => {
         examinerId,
         OR: [
           { assignmentDate: null },
-          { assignmentDate: todayUtcMidnight }
+          { assignmentDate: { gte: todayUtcMidnight } }
         ]
       },
       include: { vehicles: true }

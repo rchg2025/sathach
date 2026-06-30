@@ -682,7 +682,7 @@ router.get('/station/students', async (req, res) => {
         examinerId: Number(examinerId),
         OR: [
           { assignmentDate: null },
-          { assignmentDate: todayUtcMidnight }
+          { assignmentDate: { gte: todayUtcMidnight } }
         ]
       },
       include: { testType: true, course: true, vehicles: true }
