@@ -112,6 +112,54 @@ router.post('/vehicle-types', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.post('/vehicle-types/bulk-import', async (req, res) => {
+  const { vehicles } = req.body;
+  if (!Array.isArray(vehicles)) return res.status(400).json({ error: 'Invalid data' });
+
+  let successCount = 0;
+  let errorCount = 0;
+
+  for (const v of vehicles) {
+    try {
+      const { name, description, seats, brand, owner, manufacturingYear, inspectionExpiry, contractStart, contractEnd } = v;
+      if (!name) {
+        errorCount++;
+        continue;
+      }
+
+      const data: any = { name: String(name), description: description || '' };
+      if (seats) data.seats = Number(seats);
+      if (brand) data.brand = String(brand);
+      if (owner) data.owner = String(owner);
+      if (manufacturingYear) data.manufacturingYear = Number(manufacturingYear);
+      
+      // handle dates
+      if (inspectionExpiry && !isNaN(new Date(inspectionExpiry).getTime())) {
+        data.inspectionExpiry = new Date(inspectionExpiry);
+      }
+      if (contractStart && !isNaN(new Date(contractStart).getTime())) {
+        data.contractStart = new Date(contractStart);
+      }
+      if (contractEnd && !isNaN(new Date(contractEnd).getTime())) {
+        data.contractEnd = new Date(contractEnd);
+      }
+
+      const existing = await prisma.vehicleType.findFirst({ where: { name: String(name) } });
+      if (existing) {
+        await prisma.vehicleType.update({ where: { id: existing.id }, data });
+      } else {
+        await prisma.vehicleType.create({ data });
+      }
+      successCount++;
+    } catch (err) {
+      console.error('Import error for vehicle:', v.name, err);
+      errorCount++;
+    }
+  }
+
+  res.json({ successCount, errorCount });
+});
+
 router.put('/vehicle-types/:id', async (req, res) => {
   const { id } = req.params;
   const { isActive, manufacturingYear, inspectionExpiry } = req.body;

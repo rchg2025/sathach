@@ -182,19 +182,16 @@ const VehicleTypeManager = () => {
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsname = wb.SheetNames[0];
         const ws = wb.Sheets[wsname];
-        const data = XLSX.utils.sheet_to_json(ws);
+        // Parse the sheet using raw: false to get formatted dates
+        const data = XLSX.utils.sheet_to_json(ws, { raw: false });
 
-        let successCount = 0;
-        let errorCount = 0;
+        const vehiclesToImport = [];
 
         for (const row of data as any[]) {
           const name = row['Biển số/Tên xe'] || row['Biển số'] || row['Tên xe'];
-          if (!name) {
-            errorCount++;
-            continue;
-          }
+          if (!name) continue;
 
-          const payload = {
+          vehiclesToImport.push({
             name: String(name),
             description: row['Mô tả'] || '',
             seats: row['Số chỗ ngồi']?.toString() || '',
@@ -204,18 +201,20 @@ const VehicleTypeManager = () => {
             contractStart: row['Ngày bắt đầu HĐ (YYYY-MM-DD)'] || '',
             contractEnd: row['Ngày kết thúc HĐ (YYYY-MM-DD)'] || '',
             inspectionExpiry: row['Hạn kiểm định (YYYY-MM-DD)'] || '',
-          };
-
-          try {
-            await axios.post(`${API_BASE_URL}/api/manager/vehicle-types`, payload);
-            successCount++;
-          } catch (err) {
-            errorCount++;
-          }
+          });
         }
 
-        toast.success(`Import thành công ${successCount} xe. Lỗi: ${errorCount}`);
-        fetchVehicleTypes();
+        if (vehiclesToImport.length > 0) {
+          try {
+            const res = await axios.post(`${API_BASE_URL}/api/manager/vehicle-types/bulk-import`, { vehicles: vehiclesToImport });
+            toast.success(`Đã cập nhật/thêm mới ${res.data.successCount} xe. Lỗi: ${res.data.errorCount}`);
+            fetchVehicleTypes();
+          } catch (err) {
+            toast.error('Có lỗi xảy ra khi import lên máy chủ');
+          }
+        } else {
+          toast.error('Không tìm thấy dữ liệu hợp lệ trong file');
+        }
       } catch (err) {
         toast.error('Lỗi khi đọc file Excel');
       }
