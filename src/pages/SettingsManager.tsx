@@ -306,7 +306,17 @@ const SettingsManager = () => {
           <div className="form-group">
             <label>Google Client ID</label>
             <input type="text" className="form-control" name="google_client_id" value={settings.google_client_id} onChange={handleChange} placeholder="VD: 123456789-abc.apps.googleusercontent.com" />
-            <small className="text-muted mt-1" style={{ display: 'block' }}>Lấy mã Client ID từ Google Cloud Console (OAuth 2.0 Client IDs)</small>
+          </div>
+
+          <div style={{ background: '#f8f9fa', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #db4437', marginTop: '15px', fontSize: '0.9rem' }}>
+            <h5 style={{ margin: '0 0 10px 0', color: '#333' }}>Hướng dẫn thiết lập Google OAuth:</h5>
+            <ul style={{ paddingLeft: '20px', marginBottom: 0, color: '#555' }}>
+              <li>Truy cập <b>Google Cloud Console</b> và tạo dự án mới.</li>
+              <li>Vào mục <b>APIs & Services</b> &gt; <b>Credentials</b>, tạo một <b>OAuth client ID</b> (Loại Web application).</li>
+              <li>Ở phần <b>Authorized JavaScript origins</b> (Nguồn gốc JS), hãy thêm: <code>https://sathach.vercel.app</code> và <code>http://localhost:5173</code></li>
+              <li>Phần <b>Authorized redirect URIs</b> có thể để trống hoặc điền URL trang web.</li>
+              <li>Copy chuỗi <b>Client ID</b> và dán vào ô bên trên để hoàn tất.</li>
+            </ul>
           </div>
           
           <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
