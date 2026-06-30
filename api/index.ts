@@ -9,7 +9,8 @@ import studentRoutes from './routes/student';
 const app = expressApp();
 
 app.use(cors());
-app.use(expressApp.json());
+app.use(expressApp.json({ limit: '50mb' }));
+app.use(expressApp.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/manager', managerRoutes);
