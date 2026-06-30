@@ -187,6 +187,23 @@ h1, h2, h3, h4, h5, h6 {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+.sticky-col-right {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background-color: var(--surface) !important;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+}
+
+.table th.sticky-col-right {
+  background-color: #f2f7fd !important;
+  z-index: 2;
+}
+
+.table tr:hover td.sticky-col-right {
+  background-color: #fafafa !important;
+}
+
 /* Badges */
 .badge {
   padding: 0.25em 0.6em;

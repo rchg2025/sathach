@@ -310,7 +310,7 @@ const StationTesting = () => {
                   <th>Khóa đào tạo</th>
                   <th>Trạng thái</th>
                   <th style={{ textAlign: 'center' }}>Điểm thi</th>
-                  <th style={{ textAlign: 'right' }}>Thao tác</th>
+                  <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -328,7 +328,7 @@ const StationTesting = () => {
                     <td style={{ textAlign: 'center', fontWeight: 'bold', color: s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>
                       {s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.totalScore ?? '-'}
                     </td>
-                    <td style={{ textAlign: 'right' }}>
+                    <td className="sticky-col-right" style={{ textAlign: 'right' }}>
                       {getStudentStatusText(s) === 'Chưa thi' && (
                         <button 
                           className="btn btn-primary" 
