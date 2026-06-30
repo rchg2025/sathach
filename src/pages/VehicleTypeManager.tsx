@@ -339,7 +339,7 @@ const VehicleTypeManager = () => {
                 <th>Hạn GĐK</th>
                 <th>Hạn Hợp Đồng</th>
                 <th>Trạng thái</th>
-                <th>Hành động</th>
+                <th className="sticky-col-right">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -365,13 +365,13 @@ const VehicleTypeManager = () => {
                       </span>
                     </div>
                   </td>
-                  <td>
+                  <td className="sticky-col-right">
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(v)}><Edit size={16} /></button>
                       <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(v.id)}><Trash2 size={16} /></button>
                     </div>
                   </td>
-                </tr>
+                  </tr>
               )) : (
                 <tr>
                   <td colSpan={10} className="text-center text-muted" style={{ padding: '2rem' }}>

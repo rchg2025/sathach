@@ -157,7 +157,7 @@ const TestTypeManager = () => {
                 <th>Mô tả</th>
                 <th>Điểm tối đa</th>
                 <th>Điểm đạt</th>
-                <th>Hành động</th>
+                <th className="sticky-col-right">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -168,13 +168,13 @@ const TestTypeManager = () => {
                   <td>{type.description || '-'}</td>
                   <td><span className="badge badge-info">{type.maxScore || 100}</span></td>
                   <td><span className="badge badge-success">{type.passingScore || 80}</span></td>
-                  <td>
+                  <td className="sticky-col-right">
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(type)}><Edit size={16} /></button>
                       <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(type.id)}><Trash2 size={16} /></button>
                     </div>
                   </td>
-                </tr>
+                  </tr>
               )) : (
                 <tr>
                   <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>

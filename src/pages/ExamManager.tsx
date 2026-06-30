@@ -185,7 +185,7 @@ const ExamManager = () => {
                 <th>Thuộc Trạm thi</th>
                 <th>Mô tả</th>
                 <th>Số lượng tiêu chí</th>
-                <th>Hành động</th>
+                <th className="sticky-col-right">Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -196,13 +196,13 @@ const ExamManager = () => {
                   <td><span className="badge badge-info">{exam.testType?.name}</span></td>
                   <td>{exam.description || '-'}</td>
                   <td><span className="badge badge-warning">{exam.criteria?.length || 0}</span></td>
-                  <td>
+                  <td className="sticky-col-right">
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(exam)}><Edit size={16} /></button>
                       <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(exam.id)}><Trash2 size={16} /></button>
                     </div>
                   </td>
-                </tr>
+                  </tr>
               )) : (
                 <tr>
                   <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
