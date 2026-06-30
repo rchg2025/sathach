@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import Login from './pages/Login';
 import StudentSearch from './pages/StudentSearch';
