@@ -21,8 +21,12 @@ const Login = () => {
       } else if (res.data.user.role === 'EXAMINER') {
         navigate('/examiner');
       }
-    } catch (err) {
-      setError('Tên đăng nhập hoặc mật khẩu không đúng');
+    } catch (err: any) {
+      if (err.response && err.response.data && err.response.data.error) {
+        setError(err.response.data.error);
+      } else {
+        setError('Lỗi kết nối máy chủ. Vui lòng thử lại sau.');
+      }
     }
   };
 
