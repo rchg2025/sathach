@@ -82,9 +82,10 @@ const StudentSearch = () => {
   }, []);
 
   return (
-    <div className="container" style={{ maxWidth: '600px', margin: '3rem auto' }}>
+    <div className="container" style={{ maxWidth: '1080px', margin: '3rem auto' }}>
       <div className="card text-center shadow-lg" style={{ borderTop: '4px solid var(--primary)' }}>
-        <h2>Tra Cứu Kết Quả Sát Hạch</h2>
+        <img src="/logo.jpg" alt="Logo" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px' }} />
+        <h2>Hệ thống chấm thi thực hành lái xe</h2>
         <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp (Real-time)</p>
         
         <form onSubmit={handleSearch} className="mb-4">
@@ -142,17 +143,51 @@ const StudentSearch = () => {
                     </div>
                   </div>
 
-                  {result.scores && result.scores.length > 0 && (
+                  {result.progress && result.progress.length > 0 && (
                     <div className="mt-4">
-                      <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Lịch sử trừ điểm:</h5>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {result.scores.map((score: any) => (
-                          <li key={score.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px dashed var(--border)' }}>
-                            <span>{score.criterion?.name}</span>
-                            <span className="text-danger">-{score.criterion?.pointsToDeduct} điểm</span>
-                          </li>
-                        ))}
-                      </ul>
+                      <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '0.5rem' }}>Chi tiết các bài thi:</h5>
+                      <div className="table-responsive">
+                        <table className="table table-bordered text-sm">
+                          <thead className="table-light">
+                            <tr>
+                              <th>Tên bài thi (Trạm)</th>
+                              <th>Giám khảo</th>
+                              <th>Trạng thái</th>
+                              <th>Điểm trừ</th>
+                              <th>Chi tiết lỗi</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {result.progress.map((prog: any) => {
+                              const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
+                              const pointsDeducted = examScores.reduce((sum: number, s: any) => sum + (s.criterion?.pointsToDeduct * s.timesDeducted), 0);
+                              return (
+                                <tr key={prog.id}>
+                                  <td><strong>{prog.exam?.name}</strong></td>
+                                  <td>{prog.examiner?.name || '-'}</td>
+                                  <td>
+                                    {prog.status === 'COMPLETED' ? <span className="text-success">Đã qua</span> : 
+                                     prog.status === 'IN_PROGRESS' ? <span className="text-warning">Đang thi</span> : 
+                                     <span className="text-muted">Chờ</span>}
+                                  </td>
+                                  <td className={pointsDeducted > 0 ? 'text-danger font-bold' : ''}>
+                                    {pointsDeducted > 0 ? `-${pointsDeducted}` : '0'}
+                                  </td>
+                                  <td>
+                                    {examScores.length > 0 ? (
+                                      <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                                        {examScores.map((s: any) => (
+                                          <li key={s.id}>{s.criterion?.name} (x{s.timesDeducted})</li>
+                                        ))}
+                                      </ul>
+                                    ) : '-'}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
                     </div>
                   )}
                 </div>

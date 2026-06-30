@@ -10,9 +10,16 @@ router.get('/lookup/:cccd', async (req, res) => {
     const student = await prisma.student.findUnique({
       where: { cccd },
       include: {
+        course: true,
         testResults: {
           include: {
             testType: true,
+            progress: {
+              include: {
+                exam: true,
+                examiner: true
+              }
+            },
             scores: {
               include: {
                 criterion: true
