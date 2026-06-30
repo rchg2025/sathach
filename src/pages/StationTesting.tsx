@@ -170,7 +170,6 @@ const StationTesting = () => {
 
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
-    const tr = student.testResults[student.testResults.length - 1]; // Assume latest
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
     const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');

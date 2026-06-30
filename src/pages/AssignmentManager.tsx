@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
-import { Trash2, Download } from 'lucide-react';
+import { Trash2, Download, Edit } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import ConfirmModal from '../components/ConfirmModal';
@@ -460,7 +460,7 @@ const AssignmentManager = () => {
                   <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
                   <td style={{ textAlign: 'center' }}>
                     <button className="action-btn btn-edit" onClick={() => handleEdit(a)} title="Sửa phân công" style={{ marginRight: '8px' }}>
-                      <span className="material-icons" style={{ fontSize: '18px' }}>edit</span>
+                      <Edit size={16} />
                     </button>
                     <button className="action-btn btn-delete" onClick={() => handleDelete(a.id)} title="Xóa phân công">
                       <Trash2 size={16} />
