@@ -49,6 +49,12 @@ const UserManager = () => {
 
   const applyFilters = (data: any[], search: string, role: string, status: string) => {
     let filtered = data;
+    
+    // Chỉ ADMIN mới nhìn thấy tài khoản ADMIN
+    if (user?.role !== 'ADMIN') {
+      filtered = filtered.filter(u => u.role !== 'ADMIN');
+    }
+
     if (search) {
       const s = search.toLowerCase();
       filtered = filtered.filter(u => 
@@ -263,7 +269,7 @@ const UserManager = () => {
               <div style={{ width: '150px' }}>
                 <select className="form-control" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
                   <option value="ALL">Tất cả Quyền</option>
-                  <option value="ADMIN">Admin</option>
+                  {user?.role === 'ADMIN' && <option value="ADMIN">Admin</option>}
                   <option value="STATION_MANAGER">Trưởng trạm</option>
                   <option value="MANAGER">Quản lý</option>
                   <option value="EXAMINER">Giám khảo</option>
