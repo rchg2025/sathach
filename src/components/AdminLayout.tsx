@@ -56,19 +56,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <Car size={20} /> Sát hạch
             </Link>
           )}
-          <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`}>
-            <BookOpen size={20} /> Quản lý Danh mục
-          </Link>
-          <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`}>
-            <Users size={20} /> Quản lý Học viên
-          </Link>
-          <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`}>
-            <Users size={20} /> Phân công Giám khảo
-          </Link>
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-            <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`}>
-              <Shield size={20} /> Quản lý Thành viên
-            </Link>
+            <>
+              <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`}>
+                <BookOpen size={20} /> Quản lý Danh mục
+              </Link>
+              <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`}>
+                <Users size={20} /> Quản lý Học viên
+              </Link>
+              <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`}>
+                <Users size={20} /> Phân công Giám khảo
+              </Link>
+              <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`}>
+                <Shield size={20} /> Quản lý Thành viên
+              </Link>
+            </>
           )}
           <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`}>
             <UserCircle size={20} /> Hồ sơ cá nhân
