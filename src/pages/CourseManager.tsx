@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
+import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
 const CourseManager = () => {
@@ -34,7 +35,7 @@ const CourseManager = () => {
       await axios.post(`${API_BASE_URL}/api/manager/courses`, {
         name, description, startDate, endDate
       });
-      alert('Thêm khóa học thành công!');
+      toast.success('Thêm khóa học thành công!');
       setName('');
       setDescription('');
       setStartDate('');
@@ -42,7 +43,7 @@ const CourseManager = () => {
       fetchCourses();
       setActiveTab('list');
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast.error('Có lỗi xảy ra!');
     }
   };
 

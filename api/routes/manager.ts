@@ -111,4 +111,12 @@ router.put('/users/:id', async (req, res) => {
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
+router.delete('/users/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.user.delete({ where: { id: Number(id) } });
+    res.json({ success: true });
+  } catch (error) { res.status(500).json({ error: 'Server error' }); }
+});
+
 export default router;

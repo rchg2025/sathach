@@ -1,5 +1,6 @@
 
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import Login from './pages/Login';
 import StudentSearch from './pages/StudentSearch';
 import ManagerDashboard from './pages/ManagerDashboard';
@@ -29,6 +30,7 @@ const PublicHeader = () => {
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-right" />
       <PublicHeader />
       <Routes>
         <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />

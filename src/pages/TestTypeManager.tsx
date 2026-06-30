@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
+import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 
 const TestTypeManager = () => {
@@ -32,13 +33,13 @@ const TestTypeManager = () => {
       await axios.post(`${API_BASE_URL}/api/manager/test-types`, {
         name, description
       });
-      alert('Thêm loại sát hạch thành công!');
+      toast.success('Thêm loại sát hạch thành công!');
       setName('');
       setDescription('');
       fetchTestTypes();
       setActiveTab('list');
     } catch (err) {
-      alert('Có lỗi xảy ra!');
+      toast.error('Có lỗi xảy ra!');
     }
   };
 

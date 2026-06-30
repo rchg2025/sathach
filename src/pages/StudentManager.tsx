@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
@@ -40,12 +41,12 @@ const StudentManager = () => {
     e.preventDefault();
     try {
       await axios.post(`${API_BASE_URL}/api/manager/students`, formData);
-      alert('Thêm học viên thành công!');
+      toast.success('Thêm học viên thành công!');
       setFormData({ cccd: '', name: '', dob: '', courseId: courses.length > 0 ? courses[0].id.toString() : '' });
       setActiveTab('list');
       fetchData();
     } catch (e: any) { 
-      alert(e.response?.data?.error || 'Lỗi thêm học viên');
+      toast.error(e.response?.data?.error || 'Lỗi thêm học viên');
     }
   };
 

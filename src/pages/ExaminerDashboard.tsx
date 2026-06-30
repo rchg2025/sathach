@@ -1,3 +1,4 @@
+import toast from 'react-hot-toast';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -88,7 +89,7 @@ const ExaminerDashboard = () => {
         return s;
       }));
     } catch (e) {
-      alert('Lỗi cập nhật điểm. Vui lòng kiểm tra mạng.');
+      toast.error('Lỗi cập nhật điểm. Vui lòng kiểm tra mạng.');
     } finally {
       setIsSubmitting(false);
     }
