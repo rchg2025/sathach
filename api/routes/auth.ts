@@ -26,7 +26,7 @@ router.post('/login', async (req, res) => {
       } 
     });
     if (!user) return res.status(401).json({ error: 'Tên đăng nhập, email hoặc mật khẩu không đúng' });
-    if (!user.isActive) return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa' });
+    if (!user.isActive) return res.status(403).json({ error: 'Tài khoản bạn đang bị khóa vui lòng liên hệ quản trị viên để được hướng dẫn.' });
 
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(401).json({ error: 'Tên đăng nhập, email hoặc mật khẩu không đúng' });
@@ -62,7 +62,7 @@ router.post('/google-login', async (req, res) => {
     const user = await prisma.user.findFirst({ where: { email } });
     
     if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản nào gắn với email này' });
-    if (!user.isActive) return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa' });
+    if (!user.isActive) return res.status(403).json({ error: 'Tài khoản bạn đang bị khóa vui lòng liên hệ quản trị viên để được hướng dẫn.' });
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
     
