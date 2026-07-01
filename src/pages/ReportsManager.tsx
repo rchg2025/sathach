@@ -182,7 +182,7 @@ const ReportsManager = () => {
           @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
-            .sidebar { display: none !important; }
+            .sidebar, .mobile-header { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
             body { background: white !important; }
             .card { box-shadow: none !important; border: none !important; background: transparent !important; }
@@ -269,7 +269,7 @@ const ReportsManager = () => {
             </div>
           </div>
           
-          <div style={{ overflowX: 'auto' }}>
+          <div className="no-print" style={{ overflowX: 'auto' }}>
             <table className="table" style={{ margin: 0 }}>
               <thead>
                 <tr>
