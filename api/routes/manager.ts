@@ -146,9 +146,7 @@ router.delete('/courses/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Vehicle Types CRUD
 router.get('/vehicle-types', async (req, res) => {
@@ -257,9 +255,7 @@ router.delete('/vehicle-types/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Test Types CRUD
 router.get('/test-types', async (req, res) => {
@@ -325,9 +321,7 @@ router.delete('/criteria/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Exams CRUD
 router.get('/exams', async (req, res) => {
@@ -381,10 +375,7 @@ router.delete('/exams/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    await prisma.exam.delete({ where: { id: Number(req.params.id) } });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Students
 router.post('/students', async (req, res) => {
@@ -507,9 +498,7 @@ router.delete('/assignments/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Users Management
 router.get('/users', async (req, res) => {
@@ -584,9 +573,7 @@ router.delete('/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 router.put('/test-types/:id', async (req, res) => {
   const { id } = req.params;
@@ -637,14 +624,7 @@ router.delete('/test-types/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    for (const exam of exams) {
-      await prisma.criterion.deleteMany({ where: { examId: exam.id } });
-    }
-    await prisma.exam.deleteMany({ where: { testTypeId } });
-    await prisma.testType.delete({ where: { id: testTypeId } });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 // Settings
 router.get('/settings', async (req, res) => {
@@ -792,9 +772,7 @@ router.delete('/students/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-    res.json({ success: true });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 router.post('/students/bulk-delete', async (req, res) => {
   const { ids } = req.body;
@@ -820,11 +798,7 @@ router.post('/students/bulk-delete', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
-  try {
-    await prisma.student.deleteMany({ where: { id: { in: ids.map((id: any) => Number(id)) } } });
-    res.json({ success: true, count: ids.length });
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
+
 
 router.post('/students/bulk', async (req, res) => {
   const { students } = req.body;
@@ -1437,7 +1411,6 @@ router.post('/scores/import', async (req, res) => {
   res.json({ logs });
 });
 
-export default router;
 
 // Sửa điểm thi (chỉ dành cho quantri)
 router.put('/test-results/:id/score', async (req, res) => {
@@ -1460,3 +1433,5 @@ router.put('/test-results/:id/score', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+export default router;
