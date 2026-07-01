@@ -945,5 +945,76 @@ router.get('/results', async (req, res) => {
     res.status(500).json({ error: 'Lỗi lấy kết quả' });
   }
 });
+// GET system logs
+router.get('/system-logs', async (req, res) => {
+  const { userId, role } = req.query;
+  if (!userId || !role) return res.status(400).json({ error: 'Missing parameters' });
+
+  try {
+    const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+    const vnTime = new Date(vnTimeString);
+    const vnYear = vnTime.getFullYear();
+    const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+    const vnDate = String(vnTime.getDate()).padStart(2, '0');
+    const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+
+    let userIdsToFetch: number[] = [];
+
+    if (role === 'ADMIN' || role === 'MANAGER') {
+      const users = await prisma.user.findMany({
+        where: role === 'MANAGER' ? { role: { in: ['MANAGER', 'STATION_MANAGER', 'EXAMINER'] } } : {}
+      });
+      userIdsToFetch = users.map(u => u.id);
+    } else if (role === 'STATION_MANAGER') {
+      // Find assignments for this station manager today or null date
+      const smAssignments = await prisma.testAssignment.findMany({
+        where: {
+          examinerId: Number(userId),
+          OR: [
+            { assignmentDate: null },
+            { assignmentDate: { gte: todayUtcMidnight } }
+          ]
+        }
+      });
+      
+      const assignedTestTypeIds = [...new Set(smAssignments.map(a => a.testTypeId))];
+      
+      // Find all EXAMINERs assigned to these testTypeIds
+      if (assignedTestTypeIds.length > 0) {
+        const examinerAssignments = await prisma.testAssignment.findMany({
+          where: {
+            testTypeId: { in: assignedTestTypeIds },
+            OR: [
+              { assignmentDate: null },
+              { assignmentDate: { gte: todayUtcMidnight } }
+            ]
+          },
+          include: { examiner: true }
+        });
+        
+        const examiners = examinerAssignments.map(a => a.examiner).filter(u => u && u.role === 'EXAMINER');
+        userIdsToFetch = [...new Set(examiners.map(e => e.id))];
+      }
+    }
+
+    if (userIdsToFetch.length === 0) {
+      return res.json([]);
+    }
+
+    const logs = await prisma.systemLog.findMany({
+      where: { userId: { in: userIdsToFetch } },
+      include: {
+        user: { select: { id: true, username: true, name: true, role: true, isOnline: true } }
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 200 // Limit to recent 200 logs
+    });
+
+    res.json(logs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 export default router;

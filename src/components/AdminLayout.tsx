@@ -28,7 +28,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (user?.id) {
+      try {
+        await fetch(`${API_BASE_URL}/api/auth/logout`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+      } catch (e) { console.error('Logout error', e); }
+    }
     localStorage.clear();
     navigate('/login');
   };
@@ -65,14 +74,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
           
-          <div className="sidebar-avatar" style={{ overflow: 'hidden' }}>
+          <div className="sidebar-avatar" style={{ overflow: 'hidden', position: 'relative' }}>
             {user?.avatarUrl ? (
               <img src={user.avatarUrl.startsWith('/') ? API_BASE_URL + user.avatarUrl : user.avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             ) : (
               <Shield size={32} />
             )}
+            {/* Online indicator for self */}
+            {user?.isOnline && (
+              <div style={{ position: 'absolute', bottom: 5, right: 5, width: 12, height: 12, borderRadius: '50%', backgroundColor: '#10b981', border: '2px solid white' }} title="Đang trực tuyến"></div>
+            )}
           </div>
-          <h4 style={{ margin: 0 }}>{user?.name || 'Nguyễn Văn Luyện'}</h4>
+          <h4 style={{ margin: 0 }}>
+            {user?.name || 'Nguyễn Văn Luyện'} 
+          </h4>
           <p className="text-muted" style={{ fontSize: '0.875rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
             {user?.role === 'ADMIN' ? 'Quản trị hệ thống' : user?.role === 'MANAGER' ? 'Quản lý hệ thống' : user?.role === 'STATION_MANAGER' ? 'Trưởng trạm' : 'Giám khảo'}
             <LogOut size={14} style={{ cursor: 'pointer', color: 'var(--danger)' }} onClick={handleLogout} />
@@ -117,6 +132,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`} onClick={closeSidebar}>
             <UserCircle size={20} /> <span className="sidebar-item-text">Hồ sơ cá nhân</span>
           </Link>
+          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+            <Link to="/manager/system-logs" className={`sidebar-item ${isActive('/manager/system-logs')}`} onClick={closeSidebar}>
+              <Settings size={20} /> <span className="sidebar-item-text">Nhật ký hệ thống</span>
+            </Link>
+          )}
           {user?.role === 'ADMIN' && (
             <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`} onClick={closeSidebar}>
               <Settings size={20} /> <span className="sidebar-item-text">Cấu hình hệ thống</span>

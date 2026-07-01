@@ -25,6 +25,16 @@ model User {
   examProgress  ExamProgress[]
   resetOtp       String?
   resetOtpExpiry DateTime?
+  isOnline       Boolean  @default(false)
+  logs           SystemLog[]
+}
+
+model SystemLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  action    String   // 'LOGIN' or 'LOGOUT'
+  createdAt DateTime @default(now())
 }
 
 model Student {

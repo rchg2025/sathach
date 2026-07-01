@@ -32,7 +32,12 @@ router.post('/login', async (req, res) => {
     if (!isValid) return res.status(401).json({ error: 'Tên đăng nhập, email hoặc mật khẩu không đúng' });
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token, user: { id: user.id, username: user.username, name: user.name, role: user.role, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl } });
+    
+    // Update online status and log
+    await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
+    await prisma.systemLog.create({ data: { userId: user.id, action: 'LOGIN' } });
+
+    res.json({ token, user: { id: user.id, username: user.username, name: user.name, role: user.role, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl, isOnline: true } });
   } catch (err) {
     res.status(500).json({ error: 'Server error' });
   }
@@ -60,10 +65,30 @@ router.post('/google-login', async (req, res) => {
     if (!user.isActive) return res.status(403).json({ error: 'Tài khoản đã bị vô hiệu hóa' });
 
     const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-    res.json({ token, user: { id: user.id, username: user.username, name: user.name, role: user.role, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl } });
+    
+    // Update online status and log
+    await prisma.user.update({ where: { id: user.id }, data: { isOnline: true } });
+    await prisma.systemLog.create({ data: { userId: user.id, action: 'LOGIN' } });
+
+    res.json({ token, user: { id: user.id, username: user.username, name: user.name, role: user.role, phone: user.phone, email: user.email, avatarUrl: user.avatarUrl, isOnline: true } });
   } catch (error: any) {
     console.error('Google login error:', error.message);
     res.status(500).json({ error: 'Xác thực Google thất bại' });
+  }
+});
+
+router.post('/logout', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  try {
+    const user = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    if (user) {
+      await prisma.user.update({ where: { id: user.id }, data: { isOnline: false } });
+      await prisma.systemLog.create({ data: { userId: user.id, action: 'LOGOUT' } });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
