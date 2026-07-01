@@ -191,16 +191,16 @@ const ReportsManager = () => {
         `}
       </style>
       <div className="container print-container">
-        <div className="flex justify-between items-center mb-4 no-print">
-          <h2 style={{ margin: 0 }}>Báo cáo - Thống kê Sát hạch</h2>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn btn-success" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="no-print mb-4">
+          <h2 style={{ margin: '0 0 1rem 0' }}>Báo cáo - Thống kê Sát hạch</h2>
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button className="btn btn-success" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto', justifyContent: 'center' }}>
               <Download size={18} /> Xuất Excel
             </button>
-            <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents, 'RESULT')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents, 'RESULT')} style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto', justifyContent: 'center' }}>
               <FileText size={18} /> In ĐL Kết quả
             </button>
-            <button className="btn btn-warning" onClick={() => handlePrint(filteredStudents, 'ERROR')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button className="btn btn-warning" onClick={() => handlePrint(filteredStudents, 'ERROR')} style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto', justifyContent: 'center' }}>
               <AlertTriangle size={18} /> In ĐL Lỗi
             </button>
           </div>
@@ -240,8 +240,8 @@ const ReportsManager = () => {
         </div>
 
         <div className="card" style={{ padding: '0' }}>
-          <div className="no-print" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 250px' }}>
+          <div className="no-print filter-group" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            <div style={{ minWidth: '100%' }}>
               <input 
                 type="text" 
                 className="form-control" 
@@ -250,7 +250,7 @@ const ReportsManager = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div style={{ width: '200px' }}>
+            <div style={{ minWidth: '100%' }}>
               <select className="form-control" value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
                 <option value="ALL">Tất cả Khóa đào tạo</option>
                 {courses.map(c => (
@@ -258,7 +258,7 @@ const ReportsManager = () => {
                 ))}
               </select>
             </div>
-            <div style={{ width: '200px' }}>
+            <div style={{ minWidth: '100%' }}>
               <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="ALL">Tất cả kết quả</option>
                 <option value="PASS">ĐẬU</option>
