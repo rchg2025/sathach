@@ -261,27 +261,29 @@ const ExaminerDashboard = () => {
                 {criteria.map(c => {
                   const errCount = errors[c.id] || 0;
                   return (
-                    <div key={c.id} className="d-flex justify-content-between align-items-center p-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6' }}>
-                      <div style={{ flex: 1 }}>
+                    <div key={c.id} className="d-flex flex-wrap align-items-center p-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', gap: '15px', justifyContent: 'center' }}>
+                      <div style={{ flex: '1 1 100%', textAlign: 'center' }}>
                         <div style={{ fontWeight: '600' }}>{c.name}</div>
                         <div className="text-danger small">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                       </div>
-                      <div className="d-flex align-items-center" style={{ gap: '15px' }}>
+                      <div className="d-flex align-items-center justify-content-center" style={{ gap: '20px' }}>
                         <button 
-                          className="btn btn-outline-secondary rounded-circle p-1" 
+                          className="btn btn-outline-secondary rounded-circle p-1 d-flex align-items-center justify-content-center" 
+                          style={{ width: '40px', height: '40px' }}
                           onClick={() => updateErrorCount(c.id, -1)}
                           disabled={errCount === 0}
                         >
-                          <Minus size={20} />
+                          <Minus size={24} />
                         </button>
-                        <span style={{ fontSize: '1.2rem', fontWeight: 'bold', width: '30px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center' }}>
                           {errCount}
                         </span>
                         <button 
-                          className="btn btn-outline-danger rounded-circle p-1" 
+                          className="btn btn-outline-danger rounded-circle p-1 d-flex align-items-center justify-content-center" 
+                          style={{ width: '40px', height: '40px' }}
                           onClick={() => updateErrorCount(c.id, 1)}
                         >
-                          <Plus size={20} />
+                          <Plus size={24} />
                         </button>
                       </div>
                     </div>
@@ -290,9 +292,10 @@ const ExaminerDashboard = () => {
               </div>
             )}
 
-            <div className="mt-4 pt-3 border-top d-flex justify-content-end">
+            <div className="mt-4 pt-3 border-top d-flex justify-content-center">
               <button 
                 className="btn btn-success rounded-pill px-4 py-2" 
+                style={{ fontSize: '1.1rem', fontWeight: 'bold', width: '100%', maxWidth: '300px' }}
                 onClick={handleSubmitExam}
                 disabled={isSubmitting}
               >
