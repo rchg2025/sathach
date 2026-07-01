@@ -328,8 +328,28 @@ const StationTesting = () => {
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     <td>
                       {(() => {
-                        const studentAssignment = assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
-                        return studentAssignment?.assignmentDate ? new Date(studentAssignment.assignmentDate).toLocaleDateString('vi-VN') : '-';
+                        if (!s.testResults || s.testResults.length === 0) return '-';
+                        
+                        let targetTr = s.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
+                        if (!targetTr) {
+                          const completed = s.testResults.filter((tr: any) => tr.status === 'FINISHED' || tr.status === 'TRANSFERRED');
+                          if (completed.length > 0) {
+                            targetTr = completed.sort((a: any, b: any) => new Date(b.endTime || 0).getTime() - new Date(a.endTime || 0).getTime())[0];
+                          }
+                        }
+
+                        if (targetTr && targetTr.startTime) {
+                          const start = new Date(targetTr.startTime).getTime();
+                          const end = targetTr.endTime ? new Date(targetTr.endTime).getTime() : Date.now();
+                          const diff = Math.max(0, Math.floor((end - start) / 60000));
+                          
+                          if (targetTr.status === 'IN_PROGRESS') {
+                            return <span style={{ color: 'var(--primary)', fontWeight: '500' }}>{diff} phút (đang thi)</span>;
+                          }
+                          return <span style={{ fontWeight: '500' }}>{diff} phút</span>;
+                        }
+                        
+                        return '-';
                       })()}
                     </td>
                     <td>
