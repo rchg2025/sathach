@@ -149,24 +149,45 @@ const ManagerDashboard = () => {
             <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
-<table className="table" style={{ fontSize: '0.875rem' }}>
-            <thead>
-              <tr>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Tên Học Viên</th>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Khóa Học</th>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Thời gian</th>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td colSpan={4} className="text-center text-muted" style={{ padding: '2rem 0' }}>
-                  Chưa có học viên nào hoàn thành.
-                </td>
-              </tr>
-            </tbody>
-          </table>
-</div>
+            <table className="table" style={{ fontSize: '0.875rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Tên Học Viên</th>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Khóa Học</th>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Thời gian</th>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.recentStudents && stats.recentStudents.length > 0 ? (
+                  stats.recentStudents.map((student: any) => (
+                    <tr key={student.id}>
+                      <td style={{ padding: '0.5rem' }}><strong>{student.studentName}</strong></td>
+                      <td style={{ padding: '0.5rem' }}>{student.courseName}</td>
+                      <td style={{ padding: '0.5rem' }}>{new Date(student.time).toLocaleString('vi-VN')}</td>
+                      <td style={{ padding: '0.5rem' }}>
+                        {student.status === 'PASSED' ? (
+                          <span style={{ color: 'var(--success)', fontWeight: 600 }}>Đạt</span>
+                        ) : student.status === 'FAILED' ? (
+                          <span style={{ color: 'var(--danger)', fontWeight: 600 }}>Trượt</span>
+                        ) : student.status === 'IN_PROGRESS' ? (
+                          <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Đang thi</span>
+                        ) : (
+                          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{student.status}</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted" style={{ padding: '2rem 0' }}>
+                      Chưa có học viên nào hoàn thành.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div className="card" style={{ marginBottom: 0 }}>
@@ -175,33 +196,33 @@ const ManagerDashboard = () => {
             <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
-<table className="table" style={{ fontSize: '0.875rem' }}>
-            <thead>
-              <tr>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Họ và tên</th>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Đã chấm</th>
-                <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Loại sát hạch</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td style={{ padding: '0.5rem' }}><strong>Nguyễn Văn A</strong></td>
-                <td style={{ padding: '0.5rem' }}>142 Học viên</td>
-                <td style={{ padding: '0.5rem' }}>Sa hình</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '0.5rem' }}><strong>Trần Thị B</strong></td>
-                <td style={{ padding: '0.5rem' }}>110 Học viên</td>
-                <td style={{ padding: '0.5rem' }}>Đường trường</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '0.5rem' }}><strong>Lê Văn C</strong></td>
-                <td style={{ padding: '0.5rem' }}>95 Học viên</td>
-                <td style={{ padding: '0.5rem' }}>Đường trường</td>
-              </tr>
-            </tbody>
-          </table>
-</div>
+            <table className="table" style={{ fontSize: '0.875rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Họ và tên</th>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Đã chấm</th>
+                  <th style={{ backgroundColor: 'transparent', padding: '0.5rem' }}>Loại sát hạch</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.topExaminers && stats.topExaminers.length > 0 ? (
+                  stats.topExaminers.map((examiner: any) => (
+                    <tr key={examiner.id}>
+                      <td style={{ padding: '0.5rem' }}><strong>{examiner.name}</strong></td>
+                      <td style={{ padding: '0.5rem' }}>{examiner.gradedCount} Học viên</td>
+                      <td style={{ padding: '0.5rem' }}>{examiner.testTypeName}</td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={3} className="text-center text-muted" style={{ padding: '2rem 0' }}>
+                      Chưa có dữ liệu giám khảo.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </AdminLayout>

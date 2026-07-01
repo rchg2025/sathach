@@ -17,19 +17,23 @@ const ResultsManager = () => {
   const itemsPerPage = 15;
 
   useEffect(() => {
-    fetchResults();
+    const userStr = localStorage.getItem('user');
+    const u = userStr ? JSON.parse(userStr) : null;
+    if (u) {
+      fetchResults(u);
+    }
   }, []);
 
-  const fetchResults = async () => {
+  const fetchResults = async (currentUser: any) => {
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/manager/results`);
-      const data = res.data;
+      const res = await axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`);
+      const data = res.data.students || [];
       setResults(data);
       
       const courses = new Set<string>();
       data.forEach((r: any) => {
-        if (r.student?.courseName) courses.add(r.student.courseName);
-        if (r.student?.course?.name) courses.add(r.student.course.name);
+        if (r.courseName) courses.add(r.courseName);
+        if (r.course?.name) courses.add(r.course.name);
       });
       setAvailableCourses(Array.from(courses));
     } catch (e) {
@@ -42,17 +46,17 @@ const ResultsManager = () => {
     
     if (searchKeyword.trim() !== '') {
       const kw = searchKeyword.toLowerCase();
-      temp = temp.filter(r => 
-        r.student?.name?.toLowerCase().includes(kw) ||
-        r.student?.cccd?.includes(kw) ||
-        r.student?.registrationCode?.toLowerCase().includes(kw)
+      temp = temp.filter(s => 
+        s.name?.toLowerCase().includes(kw) ||
+        s.cccd?.includes(kw) ||
+        s.registrationCode?.toLowerCase().includes(kw)
       );
     }
     
     if (courseFilter !== 'all') {
-      temp = temp.filter(r => 
-        r.student?.courseName === courseFilter || 
-        r.student?.course?.name === courseFilter
+      temp = temp.filter(s => 
+        s.courseName === courseFilter || 
+        s.course?.name === courseFilter
       );
     }
     
@@ -63,19 +67,28 @@ const ResultsManager = () => {
   const exportToExcel = () => {
     if (filteredResults.length === 0) return toast.error('Không có dữ liệu để xuất');
     
-    const exportData = filteredResults.map((r, i) => {
-      const currentProgress = r.progress?.find((p: any) => p.status === 'IN_PROGRESS');
-      const currentExamStr = currentProgress ? currentProgress.exam?.name : (r.status === 'PASSED' || r.status === 'FAILED' ? 'Đã hoàn thành' : '-');
+    const exportData = filteredResults.map((s, i) => {
+      const getScore = (name: string) => {
+        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes(name.toLowerCase()));
+        return tr ? tr.totalScore : '-';
+      };
+      
+      const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
+      let statusStr = 'Chưa thi';
+      if (transferredCount >= 3) statusStr = 'Hoàn thành';
+      else if (s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS')) statusStr = 'Đang thi';
+      else if (s.testResults?.find((tr: any) => tr.status === 'FINISHED')) statusStr = 'Đã kết thúc';
+      else if (transferredCount > 0) statusStr = 'Đang chờ';
 
       return {
         'STT': i + 1,
-        'Họ và Tên': r.student?.name ? r.student.name.toLowerCase().replace(/(^|\s)\S/g, (l: string) => l.toUpperCase()) : '',
-        'CCCD': r.student?.cccd,
-        'Trạm thi': r.testType?.name || '-',
-        'Bài thi (đang diễn ra)': currentExamStr,
-      'Điểm bị trừ': Math.max(0, 100 - r.totalScore),
-      'Điểm còn lại': r.totalScore,
-      'Trạng thái': r.status === 'PASSED' ? 'Đạt' : r.status === 'FAILED' ? 'Trượt' : 'Đang chờ'
+        'Họ và Tên': s.name ? s.name.toLowerCase().replace(/(^|\s)\S/g, (l: string) => l.toUpperCase()) : '',
+        'CCCD': s.cccd,
+        'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-',
+        'Sa hình': getScore('sa hình'),
+        'Hình chữ Z': getScore('chữ z'),
+        'Đường trường': getScore('đường trường'),
+        'Trạng thái': statusStr
       };
     });
     
@@ -127,39 +140,48 @@ const ResultsManager = () => {
                 <th style={{ width: '50px' }}>STT</th>
                 <th>Họ và Tên</th>
                 <th>CCCD</th>
-                <th>Trạm thi</th>
-                <th>Bài thi (đang diễn ra)</th>
-                <th style={{ color: 'var(--danger)', textAlign: 'center' }}>Điểm bị trừ</th>
-                <th style={{ color: 'var(--success)', textAlign: 'center' }}>Điểm còn lại</th>
+                <th>Khóa đào tạo</th>
+                <th style={{ textAlign: 'center' }}>Sa hình</th>
+                <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
+                <th style={{ textAlign: 'center' }}>Đường trường</th>
                 <th>Trạng thái</th>
               </tr>
             </thead>
             <tbody>
-              {displayedResults.length > 0 ? displayedResults.map((r, idx) => {
-                const currentProgress = r.progress?.find((p: any) => p.status === 'IN_PROGRESS');
-                const currentExamStr = currentProgress ? currentProgress.exam?.name : (r.status === 'PASSED' || r.status === 'FAILED' ? 'Đã hoàn thành' : '-');
+              {displayedResults.length > 0 ? displayedResults.map((s, idx) => {
+                const getScore = (name: string) => {
+                  const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes(name.toLowerCase()));
+                  return tr ? tr.totalScore : '-';
+                };
+                
+                const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
+                let statusBadge = <span className="badge badge-secondary">Chưa thi</span>;
+                
+                if (transferredCount >= 3) {
+                  statusBadge = <span className="badge badge-success">Hoàn thành</span>;
+                } else if (s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS')) {
+                  statusBadge = <span className="badge badge-primary">Đang thi</span>;
+                } else if (s.testResults?.find((tr: any) => tr.status === 'FINISHED')) {
+                  statusBadge = <span className="badge badge-info" style={{ background: '#0ea5e9', color: '#fff' }}>Đã kết thúc</span>;
+                } else if (transferredCount > 0) {
+                  statusBadge = <span className="badge badge-warning">Đang chờ ({transferredCount}/3)</span>;
+                }
                 
                 return (
-                  <tr key={r.id}>
+                  <tr key={s.id}>
                     <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                    <td style={{ textTransform: 'capitalize' }}><strong>{r.student?.name?.toLowerCase()}</strong></td>
-                    <td>{r.student?.cccd}</td>
-                    <td>{r.testType?.name}</td>
-                    <td>
-                      {currentProgress ? <span className="badge badge-primary">{currentExamStr}</span> : currentExamStr}
-                    </td>
-                  <td style={{ color: 'var(--danger)', fontWeight: 'bold', textAlign: 'center' }}>{Math.max(0, 100 - r.totalScore)}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 'bold', textAlign: 'center', fontSize: '1.1rem' }}>{r.totalScore}</td>
-                  <td>
-                    {r.status === 'PASSED' ? <span className="badge badge-success">Đạt</span> :
-                     r.status === 'FAILED' ? <span className="badge badge-danger">Trượt</span> :
-                     <span className="badge badge-warning">Đang chờ</span>}
-                  </td>
-                </tr>
+                    <td style={{ textTransform: 'capitalize' }}><strong>{s.name?.toLowerCase()}</strong></td>
+                    <td>{s.cccd}</td>
+                    <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('sa hình')}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('chữ z')}</td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('đường trường')}</td>
+                    <td>{statusBadge}</td>
+                  </tr>
                 );
               }) : (
                 <tr>
-                  <td colSpan={9} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={8} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu kết quả phù hợp.
                   </td>
                 </tr>

@@ -32,6 +32,43 @@ router.get('/dashboard/stats', async (req, res) => {
     
     const traffic = Object.entries(monthlyData).map(([name, value]) => ({ name, value })).slice(-6);
 
+    const recentStudentsData = await prisma.testResult.findMany({
+      take: 5,
+      orderBy: { updatedAt: 'desc' },
+      include: {
+        student: { include: { course: true } }
+      }
+    });
+
+    const recentStudents = recentStudentsData.map(tr => ({
+      id: tr.id,
+      studentName: tr.student.name,
+      courseName: tr.student.course?.name || tr.student.courseName || 'N/A',
+      time: tr.endTime || tr.updatedAt,
+      status: tr.status
+    }));
+
+    const topExaminersData = await prisma.examProgress.groupBy({
+      by: ['examinerId'],
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+      take: 5
+    });
+
+    const topExaminers = await Promise.all(topExaminersData.map(async (te) => {
+      const user = await prisma.user.findUnique({ where: { id: te.examinerId } });
+      const assignment = await prisma.testAssignment.findFirst({
+        where: { examinerId: te.examinerId },
+        include: { testType: true }
+      });
+      return {
+        id: te.examinerId,
+        name: user?.name || 'Unknown',
+        gradedCount: te._count.id,
+        testTypeName: assignment?.testType?.name || 'N/A'
+      };
+    }));
+
     res.json({
       totalStudents,
       totalCourses,
@@ -41,7 +78,9 @@ router.get('/dashboard/stats', async (req, res) => {
         { name: 'Đậu (Passed)', value: passed },
         { name: 'Rớt (Failed)', value: failed }
       ],
-      traffic
+      traffic,
+      recentStudents,
+      topExaminers
     });
   } catch (error) {
     console.error(error);
@@ -729,6 +768,79 @@ router.get('/station/students', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+router.get('/station/students-v2', async (req, res) => {
+  const { userId, role } = req.query;
+  if (!userId || !role) return res.status(400).json({ error: 'Missing parameters' });
+  
+  try {
+    const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+    const vnTime = new Date(vnTimeString);
+    const vnYear = vnTime.getFullYear();
+    const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+    const vnDate = String(vnTime.getDate()).padStart(2, '0');
+    const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+
+    let studentWhere: any = {};
+    let assignments: any[] = [];
+
+    if (role === 'ADMIN' || role === 'MANAGER') {
+      // Admin/Manager can see all students
+      studentWhere = {}; 
+    } else if (role === 'STATION_MANAGER') {
+      assignments = await prisma.testAssignment.findMany({
+        where: { 
+          examinerId: Number(userId),
+          OR: [
+            { assignmentDate: null },
+            { assignmentDate: { gte: todayUtcMidnight } }
+          ]
+        },
+        include: { testType: true, course: true, vehicles: true }
+      });
+      const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
+      if (courseIds.length > 0) {
+        const courses = await prisma.course.findMany({ where: { id: { in: courseIds } } });
+        const courseNames = courses.map(c => c.name);
+        studentWhere = {
+          OR: [
+            { courseId: { in: courseIds } },
+            { courseName: { in: courseNames } }
+          ]
+        };
+      } else {
+        // If station manager has no assignments, return empty
+        return res.json({ students: [], assignments: [] });
+      }
+    } else if (role === 'EXAMINER') {
+      // Examiner sees students they have graded
+      const examProgresses = await prisma.examProgress.findMany({
+        where: { examinerId: Number(userId) },
+        include: { testResult: true }
+      });
+      const studentIds = [...new Set(examProgresses.map(ep => ep.testResult.studentId))];
+      studentWhere = { id: { in: studentIds } };
+    }
+
+    const students = await prisma.student.findMany({
+      where: studentWhere,
+      include: { 
+        course: true, 
+        testResults: {
+          include: { stationManager: true, vehicle: true, testType: true }
+        }
+      },
+      orderBy: { id: 'desc' },
+      take: 200 // Limit to avoid massive payloads for admin
+    });
+
+    res.json({ students, assignments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 router.post('/station/start-test', async (req, res) => {
   const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;

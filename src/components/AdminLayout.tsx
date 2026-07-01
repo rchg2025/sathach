@@ -83,14 +83,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`} onClick={closeSidebar}>
             <LayoutDashboard size={20} /> <span className="sidebar-item-text">Bảng điều khiển</span>
           </Link>
-          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'EXAMINER') && (
             <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
-              <Car size={20} /> <span className="sidebar-item-text">Sát hạch</span>
+              <Car size={20} /> <span className="sidebar-item-text">Danh sách Sát hạch</span>
             </Link>
           )}
           {user?.role === 'EXAMINER' && (
             <Link to="/examiner" className={`sidebar-item ${isActive('/examiner')}`} onClick={closeSidebar}>
-              <Car size={20} /> <span className="sidebar-item-text">Sát hạch</span>
+              <CheckCircle size={20} /> <span className="sidebar-item-text">Chấm thi</span>
             </Link>
           )}
           <Link to="/manager/results" className={`sidebar-item ${isActive('/manager/results')}`} onClick={closeSidebar}>

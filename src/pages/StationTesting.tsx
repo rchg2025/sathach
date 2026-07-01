@@ -33,14 +33,14 @@ const StationTesting = () => {
     if (u) {
       const parsedUser = JSON.parse(u);
       setUser(parsedUser);
-      fetchData(parsedUser.id);
+      fetchData(parsedUser);
     }
   }, []);
 
-  const fetchData = async (examinerId: number) => {
+  const fetchData = async (currentUser: any) => {
     try {
       const [studentsRes, vehiclesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/manager/station/students?examinerId=${examinerId}`),
+        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`),
         axios.get(`${API_BASE_URL}/api/manager/vehicle-types`)
       ]);
       setStudents(studentsRes.data.students);
@@ -175,18 +175,29 @@ const StationTesting = () => {
 
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED').length;
+    if (transferredCount >= 3) return 'Hoàn thành';
+    
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
     const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
     if (finished) return 'Đã kết thúc';
-    const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
-    if (transferred) return 'Đã chuyển điểm';
+    if (transferredCount > 0) return 'Đã chuyển điểm';
     return 'Chưa thi';
   };
 
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED').length;
+    if (transferredCount >= 3) {
+      return (
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
+          <span>Hoàn thành (Đã chuyển đủ 3 điểm)</span>
+        </div>
+      );
+    }
+
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) {
       const v = vehicles.find(v => v.id === inProgress.vehicleId);
@@ -221,20 +232,10 @@ const StationTesting = () => {
       );
     }
     
-    const transferred = student.testResults.find((tr: any) => tr.status === 'TRANSFERRED');
-    if (transferred) {
-      const v = vehicles.find(v => v.id === transferred.vehicleId);
-      let line1 = `Đã chuyển điểm ${v ? `(${v.name})` : ''}`;
-      if (transferred.stationManager) {
-        line1 += ` - Trưởng trạm: ${transferred.stationManager.name}`;
-      }
-      let line2 = '';
-      if (transferred.startTime) line2 += `Bắt đầu: ${new Date(transferred.startTime).toLocaleTimeString()}`;
-      if (transferred.endTime) line2 += ` - Kết thúc: ${new Date(transferred.endTime).toLocaleTimeString()}`;
+    if (transferredCount > 0) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
-          <span>{line1}</span>
-          {line2 && <span style={{ fontSize: '0.85em', opacity: 0.9, fontWeight: 'normal' }}>{line2}</span>}
+          <span>Đã chuyển điểm ({transferredCount}/3 trạm)</span>
         </div>
       );
     }
@@ -275,7 +276,9 @@ const StationTesting = () => {
     <AdminLayout user={user}>
       <div className="container">
         <div className="flex justify-between items-center mb-4">
-          <h2 style={{ margin: 0 }}>Sát hạch (Trưởng trạm)</h2>
+          <h2 style={{ margin: 0 }}>
+            Danh sách Sát hạch {user?.role === 'STATION_MANAGER' ? '(Trưởng trạm)' : user?.role === 'EXAMINER' ? '(Giám khảo)' : ''}
+          </h2>
         </div>
         
         <div className="card" style={{ padding: '0' }}>
@@ -310,8 +313,10 @@ const StationTesting = () => {
                   <th>Khóa đào tạo</th>
                   <th>Thời gian thực hiện</th>
                   <th>Trạng thái</th>
-                  <th style={{ textAlign: 'center' }}>Điểm thi</th>
-                  <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>
+                  <th style={{ textAlign: 'center' }}>Sa hình</th>
+                  <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
+                  <th style={{ textAlign: 'center' }}>Đường trường</th>
+                  {user?.role === 'STATION_MANAGER' && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
                 </tr>
               </thead>
               <tbody>
@@ -328,50 +333,70 @@ const StationTesting = () => {
                       })()}
                     </td>
                     <td>
-                      <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (getStudentStatusText(s) === 'Đã chuyển điểm' ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
+                      <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (['Đã chuyển điểm', 'Hoàn thành'].includes(getStudentStatusText(s)) ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
                         {getStudentStatus(s)}
                       </div>
                     </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold', color: s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>
-                      {s.testResults?.find((tr: any) => tr.testTypeId === assignments.find(a => a.courseId === s.courseId || (a.course && a.course.name === s.courseName))?.testType?.id)?.totalScore ?? '-'}
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                      {(() => {
+                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('sa hình'));
+                        if (!tr) return '-';
+                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                      })()}
                     </td>
-                    <td className="sticky-col-right" style={{ textAlign: 'right' }}>
-                      {getStudentStatusText(s) === 'Chưa thi' && (
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                          onClick={() => openStartTestModal(s)}
-                        >
-                          <Play size={16} /> Bắt đầu thi
-                        </button>
-                      )}
-                      {getStudentStatusText(s) === 'Đang thi' && (
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
-                          onClick={() => {
-                            if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
-                              handleEndTest(s);
-                            }
-                          }}
-                        >
-                          <CheckCircle size={16} /> Kết thúc
-                        </button>
-                      )}
-                      {getStudentStatusText(s) === 'Đã kết thúc' && (
-                        <button 
-                          className="btn" 
-                          style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
-                          onClick={() => {
-                            if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
-                              handleTransferScore(s);
-                            }
-                          }}
-                        >
-                          <Send size={16} /> Chuyển điểm
-                        </button>
-                      )}
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                      {(() => {
+                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('chữ z'));
+                        if (!tr) return '-';
+                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                      })()}
                     </td>
+                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                      {(() => {
+                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('đường trường'));
+                        if (!tr) return '-';
+                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                      })()}
+                    </td>
+                    {user?.role === 'STATION_MANAGER' && (
+                      <td className="sticky-col-right" style={{ textAlign: 'right' }}>
+                        {getStudentStatusText(s) === 'Chưa thi' && (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                            onClick={() => openStartTestModal(s)}
+                          >
+                            <Play size={16} /> Bắt đầu thi
+                          </button>
+                        )}
+                        {getStudentStatusText(s) === 'Đang thi' && (
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
+                            onClick={() => {
+                              if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
+                                handleEndTest(s);
+                              }
+                            }}
+                          >
+                            <CheckCircle size={16} /> Kết thúc
+                          </button>
+                        )}
+                        {getStudentStatusText(s) === 'Đã kết thúc' && (
+                          <button 
+                            className="btn" 
+                            style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
+                            onClick={() => {
+                              if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
+                                handleTransferScore(s);
+                              }
+                            }}
+                          >
+                            <Send size={16} /> Chuyển điểm
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))}
                 {filteredStudents.length === 0 && (
