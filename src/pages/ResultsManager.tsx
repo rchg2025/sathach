@@ -73,7 +73,16 @@ const ResultsManager = () => {
     const exportData = filteredResults.map((s, i) => {
       const getScore = (name: string) => {
         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes(name.toLowerCase()));
-        return tr ? tr.totalScore : '-';
+        if (!tr) return '-';
+        const userStr = localStorage.getItem('user');
+        const u = userStr ? JSON.parse(userStr) : null;
+        if (u?.role === 'ADMIN' || u?.role === 'MANAGER') {
+          if (tr.status !== 'TRANSFERRED') return '-';
+        } else {
+          const myAssignment = userAssignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+          if (myAssignment?.testType?.id !== tr.testTypeId) return 'Ẩn';
+        }
+        return tr.totalScore;
       };
       
       const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
@@ -177,9 +186,19 @@ const ResultsManager = () => {
             </thead>
             <tbody>
               {displayedResults.length > 0 ? displayedResults.map((s, idx) => {
-                const getScore = (name: string) => {
+                const renderScore = (name: string) => {
                   const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes(name.toLowerCase()));
-                  return tr ? tr.totalScore : '-';
+                  if (!tr) return '-';
+                  
+                  if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+                    if (tr.status !== 'TRANSFERRED') return '-';
+                  } else {
+                    // For STATION_MANAGER, they only see their assigned station
+                    const myAssignment = userAssignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                    if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
+                  }
+                  
+                  return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                 };
                 
                 const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
@@ -197,17 +216,17 @@ const ResultsManager = () => {
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     {showCol('sa hình') && (
                       <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                        <span style={{ color: getScore('sa hình') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('sa hình')}</span>
+                        {renderScore('sa hình')}
                       </td>
                     )}
                     {showCol('chữ z') && (
                       <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                        <span style={{ color: getScore('chữ z') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('chữ z')}</span>
+                        {renderScore('chữ z')}
                       </td>
                     )}
                     {showCol('đường trường') && (
                       <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                        <span style={{ color: getScore('đường trường') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('đường trường')}</span>
+                        {renderScore('đường trường')}
                       </td>
                     )}
                     <td>
