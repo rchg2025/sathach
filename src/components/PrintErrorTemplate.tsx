@@ -12,18 +12,22 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
           @media print {
             @page {
               size: A4;
-              margin: 1.5cm;
+              margin: 0;
             }
             body {
               font-family: 'Times New Roman', Times, serif;
               font-size: 14pt;
               line-height: 1.5;
+              margin: 0;
+              padding: 0;
             }
             .page-break {
               page-break-after: always;
             }
             .print-page {
               width: 100%;
+              padding: 1.5cm;
+              box-sizing: border-box;
             }
             .header-table {
               width: 100%;
