@@ -341,12 +341,16 @@ const StationTesting = () => {
                         if (targetTr && targetTr.startTime) {
                           const start = new Date(targetTr.startTime).getTime();
                           const end = targetTr.endTime ? new Date(targetTr.endTime).getTime() : Date.now();
-                          const diff = Math.max(0, Math.floor((end - start) / 60000));
+                          const diffMs = Math.max(0, end - start);
+                          const diffMinutes = Math.floor(diffMs / 60000);
+                          const diffSeconds = Math.floor((diffMs % 60000) / 1000);
+                          
+                          let timeStr = diffMinutes > 0 ? `${diffMinutes} phút ${diffSeconds} giây` : `${diffSeconds} giây`;
                           
                           if (targetTr.status === 'IN_PROGRESS') {
-                            return <span style={{ color: 'var(--primary)', fontWeight: '500' }}>{diff} phút (đang thi)</span>;
+                            return <span style={{ color: 'var(--primary)', fontWeight: '500' }}>{timeStr} (đang thi)</span>;
                           }
-                          return <span style={{ fontWeight: '500' }}>{diff} phút</span>;
+                          return <span style={{ fontWeight: '500' }}>{timeStr}</span>;
                         }
                         
                         return '-';
