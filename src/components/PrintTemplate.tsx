@@ -74,7 +74,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
         `}
       </style>
 
-      {students.map((student, index) => {
+      {students.map((student) => {
         // Safe check for results
         const saHinhScore = student.scoreSaHinh !== '-' ? student.scoreSaHinh : '';
         const chuZScore = student.scoreChuZ !== '-' ? student.scoreChuZ : '';
