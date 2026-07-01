@@ -257,33 +257,33 @@ const ExaminerDashboard = () => {
             {criteria.length === 0 ? (
               <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
             ) : (
-              <div className="d-flex flex-column" style={{ gap: '10px' }}>
+              <div className="d-flex flex-column">
                 {criteria.map(c => {
                   const errCount = errors[c.id] || 0;
                   return (
-                    <div key={c.id} className="d-flex flex-wrap align-items-center p-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', gap: '15px', justifyContent: 'center' }}>
-                      <div style={{ flex: '1 1 100%', textAlign: 'left' }}>
-                        <div style={{ fontWeight: '600' }}>{c.name}</div>
-                        <div className="text-danger small">Trừ {c.pointsToDeduct} điểm / lỗi</div>
+                    <div key={c.id} className="d-flex justify-content-between align-items-center py-3 border-bottom" style={{ gap: '10px' }}>
+                      <div style={{ flex: 1, textAlign: 'left' }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
+                        <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                       </div>
-                      <div className="d-flex align-items-center justify-content-center" style={{ gap: '20px' }}>
+                      <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
                         <button 
-                          className="btn btn-outline-secondary rounded-circle p-1 d-flex align-items-center justify-content-center" 
-                          style={{ width: '40px', height: '40px' }}
+                          className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                          style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                           onClick={() => updateErrorCount(c.id, -1)}
                           disabled={errCount === 0}
                         >
-                          <Minus size={24} />
+                          <Minus size={20} />
                         </button>
-                        <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '40px', textAlign: 'center' }}>
+                        <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
                           {errCount}
                         </span>
                         <button 
-                          className="btn btn-outline-danger rounded-circle p-1 d-flex align-items-center justify-content-center" 
-                          style={{ width: '40px', height: '40px' }}
+                          className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                          style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                           onClick={() => updateErrorCount(c.id, 1)}
                         >
-                          <Plus size={24} />
+                          <Plus size={20} />
                         </button>
                       </div>
                     </div>
