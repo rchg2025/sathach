@@ -16,7 +16,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
             }
             body {
               font-family: 'Times New Roman', Times, serif;
-              font-size: 14pt;
+              font-size: 12pt;
               line-height: 1.5;
               margin: 0;
               padding: 0;
