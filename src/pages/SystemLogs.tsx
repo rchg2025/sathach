@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
-import { LogIn, LogOut, Shield, CheckCircle, XCircle } from 'lucide-react';
+import { LogIn, LogOut, CheckCircle, XCircle } from 'lucide-react';
 import Select from 'react-select';
 
 const SystemLogs = () => {
@@ -36,16 +36,6 @@ const SystemLogs = () => {
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
-
-  const getRoleName = (role: string) => {
-    switch (role) {
-      case 'ADMIN': return 'Quản trị viên';
-      case 'MANAGER': return 'Quản lý';
-      case 'STATION_MANAGER': return 'Trưởng trạm';
-      case 'EXAMINER': return 'Giám khảo';
-      default: return role;
-    }
-  };
 
   const filteredLogs = logs.filter(log => {
     // Search
@@ -130,7 +120,6 @@ const SystemLogs = () => {
                   <tr>
                     <th>STT</th>
                     <th>Tài khoản</th>
-                    <th>Vai trò</th>
                     <th>Trạng thái</th>
                     <th>Đăng nhập gần nhất</th>
                     <th>Đăng xuất gần nhất</th>
@@ -142,20 +131,25 @@ const SystemLogs = () => {
                       <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
-                          <div style={{ position: 'relative' }}>
-                            <Shield size={24} className="text-muted" />
-                            {log.user?.isOnline && (
-                              <div style={{ position: 'absolute', bottom: -2, right: -2, width: 10, height: 10, borderRadius: '50%', backgroundColor: '#10b981', border: '2px solid white' }} title="Đang trực tuyến"></div>
-                            )}
-                          </div>
                           <div>
-                            <strong>{log.user?.name}</strong>
+                            <strong>
+                              {log.user?.name}
+                              <span 
+                                style={{ 
+                                  display: 'inline-block', 
+                                  width: 8, 
+                                  height: 8, 
+                                  borderRadius: '50%', 
+                                  backgroundColor: log.user?.isOnline ? '#10b981' : '#9ca3af', 
+                                  marginLeft: 6,
+                                  marginBottom: 1
+                                }} 
+                                title={log.user?.isOnline ? "Đang trực tuyến" : "Ngoại tuyến"}
+                              ></span>
+                            </strong>
                             <div className="text-muted small">@{log.user?.username}</div>
                           </div>
                         </div>
-                      </td>
-                      <td>
-                        <span className="badge bg-secondary">{getRoleName(log.user?.role)}</span>
                       </td>
                       <td>
                         {log.user?.isOnline ? (
