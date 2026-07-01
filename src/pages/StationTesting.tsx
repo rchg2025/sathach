@@ -365,6 +365,10 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('sa hình'));
                         if (!tr) return '-';
+                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
+                        }
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
@@ -372,6 +376,10 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('chữ z'));
                         if (!tr) return '-';
+                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
+                        }
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
@@ -379,6 +387,10 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('đường trường'));
                         if (!tr) return '-';
+                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
+                        }
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>

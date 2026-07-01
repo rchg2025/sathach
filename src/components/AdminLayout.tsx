@@ -42,6 +42,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
     navigate('/login');
   };
 
+  React.useEffect(() => {
+    if (!user?.id) return;
+    const ping = async () => {
+      try {
+        await fetch(`${API_BASE_URL}/api/auth/ping`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: user.id })
+        });
+      } catch (e) { console.error('Ping error', e); }
+    };
+    
+    // Ping immediately and then every 1 minute
+    ping();
+    const interval = setInterval(ping, 60000);
+    return () => clearInterval(interval);
+  }, [user?.id]);
+
   const isActive = (path: string) => location.pathname === path ? 'active' : '';
 
   const closeSidebar = () => setIsSidebarOpen(false);

@@ -958,6 +958,30 @@ router.get('/system-logs', async (req, res) => {
     const vnDate = String(vnTime.getDate()).padStart(2, '0');
     const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
 
+    // Clean up stale sessions (no ping for > 5 minutes)
+    const staleThreshold = new Date(Date.now() - 5 * 60 * 1000);
+    const staleUsers = await prisma.user.findMany({
+      where: {
+        isOnline: true,
+        OR: [
+          { lastPingAt: { lt: staleThreshold } },
+          { lastPingAt: null }
+        ]
+      }
+    });
+
+    if (staleUsers.length > 0) {
+      await prisma.user.updateMany({
+        where: { id: { in: staleUsers.map(u => u.id) } },
+        data: { isOnline: false }
+      });
+      const logsToInsert = staleUsers.map(u => ({
+        userId: u.id,
+        action: 'LOGOUT'
+      }));
+      await prisma.systemLog.createMany({ data: logsToInsert });
+    }
+
     let userIdsToFetch: number[] = [];
 
     if (role === 'ADMIN' || role === 'MANAGER') {

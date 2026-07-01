@@ -47,7 +47,7 @@ const ExaminerDashboard = () => {
     try {
       const payload: any = {
         studentId: student.id,
-        testTypeId: student.testResults[0].testTypeId,
+        testTypeId: student.currentExam.testTypeId,
         examinerId: user.id
       };
       
@@ -59,6 +59,14 @@ const ExaminerDashboard = () => {
 
       await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, payload);
       toast.success('Đã bắt đầu chấm bài thi');
+      
+      // Auto-open modal
+      const updatedStudent = { 
+        ...student, 
+        currentProgress: { status: 'IN_PROGRESS', startTime: new Date() } 
+      };
+      openGradingModal(updatedStudent);
+
       fetchData(user.id, false);
     } catch (e) {
       toast.error('Lỗi khi bắt đầu chấm');

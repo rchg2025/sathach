@@ -92,6 +92,20 @@ router.post('/logout', async (req, res) => {
   }
 });
 
+router.post('/ping', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'Missing userId' });
+  try {
+    await prisma.user.update({
+      where: { id: Number(userId) },
+      data: { lastPingAt: new Date(), isOnline: true }
+    });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.post('/forgot-password', async (req, res) => {
   const { email } = req.body;
   try {

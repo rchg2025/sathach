@@ -26,6 +26,7 @@ model User {
   resetOtp       String?
   resetOtpExpiry DateTime?
   isOnline       Boolean  @default(false)
+  lastPingAt     DateTime?
   logs           SystemLog[]
 }
 
