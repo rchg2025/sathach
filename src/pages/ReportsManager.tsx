@@ -194,8 +194,9 @@ const ReportsManager = () => {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             .sidebar, .mobile-header { display: none !important; }
-            .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
-            body { background: white !important; }
+            .main-content { margin: 0 !important; width: 100% !important; padding: 0 !important; }
+            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            .container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
             .card { box-shadow: none !important; border: none !important; background: transparent !important; }
           }
           .print-only { display: none; }
@@ -248,8 +249,8 @@ const ReportsManager = () => {
           </div>
         </div>
 
-        <div className="card" style={{ padding: '0' }}>
-          <div className="no-print filter-group" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+        <div className="card no-print" style={{ padding: '0' }}>
+          <div className="filter-group" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
             <div style={{ minWidth: '100%' }}>
               <input 
                 type="text" 
