@@ -183,7 +183,6 @@ const ResultsManager = () => {
                 };
                 
                 const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
-                let statusBadge = <span className="badge badge-secondary">Chưa thi</span>;
                 let statusStr = 'Chưa thi';
                 if (transferredCount >= 3) statusStr = 'Hoàn thành';
                 else if (s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS')) statusStr = 'Đang thi';
