@@ -17,7 +17,6 @@ import ExaminerDashboard from './pages/ExaminerDashboard';
 import Profile from './pages/Profile';
 import SettingsManager from './pages/SettingsManager';
 import StationTesting from './pages/StationTesting';
-import ResultsManager from './pages/ResultsManager';
 import SystemLogs from './pages/SystemLogs';
 import './index.css';
 
@@ -97,7 +96,6 @@ function App() {
         <Route path="/manager/users" element={<UserManager />} />
         <Route path="/manager/settings" element={<SettingsManager />} />
         <Route path="/manager/testing" element={<StationTesting />} />
-        <Route path="/manager/results" element={<ResultsManager />} />
         <Route path="/manager/system-logs" element={<SystemLogs />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
         <Route path="/profile" element={<Profile />} />
