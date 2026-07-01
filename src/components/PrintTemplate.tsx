@@ -12,7 +12,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
           @media print {
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 1.5cm;
             }
             body {
               font-family: 'Times New Roman', Times, serif;
@@ -80,7 +80,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
         const chuZScore = student.scoreChuZ !== '-' ? student.scoreChuZ : '';
         const duongTruongScore = student.scoreDuongTruong !== '-' ? student.scoreDuongTruong : '';
 
-        // Calculate "Điểm trừ" - assuming max score is 100 for Sa Hình, Đường Trường and 10 for Chữ Z based on the template
+        // Calculate "Điểm trừ" - assuming max score is 100 for Sa Hình, Đường Trường and 100 for Chữ Z based on UI
         const getDiemTru = (max: number, score: any) => {
           if (score === 'Vắng') return 'Vắng';
           if (score === 'Đang thi') return '';
@@ -91,7 +91,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
         };
 
         const diemTruSaHinh = getDiemTru(100, saHinhScore);
-        const diemTruChuZ = getDiemTru(10, chuZScore);
+        const diemTruChuZ = getDiemTru(100, chuZScore);
         const diemTruDuongTruong = getDiemTru(100, duongTruongScore);
 
         const isDat = student.finalStatus === 'ĐẬU';
@@ -118,15 +118,34 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
               PHIẾU ĐÁNH GIÁ THI THỰC HÀNH LÁI XE Ô TÔ
             </div>
 
-            <div className="info-block">
-              <div>Khóa đào tạo: <strong>{student.courseName || (student.course && student.course.name) || '................'}</strong></div>
-              <div>Hạng đào tạo: <strong>Hạng B</strong> (số: .................)</div>
-              <div>Họ tên học viên: <strong>{student.name}</strong></div>
-              <div>SBD / Mã ĐK: <strong>{student.registrationCode || student.cccd || '................'}</strong></div>
-              <div>Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong></div>
-            </div>
+            <table style={{ width: '100%', marginBottom: '20px', border: 'none' }}>
+              <tbody>
+                <tr>
+                  <td style={{ width: '50%', paddingBottom: '5px' }}>
+                    Khóa đào tạo: <strong>{student.courseName || (student.course && student.course.name) || '................'}</strong>
+                  </td>
+                  <td style={{ width: '50%', paddingBottom: '5px' }}>
+                    Hạng đào tạo: <strong>Hạng B</strong> (số: .........)
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingBottom: '5px' }}>
+                    Họ tên học viên: <strong>{student.name}</strong>
+                  </td>
+                  <td style={{ paddingBottom: '5px' }}>
+                    SBD / Mã ĐK: <strong>{student.registrationCode || student.cccd || '................'}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingBottom: '5px' }}>
+                    Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
 
-            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>KẾT QUẢ:</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>A. KẾT QUẢ:</div>
             <table className="result-table">
               <thead>
                 <tr>
@@ -163,14 +182,14 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
             </table>
 
             <div style={{ fontWeight: 'bold', marginBottom: '20px' }}>
-              KẾT LUẬN CỦA HỘI ĐỒNG THI
+              B. KẾT LUẬN CỦA HỘI ĐỒNG THI
             </div>
             
-            <div style={{ display: 'flex', marginBottom: '20px' }}>
-              <div style={{ width: '50%' }}>
+            <div style={{ display: 'flex', marginBottom: '40px' }}>
+              <div style={{ width: '50%', textAlign: 'center', fontWeight: 'bold' }}>
                 Đạt : {isDat ? '☑' : '☐'}
               </div>
-              <div style={{ width: '50%' }}>
+              <div style={{ width: '50%', textAlign: 'center', fontWeight: 'bold' }}>
                 Không đạt : {isKhongDat ? '☑' : '☐'}
               </div>
             </div>

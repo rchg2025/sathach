@@ -12,7 +12,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
           @media print {
             @page {
               size: A4;
-              margin: 20mm;
+              margin: 1.5cm;
             }
             body {
               font-family: 'Times New Roman', Times, serif;
@@ -138,13 +138,32 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
               PHIẾU ĐÁNH GIÁ THI THỰC HÀNH LÁI XE Ô TÔ
             </div>
 
-            <div className="info-block">
-              <div>Khóa đào tạo: <strong>{student.courseName || (student.course && student.course.name) || '................'}</strong></div>
-              <div>Hạng đào tạo: <strong>Hạng B</strong> (số: .................)</div>
-              <div>Họ tên học viên: <strong>{student.name}</strong></div>
-              <div>SBD / Mã ĐK: <strong>{student.registrationCode || student.cccd || '................'}</strong></div>
-              <div>Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong></div>
-            </div>
+            <table style={{ width: '100%', marginBottom: '20px', border: 'none' }}>
+              <tbody>
+                <tr>
+                  <td style={{ width: '50%', paddingBottom: '5px' }}>
+                    Khóa đào tạo: <strong>{student.courseName || (student.course && student.course.name) || '................'}</strong>
+                  </td>
+                  <td style={{ width: '50%', paddingBottom: '5px' }}>
+                    Hạng đào tạo: <strong>Hạng B</strong> (số: .........)
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingBottom: '5px' }}>
+                    Họ tên học viên: <strong>{student.name}</strong>
+                  </td>
+                  <td style={{ paddingBottom: '5px' }}>
+                    SBD / Mã ĐK: <strong>{student.registrationCode || student.cccd || '................'}</strong>
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ paddingBottom: '5px' }}>
+                    Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+                  </td>
+                  <td></td>
+                </tr>
+              </tbody>
+            </table>
 
             <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>THÔNG TIN CÁC LỖI:</div>
             
@@ -191,11 +210,11 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
               </tbody>
             </table>
 
-            <div style={{ display: 'flex', marginBottom: '20px' }}>
-              <div style={{ width: '50%', fontWeight: 'bold' }}>
+            <div style={{ display: 'flex', marginBottom: '40px' }}>
+              <div style={{ width: '50%', textAlign: 'center', fontWeight: 'bold' }}>
                 Đạt : {isDat ? '☑' : '☐'}
               </div>
-              <div style={{ width: '50%', fontWeight: 'bold' }}>
+              <div style={{ width: '50%', textAlign: 'center', fontWeight: 'bold' }}>
                 Không đạt : {isKhongDat ? '☑' : '☐'}
               </div>
             </div>
