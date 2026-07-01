@@ -261,6 +261,7 @@ const StationTesting = () => {
       if (filterStatus === 'IN_PROGRESS' && st !== 'Đang thi') match = false;
       if (filterStatus === 'FINISHED' && st !== 'Đã kết thúc') match = false;
       if (filterStatus === 'TRANSFERRED' && st !== 'Đã chuyển điểm') match = false;
+      if (filterStatus === 'COMPLETED' && st !== 'Hoàn thành bài thi') match = false;
     }
     return match;
   }).sort((a, b) => {
@@ -299,12 +300,13 @@ const StationTesting = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div style={{ width: '200px' }}>
+            <div style={{ width: '220px' }}>
               <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="NOT_STARTED">Chưa thi</option>
                 <option value="IN_PROGRESS">Đang thi</option>
-                <option value="TRANSFERRED">Đã chuyển điểm / Hoàn thành</option>
+                <option value="TRANSFERRED">Đã chuyển điểm</option>
+                <option value="COMPLETED">Hoàn thành bài thi</option>
               </select>
             </div>
           </div>
