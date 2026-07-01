@@ -103,7 +103,13 @@ const ReportsManager = () => {
 
   const courseFilteredStudents = processedStudents.filter(s => {
     if (filterCourse !== 'ALL') {
-      return (s.courseId === parseInt(filterCourse) || s.courseName === filterCourse);
+      const selectedCourseObj = courses.find(c => String(c.id) === filterCourse);
+      const selectedCourseName = selectedCourseObj ? selectedCourseObj.name : null;
+      return (
+        s.courseId === parseInt(filterCourse) || 
+        s.courseName === selectedCourseName || 
+        (s.course && s.course.name === selectedCourseName)
+      );
     }
     return true;
   });
