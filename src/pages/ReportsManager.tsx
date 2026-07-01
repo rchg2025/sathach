@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Printer, FileText } from 'lucide-react';
+import { Printer, FileText, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import PrintTemplate from '../components/PrintTemplate';
+import PrintErrorTemplate from '../components/PrintErrorTemplate';
 import { API_BASE_URL } from '../config';
 
 const ReportsManager = () => {
@@ -16,6 +17,7 @@ const ReportsManager = () => {
   const [filterStatus, setFilterStatus] = useState('ALL');
   
   const [printStudents, setPrintStudents] = useState<any[]>([]);
+  const [printType, setPrintType] = useState<'RESULT' | 'ERROR'>('RESULT');
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -121,7 +123,8 @@ const ReportsManager = () => {
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handlePrint = (studentsToPrint: any[]) => {
+  const handlePrint = (studentsToPrint: any[], type: 'RESULT' | 'ERROR' = 'RESULT') => {
+    setPrintType(type);
     setPrintStudents(studentsToPrint);
     setTimeout(() => {
       window.print();
@@ -146,14 +149,23 @@ const ReportsManager = () => {
       <div className="container print-container">
         <div className="flex justify-between items-center mb-4 no-print">
           <h2 style={{ margin: 0 }}>Báo cáo - Thống kê Sát hạch</h2>
-          <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileText size={18} /> In Đồng Loạt
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents, 'RESULT')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={18} /> In ĐL Kết quả
+            </button>
+            <button className="btn btn-warning" onClick={() => handlePrint(filteredStudents, 'ERROR')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertTriangle size={18} /> In ĐL Lỗi
+            </button>
+          </div>
         </div>
 
         {/* Print Template Container */}
         <div className="print-only">
-          <PrintTemplate students={printStudents} />
+          {printType === 'RESULT' ? (
+            <PrintTemplate students={printStudents} />
+          ) : (
+            <PrintErrorTemplate students={printStudents} />
+          )}
         </div>
         
         {/* Statistics Cards */}
@@ -236,13 +248,24 @@ const ReportsManager = () => {
                       {s.finalStatus === 'CHƯA HOÀN THÀNH' && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>Chưa hoàn thành</span>}
                     </td>
                     <td className="no-print" style={{ textAlign: 'center' }}>
-                      <button 
-                        className="btn btn-sm btn-secondary" 
-                        onClick={() => handlePrint([s])}
-                        style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                      >
-                        <Printer size={14} /> In
-                      </button>
+                      <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        <button 
+                          className="btn btn-sm btn-secondary" 
+                          onClick={() => handlePrint([s], 'RESULT')}
+                          title="In kết quả"
+                          style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <Printer size={14} /> KQ
+                        </button>
+                        <button 
+                          className="btn btn-sm btn-warning" 
+                          onClick={() => handlePrint([s], 'ERROR')}
+                          title="In lỗi"
+                          style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          <AlertTriangle size={14} /> Lỗi
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}

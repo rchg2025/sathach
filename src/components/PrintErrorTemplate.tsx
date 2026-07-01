@@ -1,0 +1,224 @@
+import React from 'react';
+
+interface PrintErrorTemplateProps {
+  students: any[];
+}
+
+const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => {
+  return (
+    <div className="print-error-template-container">
+      <style>
+        {`
+          @media print {
+            @page {
+              size: A4;
+              margin: 20mm;
+            }
+            body {
+              font-family: 'Times New Roman', Times, serif;
+              font-size: 14pt;
+              line-height: 1.5;
+            }
+            .page-break {
+              page-break-after: always;
+            }
+            .print-page {
+              width: 100%;
+            }
+            .header-table {
+              width: 100%;
+              text-align: center;
+              margin-bottom: 20px;
+            }
+            .header-table td {
+              vertical-align: top;
+            }
+            .title {
+              text-align: center;
+              font-weight: bold;
+              font-size: 16pt;
+              margin: 30px 0;
+            }
+            .info-block {
+              margin-bottom: 20px;
+            }
+            .info-block div {
+              margin-bottom: 5px;
+            }
+            .error-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            .error-table th, .error-table td {
+              border: 1px solid #000;
+              padding: 8px;
+              text-align: left;
+            }
+            .error-table th {
+              font-weight: bold;
+              text-align: center;
+            }
+            .summary-table {
+              width: 100%;
+              margin-bottom: 30px;
+              border-collapse: collapse;
+            }
+            .summary-table td {
+              padding: 5px;
+            }
+            .footer-signature {
+              width: 100%;
+              margin-top: 30px;
+            }
+            .footer-signature td {
+              width: 50%;
+              text-align: center;
+              vertical-align: top;
+            }
+          }
+        `}
+      </style>
+
+      {students.map((student) => {
+        // Collect errors
+        const trs = student.testResults || [];
+        const errorList: any[] = [];
+        let diemTruSaHinh = 0;
+        let diemTruChuZ = 0;
+        let diemTruDuongTruong = 0;
+
+        let scoreSaHinh = student.scoreSaHinh;
+        let scoreChuZ = student.scoreChuZ;
+        let scoreDuongTruong = student.scoreDuongTruong;
+
+        trs.forEach((tr: any) => {
+          const testName = tr.testType?.name || 'Chưa rõ';
+          const testNameLower = testName.toLowerCase();
+          
+          if (tr.scores && tr.scores.length > 0) {
+            tr.scores.forEach((sc: any) => {
+              if (sc.criterion) {
+                const deduction = sc.criterion.deductionScore * sc.timesDeducted;
+                errorList.push({
+                  testName,
+                  errorName: sc.criterion.name,
+                  deduction
+                });
+
+                if (testNameLower.includes('sa hình')) diemTruSaHinh += deduction;
+                if (testNameLower.includes('chữ z')) diemTruChuZ += deduction;
+                if (testNameLower.includes('đường trường')) diemTruDuongTruong += deduction;
+              }
+            });
+          }
+        });
+
+        const isDat = student.finalStatus === 'ĐẬU';
+        const isKhongDat = student.finalStatus === 'RỚT';
+
+        return (
+          <div key={student.id} className="print-page page-break">
+            <table className="header-table">
+              <tbody>
+                <tr>
+                  <td style={{ width: '40%' }}>
+                    <div style={{ fontWeight: 'bold' }}>PHÒNG QUẢN LÝ ĐÀO TẠO</div>
+                    <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>TRUNG TÂM ĐÀO TẠO LÁI XE</div>
+                  </td>
+                  <td style={{ width: '60%' }}>
+                    <div style={{ fontWeight: 'bold' }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                    <div style={{ fontWeight: 'bold', textDecoration: 'underline' }}>Độc lập – Tự do – Hạnh phúc</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="title">
+              PHIẾU ĐÁNH GIÁ THI THỰC HÀNH LÁI XE Ô TÔ
+            </div>
+
+            <div className="info-block">
+              <div>Khóa đào tạo: <strong>{student.courseName || (student.course && student.course.name) || '................'}</strong></div>
+              <div>Hạng đào tạo: <strong>Hạng B</strong> (số: .................)</div>
+              <div>Họ tên học viên: <strong>{student.name}</strong></div>
+              <div>SBD / Mã ĐK: <strong>{student.registrationCode || student.cccd || '................'}</strong></div>
+              <div>Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong></div>
+            </div>
+
+            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>THÔNG TIN CÁC LỖI:</div>
+            
+            {errorList.length > 0 ? (
+              <table className="error-table">
+                <thead>
+                  <tr>
+                    <th style={{ width: '5%' }}>TT</th>
+                    <th style={{ width: '25%' }}>Trạm thi</th>
+                    <th style={{ width: '50%' }}>Tên lỗi</th>
+                    <th style={{ width: '20%' }}>Điểm trừ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {errorList.map((err, i) => (
+                    <tr key={i}>
+                      <td style={{ textAlign: 'center' }}>{i + 1}</td>
+                      <td>{err.testName}</td>
+                      <td>{err.errorName}</td>
+                      <td style={{ textAlign: 'center' }}>-{err.deduction}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div style={{ fontStyle: 'italic', marginBottom: '20px' }}>(Không ghi nhận lỗi nào)</div>
+            )}
+
+            <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>KẾT QUẢ:</div>
+            <table className="summary-table">
+              <tbody>
+                <tr>
+                  <td>Điểm trừ Trạm Sa hình: <strong>{diemTruSaHinh}</strong></td>
+                  <td>Điểm còn lại: <strong>{scoreSaHinh}</strong></td>
+                </tr>
+                <tr>
+                  <td>Điểm trừ Trạm Hình chữ Z: <strong>{diemTruChuZ}</strong></td>
+                  <td>Điểm còn lại: <strong>{scoreChuZ}</strong></td>
+                </tr>
+                <tr>
+                  <td>Điểm trừ Trạm Đường trường: <strong>{diemTruDuongTruong}</strong></td>
+                  <td>Điểm còn lại: <strong>{scoreDuongTruong}</strong></td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style={{ display: 'flex', marginBottom: '20px' }}>
+              <div style={{ width: '50%', fontWeight: 'bold' }}>
+                Đạt : {isDat ? '☑' : '☐'}
+              </div>
+              <div style={{ width: '50%', fontWeight: 'bold' }}>
+                Không đạt : {isKhongDat ? '☑' : '☐'}
+              </div>
+            </div>
+
+            <table className="footer-signature">
+              <tbody>
+                <tr>
+                  <td>
+                    <div style={{ fontWeight: 'bold' }}>Thư ký hội đồng</div>
+                    <div>(Ký và ghi rõ họ tên)</div>
+                  </td>
+                  <td>
+                    <div style={{ fontWeight: 'bold' }}>Học viên ký xác nhận kết quả</div>
+                    <div>(Ký và ghi rõ họ tên)</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+export default PrintErrorTemplate;
