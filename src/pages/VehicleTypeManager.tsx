@@ -27,7 +27,7 @@ const VehicleTypeManager = () => {
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [seatsFilter, setSeatsFilter] = useState('all');
+
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -234,8 +234,7 @@ const VehicleTypeManager = () => {
                         removeAccents(v.brand || '').includes(keyword) ||
                         removeAccents(v.owner || '').includes(keyword);
     const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'active' ? v.isActive : !v.isActive);
-    const matchSeats = seatsFilter === 'all' ? true : (v.seats?.toString() === seatsFilter);
-    return matchSearch && matchStatus && matchSeats;
+    return matchSearch && matchStatus;
   });
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
   const displayedVehicles = filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
