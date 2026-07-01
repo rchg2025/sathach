@@ -827,7 +827,18 @@ router.get('/station/students-v2', async (req, res) => {
       include: { 
         course: true, 
         testResults: {
-          include: { stationManager: true, vehicle: true, testType: true }
+          include: { 
+            stationManager: true, 
+            vehicle: true, 
+            testType: true,
+            scores: {
+              include: {
+                criterion: {
+                  include: { exam: true }
+                }
+              }
+            }
+          }
         }
       },
       orderBy: { id: 'desc' },
