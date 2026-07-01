@@ -899,6 +899,41 @@ router.post('/station/end-test', async (req, res) => {
   }
 });
 
+router.post('/station/mark-absent', async (req, res) => {
+  const { studentId, testTypeId, stationManagerId } = req.body;
+  try {
+    let testResult = await prisma.testResult.findUnique({
+      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    });
+    
+    if (testResult) {
+      testResult = await prisma.testResult.update({
+        where: { id: testResult.id },
+        data: { 
+          status: 'ABSENT',
+          totalScore: 0,
+          stationManagerId: stationManagerId ? Number(stationManagerId) : null,
+          endTime: new Date()
+        }
+      });
+    } else {
+      testResult = await prisma.testResult.create({
+        data: { 
+          studentId: Number(studentId), 
+          testTypeId: Number(testTypeId), 
+          status: 'ABSENT',
+          totalScore: 0,
+          stationManagerId: stationManagerId ? Number(stationManagerId) : null,
+          endTime: new Date()
+        }
+      });
+    }
+    res.json(testResult);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 router.post('/station/transfer-score', async (req, res) => {
   const { studentId, testTypeId } = req.body;
   try {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Play, Car, CheckCircle } from 'lucide-react';
+import { Play, Car, CheckCircle, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -142,9 +142,43 @@ const StationTesting = () => {
     }
   };
 
+  const handleMarkAbsent = async (student: any) => {
+    const studentAssignment = assignments.find(a => 
+      a.courseId === student.courseId || 
+      (a.course && a.course.name === student.courseName)
+    );
+    if (!studentAssignment) return toast.error('Không tìm thấy bài thi phân công');
+
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/station/mark-absent`, {
+        studentId: student.id,
+        testTypeId: studentAssignment.testType?.id,
+        stationManagerId: user?.id
+      });
+      toast.success('Đã đánh dấu vắng thành công.');
+      
+      // Update local state to reflect ABSENT
+      setStudents(prev => prev.map(s => {
+        if (s.id === student.id) {
+          const newTestResults = [...(s.testResults || [])];
+          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === studentAssignment.testType?.id);
+          if (trIndex > -1) {
+            newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'ABSENT', totalScore: 0 };
+          } else {
+            newTestResults.push({ testTypeId: studentAssignment.testType?.id, status: 'ABSENT', totalScore: 0 });
+          }
+          return { ...s, testResults: newTestResults };
+        }
+        return s;
+      }));
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi khi đánh dấu vắng');
+    }
+  };
+
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
-    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED').length;
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
     if (transferredCount >= 3) return 'Hoàn thành bài thi';
     
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
@@ -158,7 +192,7 @@ const StationTesting = () => {
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     
-    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED').length;
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
     if (transferredCount >= 3) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
@@ -338,6 +372,7 @@ const StationTesting = () => {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
+                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
@@ -349,6 +384,7 @@ const StationTesting = () => {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
+                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
@@ -360,6 +396,7 @@ const StationTesting = () => {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
+                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
@@ -379,13 +416,26 @@ const StationTesting = () => {
 
                           if (myStatus === 'Chưa thi') {
                             return (
-                              <button 
-                                className="btn btn-primary" 
-                                style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                                onClick={() => openStartTestModal(s)}
-                              >
-                                <Play size={16} /> Bắt đầu thi
-                              </button>
+                              <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={() => openStartTestModal(s)}
+                                >
+                                  <Play size={16} /> Bắt đầu thi
+                                </button>
+                                <button 
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={() => {
+                                    if(window.confirm(`Xác nhận đánh dấu vắng thi cho ${s.name}?`)) {
+                                      handleMarkAbsent(s);
+                                    }
+                                  }}
+                                >
+                                  <UserX size={16} /> Vắng
+                                </button>
+                              </div>
                             );
                           } else if (myStatus === 'IN_PROGRESS') {
                             return (
@@ -403,6 +453,8 @@ const StationTesting = () => {
                             );
                           } else if (myStatus === 'TRANSFERRED' || myStatus === 'FINISHED') {
                             return <span className="text-success small">Đã chuyển điểm</span>;
+                          } else if (myStatus === 'ABSENT') {
+                            return <span className="text-muted small">Vắng</span>;
                           }
 
                           return null;
