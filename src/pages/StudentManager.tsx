@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
-import { removeAccents, toTitleCase } from '../utils/stringUtils';
+import { removeAccents } from '../utils/stringUtils';
 import CreatableSelect from 'react-select/creatable';
 import { Pagination } from '../components/Pagination';
 import AdminLayout from '../components/AdminLayout';
