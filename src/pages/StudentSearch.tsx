@@ -175,32 +175,38 @@ const StudentSearch = () => {
                     </div>
                   </div>
 
-                  {result.progress && result.progress.length > 0 && (
-                    <div className="mt-4">
-                      <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Chi tiết các bài thi:</h5>
-                      {result.progress.map((prog: any) => {
-                        const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
-                        const pointsDeducted = examScores.reduce((sum: number, s: any) => sum + (s.criterion?.pointsToDeduct * s.timesDeducted), 0);
-                        
-                        return (
-                          <div key={prog.id} style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                              <h6 style={{ margin: 0, color: 'var(--primary)', fontWeight: 'bold' }}>{prog.exam?.name}</h6>
-                              <div>
-                                {prog.status === 'COMPLETED' ? <span className="badge badge-success">Đã qua</span> : 
-                                 prog.status === 'IN_PROGRESS' ? <span className="badge badge-warning">Đang thi</span> : 
-                                 <span className="badge badge-secondary">Chờ</span>}
-                                {pointsDeducted > 0 && <span className="badge badge-danger" style={{ marginLeft: '0.5rem' }}>-{pointsDeducted} điểm</span>}
-                              </div>
-                            </div>
-                            
-                            {prog.examiner && (
-                              <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                Giám khảo: {prog.examiner.name}
-                              </div>
-                            )}
+                  {(() => {
+                    if (!result.progress || result.progress.length === 0) return null;
+                    
+                    const progressWithErrors = result.progress.filter((prog: any) => {
+                      const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
+                      return examScores.length > 0;
+                    });
+                    
+                    if (progressWithErrors.length === 0) return null;
 
-                            {examScores.length > 0 ? (
+                    return (
+                      <div className="mt-4">
+                        <h5 style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', marginBottom: '1rem' }}>Chi tiết các lỗi vi phạm:</h5>
+                        {progressWithErrors.map((prog: any) => {
+                          const examScores = result.scores?.filter((s: any) => s.criterion?.examId === prog.examId) || [];
+                          const pointsDeducted = examScores.reduce((sum: number, s: any) => sum + (s.criterion?.pointsToDeduct * s.timesDeducted), 0);
+                          
+                          return (
+                            <div key={prog.id} style={{ marginBottom: '1.5rem', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                <h6 style={{ margin: 0, color: 'var(--primary)', fontWeight: 'bold' }}>{prog.exam?.name}</h6>
+                                <div>
+                                  <span className="badge badge-danger">-{pointsDeducted} điểm</span>
+                                </div>
+                              </div>
+                              
+                              {prog.examiner && (
+                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                  Giám khảo: {prog.examiner.name}
+                                </div>
+                              )}
+
                               <ul style={{ listStyle: 'none', padding: 0, margin: '0.5rem 0 0 0', borderTop: '1px dashed var(--border)', paddingTop: '0.5rem' }}>
                                 {examScores.map((score: any) => (
                                   <li key={score.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.3rem 0', fontSize: '0.9rem' }}>
@@ -209,18 +215,12 @@ const StudentSearch = () => {
                                   </li>
                                 ))}
                               </ul>
-                            ) : (
-                              prog.status === 'COMPLETED' ? (
-                                <div style={{ fontSize: '0.9rem', color: 'var(--success)', marginTop: '0.5rem', borderTop: '1px dashed var(--border)', paddingTop: '0.5rem' }}>
-                                  Không có lỗi
-                                </div>
-                              ) : null
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))
             ) : (
