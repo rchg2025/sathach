@@ -291,13 +291,13 @@ const ExaminerDashboard = () => {
                     {(!exam.criteria || exam.criteria.length === 0) ? (
                       <div className="text-muted mb-3">Không có lỗi trừ điểm.</div>
                     ) : (
-                      <table className="table table-bordered mb-0">
+                      <table className="table table-bordered mb-0" style={{ tableLayout: 'fixed', width: '100%' }}>
                         <tbody>
                         {exam.criteria.map((c: any) => {
                           const errCount = errors[c.id] || 0;
                           return (
                             <tr key={c.id}>
-                              <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px' }}>
+                              <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
                                 <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                                 <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                               </td>
@@ -339,13 +339,13 @@ const ExaminerDashboard = () => {
                 {criteria.length === 0 ? (
                   <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
                 ) : (
-                  <table className="table table-bordered mb-0">
+                  <table className="table table-bordered mb-0" style={{ tableLayout: 'fixed', width: '100%' }}>
                     <tbody>
                     {criteria.map(c => {
                       const errCount = errors[c.id] || 0;
                       return (
                         <tr key={c.id}>
-                          <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px' }}>
+                          <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
                             <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                             <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                           </td>
