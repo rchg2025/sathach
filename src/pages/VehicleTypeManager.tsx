@@ -8,6 +8,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
 const VehicleTypeManager = () => {
+  
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [vehicleTypes, setVehicleTypes] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -35,7 +36,7 @@ const VehicleTypeManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/vehicle-types`);
       setVehicleTypes(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -62,7 +63,7 @@ const VehicleTypeManager = () => {
       resetForm();
       fetchVehicleTypes();
       setActiveTab('list');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Có lỗi xảy ra!');
     }
   };
@@ -101,11 +102,11 @@ const VehicleTypeManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/vehicle-types/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/vehicle-types/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa xe thành công!');
       fetchVehicleTypes();
-    } catch (err) {
-      toast.error('Lỗi khi xóa xe');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }
@@ -118,7 +119,7 @@ const VehicleTypeManager = () => {
       });
       fetchVehicleTypes();
       toast.success('Cập nhật trạng thái thành công!');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Lỗi khi cập nhật trạng thái');
     }
   };
@@ -209,13 +210,13 @@ const VehicleTypeManager = () => {
             const res = await axios.post(`${API_BASE_URL}/api/manager/vehicle-types/bulk-import`, { vehicles: vehiclesToImport });
             toast.success(`Đã cập nhật/thêm mới ${res.data.successCount} xe. Lỗi: ${res.data.errorCount}`);
             fetchVehicleTypes();
-          } catch (err) {
+          } catch (err: any) {
             toast.error('Có lỗi xảy ra khi import lên máy chủ');
           }
         } else {
           toast.error('Không tìm thấy dữ liệu hợp lệ trong file');
         }
-      } catch (err) {
+      } catch (err: any) {
         toast.error('Lỗi khi đọc file Excel');
       }
       

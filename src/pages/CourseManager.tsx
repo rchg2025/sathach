@@ -34,7 +34,7 @@ const CourseManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
       setCourses(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -57,7 +57,7 @@ const CourseManager = () => {
       resetForm();
       fetchCourses();
       setActiveTab('list');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Có lỗi xảy ra!');
     }
   };
@@ -86,11 +86,11 @@ const CourseManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/courses/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/courses/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa khóa học thành công!');
       fetchCourses();
-    } catch (err) {
-      toast.error('Lỗi khi xóa khóa học');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }
@@ -103,7 +103,7 @@ const CourseManager = () => {
       });
       fetchCourses();
       toast.success('Cập nhật trạng thái thành công!');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Lỗi khi cập nhật trạng thái');
     }
   };

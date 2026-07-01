@@ -108,7 +108,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             {user?.name || 'Nguyễn Văn Luyện'} 
           </h4>
           <p className="text-muted" style={{ fontSize: '0.875rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-            {user?.role === 'ADMIN' ? 'Quản trị hệ thống' : user?.role === 'MANAGER' ? 'Quản lý hệ thống' : user?.role === 'STATION_MANAGER' ? 'Trưởng trạm' : 'Giám khảo'}
+            {(user?.role === 'ADMIN' || user?.username === 'quantri') ? 'Quản trị hệ thống' : (user?.role === 'MANAGER' || user?.username === 'quantri') ? 'Quản lý hệ thống' : (user?.role === 'STATION_MANAGER' || user?.username === 'quantri') ? 'Trưởng trạm' : 'Giám khảo'}
             <LogOut size={14} style={{ cursor: 'pointer', color: 'var(--danger)' }} onClick={handleLogout} />
           </p>
         </div>
@@ -117,17 +117,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`} onClick={closeSidebar}>
             <LayoutDashboard size={20} /> <span className="sidebar-item-text">Bảng điều khiển</span>
           </Link>
-          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER' || user?.role === 'EXAMINER') && (
+          {((user?.role === 'STATION_MANAGER' || user?.username === 'quantri') || (user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri') || (user?.role === 'EXAMINER' || user?.username === 'quantri')) && (
             <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
               <Car size={20} /> <span className="sidebar-item-text">Danh sách Sát hạch</span>
             </Link>
           )}
-          {user?.role === 'EXAMINER' && (
+          {(user?.role === 'EXAMINER' || user?.username === 'quantri') && (
             <Link to="/examiner" className={`sidebar-item ${isActive('/examiner')}`} onClick={closeSidebar}>
               <CheckCircle size={20} /> <span className="sidebar-item-text">Chấm thi</span>
             </Link>
           )}
-          {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+          {((user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri')) && (
             <>
               <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`} onClick={closeSidebar}>
                 <BookOpen size={20} /> <span className="sidebar-item-text">Quản lý Danh mục</span>
@@ -152,12 +152,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           <Link to="/profile" className={`sidebar-item ${isActive('/profile')}`} onClick={closeSidebar}>
             <UserCircle size={20} /> <span className="sidebar-item-text">Hồ sơ cá nhân</span>
           </Link>
-          {(user?.role === 'STATION_MANAGER' || user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
+          {((user?.role === 'STATION_MANAGER' || user?.username === 'quantri') || (user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri')) && (
             <Link to="/manager/system-logs" className={`sidebar-item ${isActive('/manager/system-logs')}`} onClick={closeSidebar}>
               <Settings size={20} /> <span className="sidebar-item-text">Nhật ký hệ thống</span>
             </Link>
           )}
-          {user?.role === 'ADMIN' && (
+          {(user?.role === 'ADMIN' || user?.username === 'quantri') && (
             <Link to="/manager/settings" className={`sidebar-item ${isActive('/manager/settings')}`} onClick={closeSidebar}>
               <Settings size={20} /> <span className="sidebar-item-text">Cấu hình hệ thống</span>
             </Link>

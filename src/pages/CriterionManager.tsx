@@ -9,6 +9,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
 const CriterionManager = () => {
+  
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [criteria, setCriteria] = useState([]);
   const [exams, setExams] = useState([]);
@@ -31,7 +32,7 @@ const CriterionManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/criteria`);
       setCriteria(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -40,7 +41,7 @@ const CriterionManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/exams`);
       setExams(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -69,7 +70,7 @@ const CriterionManager = () => {
       resetForm();
       fetchCriteria();
       setActiveTab('list');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Có lỗi xảy ra!');
     }
   };
@@ -96,11 +97,11 @@ const CriterionManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/criteria/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/criteria/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa Tiêu chí thành công!');
       fetchCriteria();
-    } catch (err) {
-      toast.error('Lỗi khi xóa Tiêu chí');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }

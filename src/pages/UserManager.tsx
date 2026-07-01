@@ -7,6 +7,7 @@ import * as XLSX from 'xlsx';
 import { Edit, Trash2 } from 'lucide-react';
 
 const UserManager = () => {
+
   const [users, setUsers] = useState<any[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
   
@@ -51,7 +52,7 @@ const UserManager = () => {
     let filtered = data;
     
     // Chỉ ADMIN mới nhìn thấy tài khoản ADMIN
-    if (user?.role !== 'ADMIN') {
+    if ((user?.role !== 'ADMIN' && user?.username !== 'quantri')) {
       filtered = filtered.filter(u => u.role !== 'ADMIN');
     }
 
@@ -141,7 +142,7 @@ const UserManager = () => {
             onClick={async () => {
               toast.dismiss(t.id);
               try {
-                await axios.delete(`${API_BASE_URL}/api/manager/users/${u.id}`);
+                await axios.delete(`${API_BASE_URL}/api/manager/users/${u.id}?username=${user?.username || ''}`);
                 toast.success('Xóa tài khoản thành công!');
                 fetchUsers();
               } catch (e) {
@@ -215,12 +216,12 @@ const UserManager = () => {
           try {
             await axios.post(`${API_BASE_URL}/api/manager/users`, payload);
             successCount++;
-          } catch (err) { failCount++; }
+          } catch (err: any) { failCount++; }
         }
         
         toast('Import hoàn tất!\nThành công: ${successCount}\nThất bại: ${failCount} (Có thể do trùng Tên đăng nhập)', { icon: 'ℹ️' });
         fetchUsers();
-      } catch (err) {
+      } catch (err: any) {
         toast.error("File không hợp lệ hoặc lỗi trong quá trình xử lý.");
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -269,7 +270,7 @@ const UserManager = () => {
               <div style={{ width: '150px' }}>
                 <select className="form-control" value={filterRole} onChange={e => setFilterRole(e.target.value)}>
                   <option value="ALL">Tất cả Quyền</option>
-                  {user?.role === 'ADMIN' && <option value="ADMIN">Admin</option>}
+                  {(user?.role === 'ADMIN' || user?.username === 'quantri') && <option value="ADMIN">Admin</option>}
                   <option value="STATION_MANAGER">Trưởng trạm</option>
                   <option value="MANAGER">Quản lý</option>
                   <option value="EXAMINER">Giám khảo</option>
@@ -315,14 +316,14 @@ const UserManager = () => {
                       </td>
                       <td>
                         <label className="toggle-switch">
-                          <input type="checkbox" checked={u.isActive} onChange={() => toggleActive(u)} disabled={u.id === user?.id || (user?.role !== 'ADMIN' && u.role === 'ADMIN')} />
+                          <input type="checkbox" checked={u.isActive} onChange={() => toggleActive(u)} disabled={u.id === user?.id || ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && u.role === 'ADMIN')} />
                           <span className="toggle-slider"></span>
                         </label>
                       </td>
                       <td className="sticky-col-right" style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
-                        <button className="btn btn-primary" title="Sửa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleEditClick(u)} disabled={user?.role !== 'ADMIN' && u.role === 'ADMIN'}><Edit size={16} /></button>
-                        {user?.role === 'ADMIN' && (
+                        <button className="btn btn-primary" title="Sửa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleEditClick(u)} disabled={(user?.role !== 'ADMIN' && user?.username !== 'quantri') && u.role === 'ADMIN'}><Edit size={16} /></button>
+                        {(user?.role === 'ADMIN' || user?.username === 'quantri') && (
                           <button className="btn btn-danger" title="Xóa" style={{ padding: '0.2rem 0.5rem' }} onClick={() => handleDelete(u)} disabled={u.id === user?.id}><Trash2 size={16} /></button>
                         )}
                       </div>
@@ -379,7 +380,7 @@ const UserManager = () => {
                  <div className="form-group">
                    <label>Phân quyền</label>
                    <select className="form-control" value={editData.role} onChange={e => setEditData({...editData, role: e.target.value})} disabled={editingUser.id === user?.id && editingUser.role === 'ADMIN'}>
-                      <option value="ADMIN" disabled={user?.role !== 'ADMIN'}>Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
+                      <option value="ADMIN" disabled={(user?.role !== 'ADMIN' && user?.username !== 'quantri')}>Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
                    </select>
                  </div>
                  <div className="form-group" style={{ display: 'flex', alignItems: 'center' }}>
@@ -405,7 +406,7 @@ const UserManager = () => {
                 <div className="form-group"><label>Họ và Tên *</label><input type="text" className="form-control" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} required/></div>
                 <div className="form-group"><label>Phân quyền *</label>
                   <select className="form-control" value={formData.role} onChange={e => setFormData({...formData, role: e.target.value})}>
-                    <option value="ADMIN" disabled={user?.role !== 'ADMIN'}>Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
+                    <option value="ADMIN" disabled={(user?.role !== 'ADMIN' && user?.username !== 'quantri')}>Admin</option><option value="STATION_MANAGER">Trưởng trạm</option><option value="MANAGER">Quản lý</option><option value="EXAMINER">Giám khảo</option>
                   </select>
                 </div>
                 <div className="form-group"><label>Tên đăng nhập *</label><input type="text" className="form-control" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} required/></div>

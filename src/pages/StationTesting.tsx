@@ -282,7 +282,7 @@ const StationTesting = () => {
       <div className="container">
         <div className="flex justify-between items-center mb-4">
           <h2 style={{ margin: 0 }}>
-            Danh sách Sát hạch {user?.role === 'STATION_MANAGER' ? '(Trưởng trạm)' : user?.role === 'EXAMINER' ? '(Giám khảo)' : ''}
+            Danh sách Sát hạch {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') ? '(Trưởng trạm)' : (user?.role === 'EXAMINER' || user?.username === 'quantri') ? '(Giám khảo)' : ''}
           </h2>
         </div>
         
@@ -321,7 +321,7 @@ const StationTesting = () => {
                   <th style={{ textAlign: 'center' }}>Sa hình</th>
                   <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
                   <th style={{ textAlign: 'center' }}>Đường trường</th>
-                  {user?.role === 'STATION_MANAGER' && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
+                  {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
                 </tr>
               </thead>
               <tbody>
@@ -370,7 +370,7 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('sa hình'));
                         if (!tr) return '-';
-                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
@@ -382,7 +382,7 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('chữ z'));
                         if (!tr) return '-';
-                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
@@ -394,7 +394,7 @@ const StationTesting = () => {
                       {(() => {
                         const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('đường trường'));
                         if (!tr) return '-';
-                        if (user?.role !== 'ADMIN' && user?.role !== 'MANAGER') {
+                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
                           if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                         }
@@ -402,7 +402,7 @@ const StationTesting = () => {
                         return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                       })()}
                     </td>
-                    {user?.role === 'STATION_MANAGER' && (
+                    {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && (
                       <td className="sticky-col-right" style={{ textAlign: 'right' }}>
                         {(() => {
                           const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));

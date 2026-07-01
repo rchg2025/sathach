@@ -61,7 +61,7 @@ const AssignmentManager = () => {
       setExams(examRes.data);
       setCourses(courseRes.data);
       setVehicles(vehicleRes.data.filter((v: any) => v.isActive));
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Lỗi khi tải dữ liệu');
     }
   };
@@ -190,11 +190,11 @@ const AssignmentManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/assignments/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/assignments/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Đã xóa phân công!');
       fetchData();
-    } catch (err) {
-      toast.error('Lỗi khi xóa phân công');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }

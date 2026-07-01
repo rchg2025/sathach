@@ -120,8 +120,32 @@ router.put('/courses/:id', async (req, res) => {
 });
 
 router.delete('/courses/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.course.delete({ where: { id: Number(req.params.id) } });
+    if (username === 'quantri') {
+      const students = await prisma.student.findMany({ where: { courseId: id } });
+      const studentIds = students.map(s => s.id);
+      const testResults = await prisma.testResult.findMany({ where: { studentId: { in: studentIds } } });
+      const trIds = testResults.map(tr => tr.id);
+      
+      await prisma.score.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.testResult.deleteMany({ where: { studentId: { in: studentIds } } });
+      await prisma.student.deleteMany({ where: { courseId: id } });
+      await prisma.testAssignment.deleteMany({ where: { courseId: id } });
+      
+      await prisma.course.delete({ where: { id } });
+      res.json({ success: true, message: `Đã xoá khoá học cùng với ${students.length} học viên và các dữ liệu liên quan.` });
+    } else {
+      await prisma.course.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá khoá học' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -213,8 +237,26 @@ router.put('/vehicle-types/:id', async (req, res) => {
 });
 
 router.delete('/vehicle-types/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.vehicleType.delete({ where: { id: Number(req.params.id) } });
+    if (username === 'quantri') {
+      const testResults = await prisma.testResult.findMany({ where: { vehicleId: id } });
+      const trIds = testResults.map(tr => tr.id);
+      await prisma.score.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.testResult.deleteMany({ where: { vehicleId: id } });
+      await prisma.vehicleType.delete({ where: { id } });
+      res.json({ success: true, message: `Đã xoá loại xe và ${testResults.length} kết quả thi liên quan.` });
+    } else {
+      await prisma.vehicleType.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá loại xe' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -267,8 +309,22 @@ router.put('/criteria/:id', async (req, res) => {
 });
 
 router.delete('/criteria/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.criterion.delete({ where: { id: Number(req.params.id) } });
+    if (username === 'quantri') {
+      await prisma.score.deleteMany({ where: { criterionId: id } });
+      await prisma.criterion.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá tiêu chí và các điểm bị trừ liên quan.' });
+    } else {
+      await prisma.criterion.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá tiêu chí' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -302,8 +358,29 @@ router.put('/exams/:id', async (req, res) => {
 });
 
 router.delete('/exams/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.criterion.deleteMany({ where: { examId: Number(req.params.id) } });
+    if (username === 'quantri') {
+      const criteria = await prisma.criterion.findMany({ where: { examId: id } });
+      for (const c of criteria) {
+         await prisma.score.deleteMany({ where: { criterionId: c.id } });
+      }
+      await prisma.criterion.deleteMany({ where: { examId: id } });
+      await prisma.examProgress.deleteMany({ where: { examId: id } });
+      await prisma.testAssignment.deleteMany({ where: { examId: id } });
+      await prisma.exam.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá bài thi và các dữ liệu liên quan.' });
+    } else {
+      await prisma.criterion.deleteMany({ where: { examId: id } });
+      await prisma.exam.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá bài thi' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     await prisma.exam.delete({ where: { id: Number(req.params.id) } });
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
@@ -422,8 +499,14 @@ router.put('/assignments/:id', async (req, res) => {
 });
 
 router.delete('/assignments/:id', async (req, res) => {
+  const id = Number(req.params.id);
   try {
-    await prisma.testAssignment.delete({ where: { id: Number(req.params.id) } });
+    await prisma.testAssignment.delete({ where: { id } });
+    res.json({ success: true, message: 'Đã xoá phân công' });
+  } catch (error: any) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -482,9 +565,25 @@ router.put('/users/:id', async (req, res) => {
 });
 
 router.delete('/users/:id', async (req, res) => {
-  const { id } = req.params;
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.user.delete({ where: { id: Number(id) } });
+    if (username === 'quantri') {
+      await prisma.testAssignment.deleteMany({ where: { examinerId: id } });
+      await prisma.examProgress.deleteMany({ where: { examinerId: id } });
+      await prisma.testResult.updateMany({ where: { stationManagerId: id }, data: { stationManagerId: null } });
+      await prisma.systemLog.deleteMany({ where: { userId: id } });
+      await prisma.user.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá người dùng và các dữ liệu liên quan.' });
+    } else {
+      await prisma.user.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá người dùng' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -505,9 +604,39 @@ router.put('/test-types/:id', async (req, res) => {
 });
 
 router.delete('/test-types/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    const testTypeId = Number(req.params.id);
-    const exams = await prisma.exam.findMany({ where: { testTypeId } });
+    if (username === 'quantri') {
+      const testResults = await prisma.testResult.findMany({ where: { testTypeId: id } });
+      const trIds = testResults.map(tr => tr.id);
+      await prisma.score.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.testResult.deleteMany({ where: { testTypeId: id } });
+      
+      const exams = await prisma.exam.findMany({ where: { testTypeId: id } });
+      for (const exam of exams) {
+        await prisma.criterion.deleteMany({ where: { examId: exam.id } });
+        await prisma.examProgress.deleteMany({ where: { examId: exam.id } });
+      }
+      await prisma.exam.deleteMany({ where: { testTypeId: id } });
+      await prisma.testAssignment.deleteMany({ where: { testTypeId: id } });
+      await prisma.testType.delete({ where: { id } });
+      res.json({ success: true, message: `Đã xoá loại bài thi, ${exams.length} bài thi con và ${testResults.length} kết quả thi liên quan.` });
+    } else {
+      const exams = await prisma.exam.findMany({ where: { testTypeId: id } });
+      for (const exam of exams) {
+        await prisma.criterion.deleteMany({ where: { examId: exam.id } });
+      }
+      await prisma.exam.deleteMany({ where: { testTypeId: id } });
+      await prisma.testType.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá loại bài thi' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     for (const exam of exams) {
       await prisma.criterion.deleteMany({ where: { examId: exam.id } });
     }
@@ -643,15 +772,54 @@ router.put('/students/:id', async (req, res) => {
 });
 
 router.delete('/students/:id', async (req, res) => {
+  const { username } = req.query;
+  const id = Number(req.params.id);
   try {
-    await prisma.student.delete({ where: { id: Number(req.params.id) } });
+    if (username === 'quantri') {
+      const testResults = await prisma.testResult.findMany({ where: { studentId: id } });
+      const trIds = testResults.map(tr => tr.id);
+      await prisma.score.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.testResult.deleteMany({ where: { studentId: id } });
+      await prisma.student.delete({ where: { id } });
+      res.json({ success: true, message: `Đã xoá học viên và ${testResults.length} kết quả thi liên quan.` });
+    } else {
+      await prisma.student.delete({ where: { id } });
+      res.json({ success: true, message: 'Đã xoá học viên' });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
     res.json({ success: true });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 
 router.post('/students/bulk-delete', async (req, res) => {
   const { ids } = req.body;
+  const { username } = req.query;
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
+  
+  try {
+    const studentIds = ids.map((id: any) => Number(id));
+    if (username === 'quantri') {
+      const testResults = await prisma.testResult.findMany({ where: { studentId: { in: studentIds } } });
+      const trIds = testResults.map(tr => tr.id);
+      await prisma.score.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: trIds } } });
+      await prisma.testResult.deleteMany({ where: { studentId: { in: studentIds } } });
+      await prisma.student.deleteMany({ where: { id: { in: studentIds } } });
+      res.json({ success: true, count: ids.length, message: `Đã xoá ${ids.length} học viên và ${testResults.length} kết quả thi liên quan.` });
+    } else {
+      await prisma.student.deleteMany({ where: { id: { in: studentIds } } });
+      res.json({ success: true, count: ids.length, message: `Đã xoá ${ids.length} học viên.` });
+    }
+  } catch (error: any) {
+    if (error.code === 'P2003') return res.status(400).json({ error: 'Không thể xoá vì đang có dữ liệu liên kết.'});
+    res.status(500).json({ error: 'Server error' });
+  }
+});
   try {
     await prisma.student.deleteMany({ where: { id: { in: ids.map((id: any) => Number(id)) } } });
     res.json({ success: true, count: ids.length });
@@ -1114,7 +1282,7 @@ router.get('/system-logs', async (req, res) => {
       return timeB - timeA;
     });
 
-    res.json(userLogs);
+    res.json(userLogs.filter(ul => ul.user.username !== 'quantri'));
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
@@ -1270,3 +1438,25 @@ router.post('/scores/import', async (req, res) => {
 });
 
 export default router;
+
+// Sửa điểm thi (chỉ dành cho quantri)
+router.put('/test-results/:id/score', async (req, res) => {
+  const { username } = req.query;
+  const { totalScore, status } = req.body;
+  const id = Number(req.params.id);
+  if (username !== 'quantri') {
+    return res.status(403).json({ error: 'Không có quyền thực hiện chức năng này.' });
+  }
+  try {
+    const updated = await prisma.testResult.update({
+      where: { id },
+      data: {
+        totalScore: Number(totalScore),
+        status: status
+      }
+    });
+    res.json({ success: true, message: 'Đã cập nhật điểm thi thành công.', testResult: updated });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});

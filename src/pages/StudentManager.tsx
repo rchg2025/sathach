@@ -152,7 +152,7 @@ const StudentManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/students`);
       setStudents(res.data);
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Lỗi khi tải dữ liệu Học viên');
     }
   };
@@ -161,7 +161,7 @@ const StudentManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
       setDbCourses(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -265,12 +265,12 @@ const StudentManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/students/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/students/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa Học viên thành công!');
       setSelectedStudentIds(prev => prev.filter(id => id !== deleteModal.id));
       fetchStudents();
-    } catch (err) {
-      toast.error('Lỗi khi xóa Học viên');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }
@@ -279,14 +279,14 @@ const StudentManager = () => {
   const confirmBulkDelete = async () => {
     if (selectedStudentIds.length === 0) return;
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/students/bulk-delete`, {
+      await axios.post(`${API_BASE_URL}/api/manager/students/bulk-delete?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`, {
         ids: selectedStudentIds
       });
       toast.success(`Đã xóa ${selectedStudentIds.length} Học viên!`);
       setSelectedStudentIds([]);
       fetchStudents();
-    } catch (err) {
-      toast.error('Lỗi khi xóa Học viên');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setBulkDeleteModal(false);
     }

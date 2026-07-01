@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Printer, FileText, AlertTriangle, Download } from 'lucide-react';
+import { Printer, FileText, AlertTriangle, Download, Edit, Save, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -22,6 +22,8 @@ const ReportsManager = () => {
   
   const [printStudents, setPrintStudents] = useState<any[]>([]);
   const [printType, setPrintType] = useState<'RESULT' | 'ERROR'>('RESULT');
+  const [editingStudent, setEditingStudent] = useState<any>(null);
+  const [editingScores, setEditingScores] = useState<any[]>([]);
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -157,6 +159,32 @@ const ReportsManager = () => {
     setTimeout(() => {
       window.print();
     }, 500);
+  };
+
+  const handleEditClick = (student: any) => {
+    setEditingStudent(student);
+    setEditingScores(student.testResults.map((tr: any) => ({
+      id: tr.id,
+      name: tr.testType?.name || 'Bài thi',
+      totalScore: tr.totalScore,
+      status: tr.status
+    })));
+  };
+  
+  const handleSaveScore = async () => {
+    try {
+      for (const tr of editingScores) {
+        await axios.put(`${API_BASE_URL}/api/manager/test-results/${tr.id}/score?username=${user?.username}`, {
+          totalScore: tr.totalScore,
+          status: tr.status
+        });
+      }
+      toast.success('Đã cập nhật điểm thi thành công!');
+      setEditingStudent(null);
+      fetchData(user);
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi cập nhật điểm thi');
+    }
   };
 
   const exportToExcel = () => {
@@ -312,6 +340,16 @@ const ReportsManager = () => {
                     </td>
                     <td className="no-print sticky-col-right" style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
+                        {user?.username === 'quantri' && (
+                          <button 
+                            className="btn btn-sm btn-info"
+                            onClick={() => handleEditClick(s)}
+                            title="Sửa điểm"
+                            style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px', backgroundColor: '#0dcaf0', color: 'white', border: 'none' }}
+                          >
+                            <Edit size={14} /> Sửa
+                          </button>
+                        )}
                         <button 
                           className="btn btn-sm btn-secondary" 
                           onClick={() => handlePrint([s], 'RESULT')}
@@ -364,6 +402,62 @@ const ReportsManager = () => {
           )}
         </div>
       </div>
+      {editingStudent && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ backgroundColor: 'white', padding: '2rem', borderRadius: '8px', width: '500px', maxWidth: '90%' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0 }}>Sửa điểm thi của học viên {editingStudent.name}</h3>
+              <button onClick={() => setEditingStudent(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={20}/></button>
+            </div>
+            {editingScores.length === 0 && <p className="text-muted">Học viên chưa có bài thi nào.</p>}
+            {editingScores.map((score, index) => (
+              <div key={score.id} style={{ marginBottom: '1rem', padding: '1rem', border: '1px solid #dee2e6', borderRadius: '8px' }}>
+                <div style={{ fontWeight: 'bold', marginBottom: '0.5rem' }}>{score.name}</div>
+                <div style={{ display: 'flex', gap: '1rem' }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Điểm</label>
+                    <input type="number" className="form-control" value={score.totalScore} onChange={e => {
+                      const newScores = [...editingScores];
+                      newScores[index].totalScore = e.target.value;
+                      setEditingScores(newScores);
+                    }} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.2rem' }}>Trạng thái</label>
+                    <select className="form-control" value={score.status} onChange={e => {
+                      const newScores = [...editingScores];
+                      newScores[index].status = e.target.value;
+                      setEditingScores(newScores);
+                    }}>
+                      <option value="ĐẬU">ĐẬU</option>
+                      <option value="RỚT">RỚT</option>
+                      <option value="VẮNG">VẮNG</option>
+                      <option value="CHƯA HOÀN THÀNH">CHƯA HOÀN THÀNH</option>
+                      <option value="TRANSFERRED">TRANSFERRED</option>
+                      <option value="FINISHED">FINISHED</option>
+                      <option value="PENDING">PENDING</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="ABSENT">ABSENT</option>
+                      <option value="FAILED">FAILED</option>
+                      <option value="PASSED">PASSED</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem' }}>
+              <button className="btn btn-secondary" onClick={() => setEditingStudent(null)}>Huỷ</button>
+              <button className="btn btn-primary" onClick={handleSaveScore} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <Save size={16}/> Lưu Thay Đổi
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };

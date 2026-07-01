@@ -9,6 +9,7 @@ import { Edit, Trash2 } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 
 const ExamManager = () => {
+  
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [exams, setExams] = useState([]);
   const [testTypes, setTestTypes] = useState([]);
@@ -30,7 +31,7 @@ const ExamManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/exams`);
       setExams(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -39,7 +40,7 @@ const ExamManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/test-types`);
       setTestTypes(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -68,7 +69,7 @@ const ExamManager = () => {
       resetForm();
       fetchExams();
       setActiveTab('list');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Có lỗi xảy ra!');
     }
   };
@@ -95,11 +96,11 @@ const ExamManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/exams/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/exams/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa bài thi thành công!');
       fetchExams();
-    } catch (err) {
-      toast.error('Lỗi khi xóa bài thi');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }

@@ -30,7 +30,7 @@ const TestTypeManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/test-types`);
       setTestTypes(res.data);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
     }
   };
@@ -53,7 +53,7 @@ const TestTypeManager = () => {
       resetForm();
       fetchTestTypes();
       setActiveTab('list');
-    } catch (err) {
+    } catch (err: any) {
       toast.error('Có lỗi xảy ra!');
     }
   };
@@ -82,11 +82,11 @@ const TestTypeManager = () => {
   const confirmDelete = async () => {
     if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/test-types/${deleteModal.id}`);
+      await axios.delete(`${API_BASE_URL}/api/manager/test-types/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
       toast.success('Xóa loại sát hạch thành công!');
       fetchTestTypes();
-    } catch (err) {
-      toast.error('Lỗi khi xóa loại sát hạch');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
     }
