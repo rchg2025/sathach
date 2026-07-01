@@ -1,25 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from './config';
 import { Search, UserCircle } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
-import Login from './pages/Login';
-import StudentSearch from './pages/StudentSearch';
-import ManagerDashboard from './pages/ManagerDashboard';
-import CourseManager from './pages/CourseManager';
+const Login = lazy(() => import('./pages/Login'));
+const StudentSearch = lazy(() => import('./pages/StudentSearch'));
+const ManagerDashboard = lazy(() => import('./pages/ManagerDashboard'));
+const CourseManager = lazy(() => import('./pages/CourseManager'));
+const CategoryManager = lazy(() => import('./pages/CategoryManager'));
+const UserManager = lazy(() => import('./pages/UserManager'));
+const StudentManager = lazy(() => import('./pages/StudentManager'));
+const AssignmentManager = lazy(() => import('./pages/AssignmentManager'));
+const ExaminerDashboard = lazy(() => import('./pages/ExaminerDashboard'));
+const Profile = lazy(() => import('./pages/Profile'));
+const SettingsManager = lazy(() => import('./pages/SettingsManager'));
+const StationTesting = lazy(() => import('./pages/StationTesting'));
+const SystemLogs = lazy(() => import('./pages/SystemLogs'));
+const ReportsManager = lazy(() => import('./pages/ReportsManager'));
+const ScoreImport = lazy(() => import('./pages/ScoreImport'));
 
-import CategoryManager from './pages/CategoryManager';
-import UserManager from './pages/UserManager';
-import StudentManager from './pages/StudentManager';
-import AssignmentManager from './pages/AssignmentManager';
-import ExaminerDashboard from './pages/ExaminerDashboard';
-import Profile from './pages/Profile';
-import SettingsManager from './pages/SettingsManager';
-import StationTesting from './pages/StationTesting';
-import SystemLogs from './pages/SystemLogs';
-import ReportsManager from './pages/ReportsManager';
-import ScoreImport from './pages/ScoreImport';
 import './index.css';
 
 
@@ -88,24 +88,26 @@ function App() {
       <GlobalSEOUpdater />
       <Toaster position="top-right" />
       <PublicHeader />
-      <Routes>
-        <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/manager" element={<ManagerDashboard />} />
-        <Route path="/manager/categories" element={<CategoryManager />} />
-        {/* Kept for backward compatibility if needed, though they aren't in sidebar anymore */}
-        <Route path="/manager/courses" element={<CourseManager />} />
-        <Route path="/manager/students" element={<StudentManager />} />
-        <Route path="/manager/assignments" element={<AssignmentManager />} />
-        <Route path="/manager/users" element={<UserManager />} />
-        <Route path="/manager/settings" element={<SettingsManager />} />
-        <Route path="/manager/testing" element={<StationTesting />} />
-        <Route path="/manager/system-logs" element={<SystemLogs />} />
-        <Route path="/manager/reports" element={<ReportsManager />} />
-        <Route path="/manager/import-scores" element={<ScoreImport />} />
-        <Route path="/examiner" element={<ExaminerDashboard />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
+      <Suspense fallback={<div className="container mt-4" style={{ textAlign: 'center', padding: '2rem' }}>Đang tải...</div>}>
+        <Routes>
+          <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/manager" element={<ManagerDashboard />} />
+          <Route path="/manager/categories" element={<CategoryManager />} />
+          {/* Kept for backward compatibility if needed, though they aren't in sidebar anymore */}
+          <Route path="/manager/courses" element={<CourseManager />} />
+          <Route path="/manager/students" element={<StudentManager />} />
+          <Route path="/manager/assignments" element={<AssignmentManager />} />
+          <Route path="/manager/users" element={<UserManager />} />
+          <Route path="/manager/settings" element={<SettingsManager />} />
+          <Route path="/manager/testing" element={<StationTesting />} />
+          <Route path="/manager/system-logs" element={<SystemLogs />} />
+          <Route path="/manager/reports" element={<ReportsManager />} />
+          <Route path="/manager/import-scores" element={<ScoreImport />} />
+          <Route path="/examiner" element={<ExaminerDashboard />} />
+          <Route path="/profile" element={<Profile />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

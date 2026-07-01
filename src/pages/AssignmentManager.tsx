@@ -8,6 +8,7 @@ import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import ConfirmModal from '../components/ConfirmModal';
 import { Pagination } from '../components/Pagination';
+import { useDebounce } from '../hooks/useDebounce';
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   
@@ -33,6 +34,7 @@ const AssignmentManager = () => {
 
   // Filter & Pagination states
   const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
   const [roleFilter, setRoleFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('all');
   const [testTypeFilter, setTestTypeFilter] = useState('all');
@@ -222,19 +224,23 @@ const AssignmentManager = () => {
     XLSX.writeFile(workbook, `Danh_Sach_Phan_Cong_${new Date().getTime()}.xlsx`);
   };
 
-  const filteredAssignments = assignments.filter(a => {
-    const matchSearch = (a.examiner?.name || '').toLowerCase().includes(searchKeyword.toLowerCase()) || 
-                        (a.examiner?.username || '').toLowerCase().includes(searchKeyword.toLowerCase()) ||
-                        (a.exam?.name || '').toLowerCase().includes(searchKeyword.toLowerCase());
-    const matchRole = roleFilter === 'all' ? true : a.examiner?.role === roleFilter;
-    const matchCourse = courseFilter === 'all' ? true : String(a.course?.id) === courseFilter;
-    const matchTestType = testTypeFilter === 'all' ? true : String(a.testType?.id) === testTypeFilter;
-    
-    return matchSearch && matchRole && matchCourse && matchTestType;
-  });
+  const filteredAssignments = React.useMemo(() => {
+    return assignments.filter(a => {
+      const matchSearch = (a.examiner?.name || '').toLowerCase().includes(debouncedSearchKeyword.toLowerCase()) || 
+                          (a.examiner?.username || '').toLowerCase().includes(debouncedSearchKeyword.toLowerCase()) ||
+                          (a.exam?.name || '').toLowerCase().includes(debouncedSearchKeyword.toLowerCase());
+      const matchRole = roleFilter === 'all' ? true : a.examiner?.role === roleFilter;
+      const matchCourse = courseFilter === 'all' ? true : String(a.course?.id) === courseFilter;
+      const matchTestType = testTypeFilter === 'all' ? true : String(a.testType?.id) === testTypeFilter;
+      
+      return matchSearch && matchRole && matchCourse && matchTestType;
+    });
+  }, [assignments, debouncedSearchKeyword, roleFilter, courseFilter, testTypeFilter]);
 
   const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
-  const paginatedAssignments = filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedAssignments = React.useMemo(() => {
+    return filteredAssignments.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredAssignments, currentPage]);
 
   return (
     <AdminLayout user={user}>

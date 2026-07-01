@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { Printer, FileText, AlertTriangle, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import AdminLayout from '../components/AdminLayout';
 import PrintTemplate from '../components/PrintTemplate';
 import PrintErrorTemplate from '../components/PrintErrorTemplate';
 import { API_BASE_URL } from '../config';
+import { useDebounce } from '../hooks/useDebounce';
 
 const ReportsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -15,6 +16,7 @@ const ReportsManager = () => {
   const [user, setUser] = useState<any>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   
@@ -99,45 +101,55 @@ const ReportsManager = () => {
     };
   };
 
-  const processedStudents = students.map(getStudentReport);
+  const processedStudents = useMemo(() => students.map(getStudentReport), [students]);
 
-  const courseFilteredStudents = processedStudents.filter(s => {
-    if (filterCourse !== 'ALL') {
-      const selectedCourseObj = courses.find(c => String(c.id) === filterCourse);
-      const selectedCourseName = selectedCourseObj ? selectedCourseObj.name : null;
-      return (
-        s.courseId === parseInt(filterCourse) || 
-        s.courseName === selectedCourseName || 
-        (s.course && s.course.name === selectedCourseName)
-      );
-    }
-    return true;
-  });
+  const courseFilteredStudents = useMemo(() => {
+    return processedStudents.filter(s => {
+      if (filterCourse !== 'ALL') {
+        const selectedCourseObj = courses.find(c => String(c.id) === filterCourse);
+        const selectedCourseName = selectedCourseObj ? selectedCourseObj.name : null;
+        return (
+          s.courseId === parseInt(filterCourse) || 
+          s.courseName === selectedCourseName || 
+          (s.course && s.course.name === selectedCourseName)
+        );
+      }
+      return true;
+    });
+  }, [processedStudents, filterCourse, courses]);
 
-  const filteredStudents = courseFilteredStudents.filter(s => {
-    let match = true;
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
-    }
-    if (match && filterStatus !== 'ALL') {
-      if (filterStatus === 'PASS' && s.finalStatus !== 'ĐẬU') match = false;
-      if (filterStatus === 'FAIL' && s.finalStatus !== 'RỚT') match = false;
-      if (filterStatus === 'ABSENT' && s.finalStatus !== 'VẮNG') match = false;
-      if (filterStatus === 'INCOMPLETE' && s.finalStatus !== 'CHƯA HOÀN THÀNH') match = false;
-    }
-    return match;
-  });
+  const filteredStudents = useMemo(() => {
+    return courseFilteredStudents.filter(s => {
+      let match = true;
+      if (debouncedSearchQuery) {
+        const q = debouncedSearchQuery.toLowerCase();
+        match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
+      }
+      if (match && filterStatus !== 'ALL') {
+        if (filterStatus === 'PASS' && s.finalStatus !== 'ĐẬU') match = false;
+        if (filterStatus === 'FAIL' && s.finalStatus !== 'RỚT') match = false;
+        if (filterStatus === 'ABSENT' && s.finalStatus !== 'VẮNG') match = false;
+        if (filterStatus === 'INCOMPLETE' && s.finalStatus !== 'CHƯA HOÀN THÀNH') match = false;
+      }
+      return match;
+    });
+  }, [courseFilteredStudents, debouncedSearchQuery, filterStatus]);
 
-  const totalCourseStudents = courseFilteredStudents.length;
-  const totalPass = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU').length;
-  const totalFail = courseFilteredStudents.filter(s => s.finalStatus === 'RỚT').length;
-  const totalAbsent = courseFilteredStudents.filter(s => s.finalStatus === 'VẮNG').length;
-  const totalCompleted = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU' || s.finalStatus === 'RỚT' || s.finalStatus === 'VẮNG').length;
-  const passRate = totalCompleted > 0 ? Math.round((totalPass / totalCompleted) * 100) : 0;
+  const stats = useMemo(() => {
+    const totalCourseStudents = courseFilteredStudents.length;
+    const totalPass = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU').length;
+    const totalFail = courseFilteredStudents.filter(s => s.finalStatus === 'RỚT').length;
+    const totalAbsent = courseFilteredStudents.filter(s => s.finalStatus === 'VẮNG').length;
+    const totalCompleted = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU' || s.finalStatus === 'RỚT' || s.finalStatus === 'VẮNG').length;
+    const passRate = totalCompleted > 0 ? Math.round((totalPass / totalCompleted) * 100) : 0;
+    
+    return { totalCourseStudents, totalPass, totalFail, totalAbsent, passRate };
+  }, [courseFilteredStudents]);
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
-  const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const paginatedStudents = useMemo(() => {
+    return filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  }, [filteredStudents, currentPage]);
 
   const handlePrint = (studentsToPrint: any[], type: 'RESULT' | 'ERROR' = 'RESULT') => {
     setPrintType(type);
@@ -163,7 +175,6 @@ const ReportsManager = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'ThongKeKetQua');
     
-    // Auto size columns
     const wscols = [
       { wch: 5 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, 
       { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
@@ -206,7 +217,6 @@ const ReportsManager = () => {
           </div>
         </div>
 
-        {/* Print Template Container */}
         <div className="print-only">
           {printType === 'RESULT' ? (
             <PrintTemplate students={printStudents} />
@@ -215,27 +225,26 @@ const ReportsManager = () => {
           )}
         </div>
         
-        {/* Statistics Cards */}
         <div className="grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Tổng học viên</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{totalCourseStudents}</div>
+          <div className="stat-card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Tổng số học viên</h3>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalCourseStudents}</div>
           </div>
-          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Đậu</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--success)' }}>{totalPass}</div>
+          <div className="stat-card" style={{ padding: '1.5rem', background: '#dcfce7', borderRadius: '12px', border: '1px solid #bbf7d0', color: '#166534' }}>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Đậu</h3>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalPass}</div>
           </div>
-          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Rớt</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--danger)' }}>{totalFail}</div>
+          <div className="stat-card" style={{ padding: '1.5rem', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fecaca', color: '#991b1b' }}>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Rớt</h3>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalFail}</div>
           </div>
-          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Vắng</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{totalAbsent}</div>
+          <div className="stat-card" style={{ padding: '1.5rem', background: '#fef3c7', borderRadius: '12px', border: '1px solid #fde68a', color: '#92400e' }}>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Vắng</h3>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalAbsent}</div>
           </div>
-          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Tỷ lệ Đậu</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--warning)' }}>{passRate}%</div>
+          <div className="stat-card" style={{ padding: '1.5rem', background: '#e0e7ff', borderRadius: '12px', border: '1px solid #c7d2fe', color: '#3730a3' }}>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Tỉ lệ đậu</h3>
+            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.passRate}%</div>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import AdminLayout from '../components/AdminLayout';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
+import { useDebounce } from '../hooks/useDebounce';
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return '-';
@@ -134,6 +135,7 @@ const StudentManager = () => {
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
   const [courseFilter, setCourseFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -325,29 +327,31 @@ const StudentManager = () => {
   });
   const availableLicenseClasses = Array.from(uniqueLicenseMap.values());
 
-  const filteredStudents = students.filter((s: any) => {
-    const keyword = removeAccents(searchKeyword);
-    const matchSearch = removeAccents(s.name).includes(keyword) || 
-                        removeAccents(s.cccd).includes(keyword) ||
-                        removeAccents(s.registrationCode || '').includes(keyword) ||
-                        removeAccents(s.courseName || '').includes(keyword);
-    const matchCourse = courseFilter === 'all' ? true : s.courseName === courseFilter;
-    return matchSearch && matchCourse;
-  }).sort((a: any, b: any) => {
-    const getFirstName = (fullName: string) => {
-      if (!fullName) return '';
-      const parts = fullName.trim().split(' ');
-      return parts[parts.length - 1];
-    };
-    
-    const nameA = removeAccents(getFirstName(a.name)).toLowerCase();
-    const nameB = removeAccents(getFirstName(b.name)).toLowerCase();
-    
-    if (nameA < nameB) return -1;
-    if (nameA > nameB) return 1;
-    
-    return removeAccents(a.name).toLowerCase().localeCompare(removeAccents(b.name).toLowerCase());
-  });
+  const filteredStudents = React.useMemo(() => {
+    return students.filter((s: any) => {
+      const keyword = removeAccents(debouncedSearchKeyword);
+      const matchSearch = removeAccents(s.name).includes(keyword) || 
+                          removeAccents(s.cccd).includes(keyword) ||
+                          removeAccents(s.registrationCode || '').includes(keyword) ||
+                          removeAccents(s.courseName || '').includes(keyword);
+      const matchCourse = courseFilter === 'all' ? true : s.courseName === courseFilter;
+      return matchSearch && matchCourse;
+    }).sort((a: any, b: any) => {
+      const getFirstName = (fullName: string) => {
+        if (!fullName) return '';
+        const parts = fullName.trim().split(' ');
+        return parts[parts.length - 1];
+      };
+      
+      const nameA = removeAccents(getFirstName(a.name)).toLowerCase();
+      const nameB = removeAccents(getFirstName(b.name)).toLowerCase();
+      
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      
+      return removeAccents(a.name).toLowerCase().localeCompare(removeAccents(b.name).toLowerCase());
+    });
+  }, [students, debouncedSearchKeyword, courseFilter]);
   
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const displayedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
