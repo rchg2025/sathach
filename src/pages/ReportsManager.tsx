@@ -281,7 +281,7 @@ const ReportsManager = () => {
                   <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
                   <th style={{ textAlign: 'center' }}>Đường trường</th>
                   <th style={{ textAlign: 'center' }}>Kết quả</th>
-                  <th className="no-print" style={{ textAlign: 'center' }}>Thao tác</th>
+                  <th className="no-print sticky-col-right" style={{ textAlign: 'center' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -300,7 +300,7 @@ const ReportsManager = () => {
                       {s.finalStatus === 'VẮNG' && <span style={{ color: 'var(--text-muted)' }}>VẮNG</span>}
                       {s.finalStatus === 'CHƯA HOÀN THÀNH' && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>Chưa hoàn thành</span>}
                     </td>
-                    <td className="no-print" style={{ textAlign: 'center' }}>
+                    <td className="no-print sticky-col-right" style={{ textAlign: 'center' }}>
                       <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                         <button 
                           className="btn btn-sm btn-secondary" 

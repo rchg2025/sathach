@@ -343,43 +343,52 @@ router.get('/assignments', async (req, res) => {
 });
 
 router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
+  const { examinerId, testTypeIds, testTypeId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
   try {
-    const whereData: any = {
-      examinerId: Number(examinerId),
-      testTypeId: Number(testTypeId),
-    };
-    if (courseId) whereData.courseId = Number(courseId);
-    if (assignmentDate) whereData.assignmentDate = new Date(assignmentDate);
+    const tIds = testTypeIds && Array.isArray(testTypeIds) && testTypeIds.length > 0 ? testTypeIds : [testTypeId];
+    let count = 0;
+    
+    for (const tId of tIds) {
+      if (!tId) continue;
+      
+      const whereData: any = {
+        examinerId: Number(examinerId),
+        testTypeId: Number(tId),
+      };
+      if (courseId) whereData.courseId = Number(courseId);
+      if (assignmentDate) whereData.assignmentDate = new Date(assignmentDate);
 
-    const baseData = { ...whereData };
-    if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
-      baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
-    }
+      const baseData = { ...whereData };
+      if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
+        baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
+      }
 
-    if (examIds && Array.isArray(examIds) && examIds.length > 0) {
-      for (const eId of examIds) {
-        const recordWhere = { ...whereData, examId: Number(eId) };
-        const existing = await prisma.testAssignment.findFirst({ where: recordWhere });
-        if (existing) {
-          const exam = await prisma.exam.findUnique({ where: { id: recordWhere.examId } });
-          return res.status(400).json({ error: `Bài thi "${exam?.name || 'này'}" đã được phân công cho người này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.` });
+      if (examIds && Array.isArray(examIds) && examIds.length > 0) {
+        for (const eId of examIds) {
+          const recordWhere = { ...whereData, examId: Number(eId) };
+          const existing = await prisma.testAssignment.findFirst({ where: recordWhere });
+          if (existing) {
+            const exam = await prisma.exam.findUnique({ where: { id: recordWhere.examId } });
+            return res.status(400).json({ error: `Bài thi "${exam?.name || 'này'}" đã được phân công cho người này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.` });
+          }
         }
-      }
 
-      for (const eId of examIds) {
-        await prisma.testAssignment.create({ data: { ...baseData, examId: Number(eId) } });
-      }
-      res.json({ success: true, count: examIds.length });
-    } else {
-      const existing = await prisma.testAssignment.findFirst({ where: whereData });
-      if (existing) {
-        return res.status(400).json({ error: 'Người này đã được phân công ở trạm này với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.' });
-      }
+        for (const eId of examIds) {
+          await prisma.testAssignment.create({ data: { ...baseData, examId: Number(eId) } });
+          count++;
+        }
+      } else {
+        const existing = await prisma.testAssignment.findFirst({ where: whereData });
+        if (existing) {
+          const tt = await prisma.testType.findUnique({ where: { id: Number(tId) }});
+          return res.status(400).json({ error: `Người này đã được phân công ở trạm "${tt?.name}" với cùng khóa đào tạo và thời gian. Vui lòng kiểm tra lại.` });
+        }
 
-      const assignment = await prisma.testAssignment.create({ data: baseData });
-      res.json(assignment);
+        await prisma.testAssignment.create({ data: baseData });
+        count++;
+      }
     }
+    res.json({ success: true, count });
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
 

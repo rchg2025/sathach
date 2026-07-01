@@ -21,7 +21,7 @@ const AssignmentManager = () => {
   // Form states
   const [roleType, setRoleType] = useState<'STATION_MANAGER' | 'EXAMINER'>('STATION_MANAGER');
   const [selectedUser, setSelectedUser] = useState('');
-  const [selectedTestType, setSelectedTestType] = useState('');
+  const [selectedTestTypes, setSelectedTestTypes] = useState<string[]>([]);
   const [selectedExams, setSelectedExams] = useState<string[]>([]);
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
@@ -65,7 +65,7 @@ const AssignmentManager = () => {
   };
 
   const filteredUsers = users.filter(u => u.role === roleType && u.isActive);
-  const filteredExams = exams.filter(e => e.testTypeId === Number(selectedTestType));
+  const filteredExams = exams.filter(e => e.testTypeId === Number(selectedTestTypes[0]));
 
   // Reset dependent fields when parent selection changes
   useEffect(() => {
@@ -93,11 +93,11 @@ const AssignmentManager = () => {
       });
       return vehicles.filter(v => !assignedVehicleIds.has(String(v.id)));
     } else if (roleType === 'EXAMINER') {
-      if (!selectedTestType) return [];
+      if (selectedTestTypes.length === 0) return [];
       
       const smAssignment = assignmentsOnDate.find(a => 
         a.examiner?.role === 'STATION_MANAGER' && 
-        String(a.testType?.id) === String(selectedTestType)
+        selectedTestTypes.includes(String(a.testType?.id))
       );
 
       if (!smAssignment || !smAssignment.vehicles) return [];
@@ -107,16 +107,16 @@ const AssignmentManager = () => {
     }
 
     return vehicles;
-  }, [vehicles, assignments, roleType, assignmentDate, selectedTestType, editingId]);
+  }, [vehicles, assignments, roleType, assignmentDate, selectedTestTypes, editingId]);
 
   useEffect(() => {
     setSelectedExams([]);
-  }, [selectedTestType]);
+  }, [selectedTestTypes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return toast.error('Vui lòng chọn người được phân công');
-    if (!selectedTestType) return toast.error('Vui lòng chọn Trạm thi');
+    if (selectedTestTypes.length === 0) return toast.error('Vui lòng chọn Trạm thi');
     if (roleType === 'EXAMINER' && selectedExams.length === 0) return toast.error('Vui lòng chọn ít nhất 1 Bài thi');
     if (!assignmentDate) return toast.error('Vui lòng chọn Ngày thực hiện');
 
@@ -124,7 +124,7 @@ const AssignmentManager = () => {
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/assignments/${editingId}`, {
           examinerId: selectedUser,
-          testTypeId: selectedTestType,
+          testTypeId: selectedTestTypes[0],
           examId: roleType === 'EXAMINER' ? selectedExams[0] : undefined,
           courseId: selectedCourse ? selectedCourse : undefined,
           vehicleIds: selectedVehicles,
@@ -134,7 +134,7 @@ const AssignmentManager = () => {
       } else {
         await axios.post(`${API_BASE_URL}/api/manager/assignments`, {
           examinerId: selectedUser,
-          testTypeId: selectedTestType,
+          testTypeIds: selectedTestTypes,
           examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
           courseId: selectedCourse ? selectedCourse : undefined,
           vehicleIds: selectedVehicles,
@@ -146,7 +146,7 @@ const AssignmentManager = () => {
       // Reset form
       setEditingId(null);
       setSelectedUser('');
-      setSelectedTestType('');
+      setSelectedTestTypes([]);
       setSelectedExams([]);
       setSelectedCourse('');
       setSelectedVehicles([]);
@@ -169,7 +169,7 @@ const AssignmentManager = () => {
     // To fix that, we can wrap the resets in the effects to check if editingId is set, or just use a small timeout.
     setTimeout(() => {
       setSelectedUser(String(assignment.examinerId));
-      setSelectedTestType(String(assignment.testTypeId));
+      setSelectedTestTypes([String(assignment.testTypeId)]);
       setSelectedCourse(assignment.courseId ? String(assignment.courseId) : '');
       setSelectedVehicles(assignment.vehicles?.map((v: any) => String(v.id)) || []);
       if (assignment.examId) {
@@ -250,7 +250,7 @@ const AssignmentManager = () => {
               onClick={() => {
                 setEditingId(null);
                 setSelectedUser('');
-                setSelectedTestType('');
+                setSelectedTestTypes([]);
                 setSelectedExams([]);
                 setSelectedCourse('');
                 setSelectedVehicles([]);
@@ -317,7 +317,8 @@ const AssignmentManager = () => {
                     borderRadius: '6px', 
                     minHeight: '38px',
                     boxShadow: 'none' 
-                  }) 
+                  }),
+                  menu: (base: any) => ({ ...base, zIndex: 9999 })
                 }}
               />
             </div>
@@ -325,16 +326,22 @@ const AssignmentManager = () => {
             <div className="form-group">
               <label className="form-label">Trạm thi</label>
               <Select 
-                options={[{ value: '', label: '-- Chọn Trạm thi --' }, ...testTypes.map(tt => ({ value: String(tt.id), label: tt.name }))]}
-                value={
-                  selectedTestType 
-                    ? { value: selectedTestType, label: testTypes.find(tt => String(tt.id) === String(selectedTestType))?.name || '-- Chọn Trạm thi --' }
-                    : { value: '', label: '-- Chọn Trạm thi --' }
-                }
-                onChange={(selected: any) => setSelectedTestType(selected ? selected.value : '')}
+                isMulti={roleType === 'STATION_MANAGER' && !editingId}
+                options={testTypes.map(tt => ({ value: String(tt.id), label: tt.name }))}
+                value={testTypes.filter(tt => selectedTestTypes.includes(String(tt.id))).map(tt => ({ value: String(tt.id), label: tt.name }))}
+                onChange={(selected: any) => {
+                  if (Array.isArray(selected)) {
+                    setSelectedTestTypes(selected.map((s: any) => s.value));
+                  } else {
+                    setSelectedTestTypes(selected ? [selected.value] : []);
+                  }
+                }}
                 placeholder="Tìm trạm thi..."
                 isClearable
-                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                styles={{ 
+                  control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                  menu: (base: any) => ({ ...base, zIndex: 9999 })
+                }}
               />
             </div>
 
@@ -347,7 +354,10 @@ const AssignmentManager = () => {
                   value={filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))}
                   onChange={(selected: any) => setSelectedExams(selected ? selected.map((s: any) => s.value) : [])}
                   placeholder="Tìm chọn bài thi..."
-                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                  styles={{ 
+                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  }}
                   noOptionsMessage={() => "Không tìm thấy bài thi"}
                 />
               </div>
@@ -365,7 +375,10 @@ const AssignmentManager = () => {
                   setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
                 }}
                 placeholder="Tìm chọn số xe..."
-                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                styles={{ 
+                  control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                  menu: (base: any) => ({ ...base, zIndex: 9999 })
+                }}
                 noOptionsMessage={() => "Không tìm thấy số xe"}
               />
             </div>
@@ -414,7 +427,10 @@ const AssignmentManager = () => {
                   onChange={(selected: any) => { setRoleFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
                   placeholder="Lọc Vai trò..."
                   isClearable={false}
-                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                  styles={{ 
+                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  }}
                 />
               </div>
               <div style={{ width: '220px' }}>
@@ -424,7 +440,10 @@ const AssignmentManager = () => {
                   onChange={(selected: any) => { setCourseFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
                   placeholder="Lọc Khóa đào tạo..."
                   isClearable={false}
-                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                  styles={{ 
+                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  }}
                 />
               </div>
               <div style={{ width: '220px' }}>
@@ -434,7 +453,10 @@ const AssignmentManager = () => {
                   onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
                   placeholder="Lọc Trạm thi..."
                   isClearable={false}
-                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                  styles={{ 
+                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  }}
                 />
               </div>
             </div>

@@ -171,7 +171,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students }) => {
                 <tr>
                   <td>2</td>
                   <td className="text-left">Thực hành tiến lùi chữ chi</td>
-                  <td>10<br/>Kết quả ≥ 5: Đạt</td>
+                  <td>100<br/>Kết quả ≥ 80: Đạt</td>
                   <td>{diemTruChuZ}</td>
                   <td>{chuZScore}</td>
                 </tr>
