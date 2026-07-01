@@ -145,7 +145,7 @@ const StationTesting = () => {
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED').length;
-    if (transferredCount >= 3) return 'Hoàn thành';
+    if (transferredCount >= 3) return 'Hoàn thành bài thi';
     
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
@@ -162,7 +162,7 @@ const StationTesting = () => {
     if (transferredCount >= 3) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
-          <span>Hoàn thành (Đã chuyển đủ 3 điểm)</span>
+          <span>Hoàn thành bài thi</span>
         </div>
       );
     }
@@ -233,7 +233,8 @@ const StationTesting = () => {
       if (st === 'Đã kết thúc') return 2;
       if (st === 'Chưa thi') return 3;
       if (st === 'Đã chuyển điểm') return 4;
-      return 5;
+      if (st === 'Hoàn thành bài thi') return 5;
+      return 6;
     };
     return getWeight(a) - getWeight(b);
   });
@@ -325,7 +326,7 @@ const StationTesting = () => {
                       })()}
                     </td>
                     <td>
-                      <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (['Đã chuyển điểm', 'Hoàn thành'].includes(getStudentStatusText(s)) ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
+                      <div className={`badge ${getStudentStatusText(s) === 'Đang thi' ? 'badge-primary' : (['Đã chuyển điểm', 'Hoàn thành bài thi'].includes(getStudentStatusText(s)) ? 'badge-success' : 'badge-secondary')}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem' }}>
                         {getStudentStatus(s)}
                       </div>
                     </td>
