@@ -1025,16 +1025,41 @@ router.get('/system-logs', async (req, res) => {
       return res.json([]);
     }
 
-    const logs = await prisma.systemLog.findMany({
-      where: { userId: { in: userIdsToFetch } },
-      include: {
-        user: { select: { id: true, username: true, name: true, role: true, isOnline: true } }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 200 // Limit to recent 200 logs
+    const users = await prisma.user.findMany({
+      where: { id: { in: userIdsToFetch } },
+      select: {
+        id: true,
+        name: true,
+        username: true,
+        role: true,
+        isOnline: true,
+      }
     });
 
-    res.json(logs);
+    const userLogs = await Promise.all(users.map(async u => {
+      const lastLogin = await prisma.systemLog.findFirst({
+        where: { userId: u.id, action: 'LOGIN' },
+        orderBy: { createdAt: 'desc' }
+      });
+      const lastLogout = await prisma.systemLog.findFirst({
+        where: { userId: u.id, action: 'LOGOUT' },
+        orderBy: { createdAt: 'desc' }
+      });
+      return {
+        user: u,
+        lastLoginAt: lastLogin?.createdAt || null,
+        lastLogoutAt: lastLogout?.createdAt || null
+      };
+    }));
+
+    // Sort users by last login or logout time, newest first
+    userLogs.sort((a, b) => {
+      const timeA = Math.max(a.lastLoginAt ? new Date(a.lastLoginAt).getTime() : 0, a.lastLogoutAt ? new Date(a.lastLogoutAt).getTime() : 0);
+      const timeB = Math.max(b.lastLoginAt ? new Date(b.lastLoginAt).getTime() : 0, b.lastLogoutAt ? new Date(b.lastLogoutAt).getTime() : 0);
+      return timeB - timeA;
+    });
+
+    res.json(userLogs);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });

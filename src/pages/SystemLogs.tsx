@@ -12,7 +12,6 @@ const SystemLogs = () => {
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [actionFilter, setActionFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
 
   // Pagination
@@ -58,8 +57,6 @@ const SystemLogs = () => {
     }
     // Role filter
     if (roleFilter !== 'all' && log.user?.role !== roleFilter) return false;
-    // Action filter
-    if (actionFilter !== 'all' && log.action !== actionFilter) return false;
     // Status filter
     if (statusFilter !== 'all') {
       const isOnline = statusFilter === 'online';
@@ -104,18 +101,6 @@ const SystemLogs = () => {
           <div style={{ flex: '1 1 200px' }}>
             <Select
               options={[
-                { value: 'all', label: 'Tất cả hành động' },
-                { value: 'LOGIN', label: 'Đăng nhập' },
-                { value: 'LOGOUT', label: 'Đăng xuất' }
-              ]}
-              value={[{ value: 'all', label: 'Tất cả hành động' }, { value: 'LOGIN', label: 'Đăng nhập' }, { value: 'LOGOUT', label: 'Đăng xuất' }].find(opt => opt.value === actionFilter)}
-              onChange={(selected: any) => setActionFilter(selected ? selected.value : 'all')}
-              placeholder="Lọc Hành động..."
-            />
-          </div>
-          <div style={{ flex: '1 1 200px' }}>
-            <Select
-              options={[
                 { value: 'all', label: 'Tất cả trạng thái' },
                 { value: 'online', label: 'Đang trực tuyến' },
                 { value: 'offline', label: 'Ngoại tuyến' }
@@ -147,13 +132,13 @@ const SystemLogs = () => {
                     <th>Tài khoản</th>
                     <th>Vai trò</th>
                     <th>Trạng thái</th>
-                    <th>Hành động</th>
-                    <th>Thời gian</th>
+                    <th>Đăng nhập gần nhất</th>
+                    <th>Đăng xuất gần nhất</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paginatedLogs.map((log, index) => (
-                    <tr key={log.id}>
+                    <tr key={log.user.id}>
                       <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
                       <td>
                         <div className="d-flex align-items-center gap-2">
@@ -184,18 +169,24 @@ const SystemLogs = () => {
                         )}
                       </td>
                       <td>
-                        {log.action === 'LOGIN' ? (
-                          <span className="text-primary fw-bold">
-                            <LogIn size={16} className="me-1" /> Đăng nhập
+                        {log.lastLoginAt ? (
+                          <span>
+                            <LogIn size={16} className="me-1 text-primary" />
+                            {new Date(log.lastLoginAt).toLocaleString('en-GB', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')}
                           </span>
                         ) : (
-                          <span className="text-danger fw-bold">
-                            <LogOut size={16} className="me-1" /> Đăng xuất
-                          </span>
+                          <span className="text-muted">-</span>
                         )}
                       </td>
                       <td>
-                        {new Date(log.createdAt).toLocaleString('en-GB', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')}
+                        {log.lastLogoutAt ? (
+                          <span>
+                            <LogOut size={16} className="me-1 text-danger" />
+                            {new Date(log.lastLogoutAt).toLocaleString('en-GB', { hour12: false, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')}
+                          </span>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
                       </td>
                     </tr>
                   ))}
