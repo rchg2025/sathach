@@ -92,8 +92,17 @@ const StudentSearch = () => {
   }, []);
 
   return (
-    <div className="container" style={{ maxWidth: '1080px', margin: '3rem auto' }}>
-      <div className="card text-center shadow-lg" style={{ borderTop: '4px solid var(--primary)' }}>
+    <div style={{
+      minHeight: 'calc(100vh - 64px)',
+      backgroundImage: `url('/login-bg.jpg')`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundAttachment: 'fixed',
+      padding: '3rem 1rem'
+    }}>
+      <div className="container" style={{ maxWidth: '1080px', margin: '0 auto' }}>
+        <div className="card text-center shadow-lg" style={{ borderTop: '4px solid var(--primary)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
         {logoUrl && (
           <img src={logoUrl} alt="Logo" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px', objectFit: 'contain' }} />
         )}
@@ -211,6 +220,7 @@ const StudentSearch = () => {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 };

@@ -90,7 +90,7 @@ function App() {
       <PublicHeader />
       <Suspense fallback={<div className="container mt-4" style={{ textAlign: 'center', padding: '2rem' }}>Đang tải...</div>}>
         <Routes>
-          <Route path="/" element={<div className="container mt-4"><StudentSearch /></div>} />
+          <Route path="/" element={<StudentSearch />} />
           <Route path="/login" element={<Login />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/manager/categories" element={<CategoryManager />} />
