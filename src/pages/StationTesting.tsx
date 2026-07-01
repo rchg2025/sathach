@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Play, Car, CheckCircle, Send } from 'lucide-react';
+import { Play, Car, CheckCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -123,38 +123,7 @@ const StationTesting = () => {
         studentId: student.id,
         testTypeId: studentAssignment.testType?.id
       });
-      toast.success('Kết thúc phần thi thành công.');
-      
-      // Update local state to reflect FINISHED
-      setStudents(prev => prev.map(s => {
-        if (s.id === student.id) {
-          const newTestResults = [...(s.testResults || [])];
-          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === studentAssignment.testType?.id);
-          if (trIndex > -1) {
-            newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'FINISHED' };
-          }
-          return { ...s, testResults: newTestResults };
-        }
-        return s;
-      }));
-    } catch (e: any) {
-      toast.error(e.response?.data?.error || 'Lỗi khi kết thúc thi');
-    }
-  };
-
-  const handleTransferScore = async (student: any) => {
-    const studentAssignment = assignments.find(a => 
-      a.courseId === student.courseId || 
-      (a.course && a.course.name === student.courseName)
-    );
-    if (!studentAssignment) return toast.error('Không tìm thấy bài thi phân công');
-
-    try {
-      await axios.post(`${API_BASE_URL}/api/manager/station/transfer-score`, {
-        studentId: student.id,
-        testTypeId: studentAssignment.testType?.id
-      });
-      toast.success('Chuyển điểm thành công.');
+      toast.success('Kết thúc và chuyển điểm thành công.');
       
       // Update local state to reflect TRANSFERRED
       setStudents(prev => prev.map(s => {
@@ -169,7 +138,7 @@ const StationTesting = () => {
         return s;
       }));
     } catch (e: any) {
-      toast.error(e.response?.data?.error || 'Lỗi khi chuyển điểm');
+      toast.error(e.response?.data?.error || 'Lỗi khi kết thúc thi');
     }
   };
 
@@ -297,8 +266,7 @@ const StationTesting = () => {
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="NOT_STARTED">Chưa thi</option>
                 <option value="IN_PROGRESS">Đang thi</option>
-                <option value="FINISHED">Đã kết thúc</option>
-                <option value="TRANSFERRED">Đã chuyển điểm</option>
+                <option value="TRANSFERRED">Đã chuyển điểm / Hoàn thành</option>
               </select>
             </div>
           </div>
@@ -432,21 +400,7 @@ const StationTesting = () => {
                                 <CheckCircle size={16} /> Kết thúc
                               </button>
                             );
-                          } else if (myStatus === 'FINISHED') {
-                            return (
-                              <button 
-                                className="btn" 
-                                style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
-                                onClick={() => {
-                                  if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
-                                    handleTransferScore(s);
-                                  }
-                                }}
-                              >
-                                <Send size={16} /> Chuyển điểm
-                              </button>
-                            );
-                          } else if (myStatus === 'TRANSFERRED') {
+                          } else if (myStatus === 'TRANSFERRED' || myStatus === 'FINISHED') {
                             return <span className="text-success small">Đã chuyển điểm</span>;
                           }
 

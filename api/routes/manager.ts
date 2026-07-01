@@ -888,7 +888,7 @@ router.post('/station/end-test', async (req, res) => {
       await prisma.testResult.update({
         where: { id: testResult.id },
         data: { 
-          status: 'FINISHED',
+          status: 'TRANSFERRED',
           endTime: new Date()
         }
       });
