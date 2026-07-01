@@ -247,11 +247,11 @@ const ReportsManager = () => {
                 className="form-control" 
                 placeholder="Tìm kiếm theo Tên, CCCD..." 
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               />
             </div>
             <div style={{ minWidth: '100%' }}>
-              <select className="form-control" value={filterCourse} onChange={(e) => setFilterCourse(e.target.value)}>
+              <select className="form-control" value={filterCourse} onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}>
                 <option value="ALL">Tất cả Khóa đào tạo</option>
                 {courses.map(c => (
                   <option key={c.id} value={c.id.toString()}>{c.name}</option>
@@ -259,7 +259,7 @@ const ReportsManager = () => {
               </select>
             </div>
             <div style={{ minWidth: '100%' }}>
-              <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+              <select className="form-control" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
                 <option value="ALL">Tất cả kết quả</option>
                 <option value="PASS">ĐẬU</option>
                 <option value="FAIL">RỚT</option>
