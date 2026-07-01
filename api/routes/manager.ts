@@ -1112,4 +1112,152 @@ router.get('/system-logs', async (req, res) => {
   }
 });
 
+router.post('/scores/import', async (req, res) => {
+  const { scores, stationManagerId } = req.body;
+  if (!Array.isArray(scores)) return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
+
+  const logs: { status: 'success'|'error', message: string, row: any }[] = [];
+
+  for (const row of scores) {
+    try {
+      const { cccd, courseName, testTypeName, remainingScore, errorsText, status } = row;
+      
+      if (!cccd || !courseName || !testTypeName) {
+        logs.push({ status: 'error', message: 'Thiếu CCCD, Khóa đào tạo hoặc Trạm thi', row });
+        continue;
+      }
+
+      // Check student & course
+      const student = await prisma.student.findFirst({
+        where: { cccd }
+      });
+      if (!student) {
+        logs.push({ status: 'error', message: `CCCD ${cccd} không tồn tại`, row });
+        continue;
+      }
+      
+      const course = await prisma.course.findFirst({
+        where: { name: courseName }
+      });
+      if (!course) {
+        logs.push({ status: 'error', message: `Khóa đào tạo ${courseName} không tồn tại`, row });
+        continue;
+      }
+      
+      // Update student course if needed
+      if (student.courseId !== course.id && student.courseName !== courseName) {
+         await prisma.student.update({
+           where: { id: student.id },
+           data: { courseId: course.id, courseName: course.name }
+         });
+      }
+
+      // Check test type
+      const testType = await prisma.testType.findFirst({
+        where: { name: testTypeName }
+      });
+      if (!testType) {
+        logs.push({ status: 'error', message: `Trạm thi ${testTypeName} không tồn tại`, row });
+        continue;
+      }
+
+      // Check if test result already exists
+      const existingResult = await prisma.testResult.findUnique({
+        where: {
+          studentId_testTypeId: { studentId: student.id, testTypeId: testType.id }
+        }
+      });
+      if (existingResult) {
+        logs.push({ status: 'error', message: 'Học viên đã có điểm ở Trạm thi này', row });
+        continue;
+      }
+
+      // Parse errorsText
+      // Example: "Không xi nhan (x2), Chết máy (x1)"
+      let totalDeduction = 0;
+      const scoreData: any[] = [];
+      
+      if (errorsText && errorsText.trim() !== '') {
+        const exam = await prisma.exam.findFirst({
+          where: { testTypeId: testType.id },
+          include: { criteria: true }
+        });
+        
+        if (exam && exam.criteria.length > 0) {
+          const errorParts = errorsText.split(',').map((p: string) => p.trim()).filter(Boolean);
+          for (const part of errorParts) {
+            // match "Error Name (x2)" or "Error Name"
+            const match = part.match(/^(.*?)(?:\s*\(x(\d+)\))?$/);
+            if (match) {
+              const errName = match[1].trim();
+              const times = match[2] ? parseInt(match[2], 10) : 1;
+              
+              // Find criterion by name (case-insensitive approximation)
+              const criterion = exam.criteria.find(c => c.name.toLowerCase() === errName.toLowerCase());
+              if (criterion) {
+                totalDeduction += criterion.pointsToDeduct * times;
+                scoreData.push({ criterionId: criterion.id, timesDeducted: times });
+              } else {
+                // If we want to strictly require matching:
+                throw new Error(`Lỗi "${errName}" không có trong danh mục lỗi của trạm này`);
+              }
+            }
+          }
+        } else {
+          if (errorsText.trim() !== '') {
+             throw new Error('Trạm thi này chưa được cấu hình danh sách lỗi');
+          }
+        }
+      }
+
+      let finalScore = remainingScore;
+      if (finalScore === null || finalScore === undefined) {
+        finalScore = testType.maxScore - totalDeduction;
+      }
+      
+      let finalStatus = status;
+      if (!finalStatus) {
+        finalStatus = finalScore >= testType.passingScore ? 'ĐẬU' : 'RỚT';
+      }
+      if (['ĐẬU', 'RỚT', 'VẮNG', 'CHƯA HOÀN THÀNH'].indexOf(finalStatus) === -1) {
+         finalStatus = finalScore >= testType.passingScore ? 'ĐẬU' : 'RỚT';
+      }
+
+      // Create TestResult and Scores
+      await prisma.$transaction(async (tx) => {
+        const tr = await tx.testResult.create({
+          data: {
+            studentId: student.id,
+            testTypeId: testType.id,
+            totalScore: finalScore,
+            status: finalStatus,
+            stationManagerId: stationManagerId || null,
+            startTime: new Date(),
+            endTime: new Date()
+          }
+        });
+        
+        if (scoreData.length > 0) {
+          for (const sd of scoreData) {
+            await tx.score.create({
+              data: {
+                testResultId: tr.id,
+                criterionId: sd.criterionId,
+                timesDeducted: sd.timesDeducted
+              }
+            });
+          }
+        }
+      });
+
+      logs.push({ status: 'success', message: `Import thành công (${finalScore}đ - ${finalStatus})`, row });
+
+    } catch (e: any) {
+      logs.push({ status: 'error', message: e.message || 'Lỗi không xác định', row });
+    }
+  }
+
+  res.json({ logs });
+});
+
 export default router;

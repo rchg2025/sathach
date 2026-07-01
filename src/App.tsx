@@ -19,7 +19,10 @@ import SettingsManager from './pages/SettingsManager';
 import StationTesting from './pages/StationTesting';
 import SystemLogs from './pages/SystemLogs';
 import ReportsManager from './pages/ReportsManager';
+import ScoreImport from './pages/ScoreImport';
 import './index.css';
+
+
 
 const PublicHeader = () => {
   const location = useLocation();
@@ -99,6 +102,7 @@ function App() {
         <Route path="/manager/testing" element={<StationTesting />} />
         <Route path="/manager/system-logs" element={<SystemLogs />} />
         <Route path="/manager/reports" element={<ReportsManager />} />
+        <Route path="/manager/import-scores" element={<ScoreImport />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>
