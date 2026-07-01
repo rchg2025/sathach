@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AdminLayout from '../components/AdminLayout';
 import { Users, BookOpen, ClipboardList, Shield } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
@@ -146,7 +146,7 @@ const ManagerDashboard = () => {
         <div className="card" style={{ marginBottom: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Học viên thi gần đây</h4>
-            <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
+            <Link to="/manager/testing" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
             <table className="table" style={{ fontSize: '0.875rem' }}>
@@ -172,8 +172,12 @@ const ManagerDashboard = () => {
                           <span style={{ color: 'var(--danger)', fontWeight: 600 }}>Trượt</span>
                         ) : student.status === 'IN_PROGRESS' ? (
                           <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Đang thi</span>
+                        ) : student.status === 'TRANSFERRED' ? (
+                          <span style={{ color: 'var(--info)', fontWeight: 600 }}>Đã chuyển điểm</span>
+                        ) : student.status === 'ABSENT' ? (
+                          <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Vắng</span>
                         ) : (
-                          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{student.status}</span>
+                          <span style={{ color: 'var(--primary)', fontWeight: 600 }}>{student.status === 'PENDING' ? 'Chờ thi' : student.status}</span>
                         )}
                       </td>
                     </tr>
@@ -193,7 +197,7 @@ const ManagerDashboard = () => {
         <div className="card" style={{ marginBottom: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Giám khảo hoạt động nhiều nhất</h4>
-            <a href="#" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</a>
+            <Link to="/manager/users" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
             <table className="table" style={{ fontSize: '0.875rem' }}>
