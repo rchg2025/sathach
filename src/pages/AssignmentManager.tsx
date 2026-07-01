@@ -471,7 +471,7 @@ const AssignmentManager = () => {
         {/* Phân trang */}
         {totalPages > 1 && (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', borderTop: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: '5px' }}>
+            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
               <button 
                 className="btn btn-secondary" 
                 disabled={currentPage === 1}

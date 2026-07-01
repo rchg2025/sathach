@@ -215,11 +215,11 @@ const ExamManager = () => {
 </div>
 
           {totalPages > 1 && (
-            <div className="flex justify-between items-center mt-4">
+            <div className="pagination-wrapper mt-4">
               <span className="text-muted">
                 Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredExams.length)} trong tổng số {filteredExams.length}
               </span>
-              <div className="pagination flex" style={{ gap: '0.5rem' }}>
+              <div className="pagination flex" style={{ gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button 
                   className="btn btn-outline" 
                   disabled={currentPage === 1} 

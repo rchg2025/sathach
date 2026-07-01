@@ -343,11 +343,11 @@ const UserManager = () => {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)' }}>
+              <div className="pagination-wrapper" style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
                 <div className="text-muted" style={{ fontSize: '0.9rem' }}>
                   Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredUsers.length)} / {filteredUsers.length}
                 </div>
-                <div style={{ display: 'flex', gap: '5px' }}>
+                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
                   <button className="btn" style={{ padding: '0.3rem 0.6rem' }} disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>Trước</button>
                   {Array.from({ length: totalPages }).map((_, i) => (
                     <button key={i} className="btn"
