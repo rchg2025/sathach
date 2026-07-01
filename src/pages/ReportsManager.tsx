@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Printer } from 'lucide-react';
+import { Printer, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
+import PrintTemplate from '../components/PrintTemplate';
 import { API_BASE_URL } from '../config';
 
 const ReportsManager = () => {
@@ -13,6 +14,8 @@ const ReportsManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  
+  const [printStudents, setPrintStudents] = useState<any[]>([]);
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
@@ -118,8 +121,11 @@ const ReportsManager = () => {
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handlePrint = () => {
-    window.print();
+  const handlePrint = (studentsToPrint: any[]) => {
+    setPrintStudents(studentsToPrint);
+    setTimeout(() => {
+      window.print();
+    }, 500);
   };
 
   return (
@@ -132,9 +138,7 @@ const ReportsManager = () => {
             .sidebar { display: none !important; }
             .main-content { margin-left: 0 !important; width: 100% !important; padding: 0 !important; }
             body { background: white !important; }
-            .card { box-shadow: none !important; border: none !important; }
-            table { width: 100% !important; border-collapse: collapse !important; }
-            th, td { border: 1px solid #ddd !important; padding: 8px !important; }
+            .card { box-shadow: none !important; border: none !important; background: transparent !important; }
           }
           .print-only { display: none; }
         `}
@@ -142,19 +146,18 @@ const ReportsManager = () => {
       <div className="container print-container">
         <div className="flex justify-between items-center mb-4 no-print">
           <h2 style={{ margin: 0 }}>Báo cáo - Thống kê Sát hạch</h2>
-          <button className="btn btn-primary" onClick={handlePrint} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Printer size={18} /> In Báo cáo
+          <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents)} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <FileText size={18} /> In Đồng Loạt
           </button>
         </div>
 
-        {/* Print Header */}
-        <div className="print-only" style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <h2>BÁO CÁO KẾT QUẢ SÁT HẠCH</h2>
-          <p>Thời gian in: {new Date().toLocaleString('vi-VN')}</p>
+        {/* Print Template Container */}
+        <div className="print-only">
+          <PrintTemplate students={printStudents} />
         </div>
         
         {/* Statistics Cards */}
-        <div className="grid no-print" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Tổng học viên</h3>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{filteredStudents.length}</div>
@@ -214,6 +217,7 @@ const ReportsManager = () => {
                   <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
                   <th style={{ textAlign: 'center' }}>Đường trường</th>
                   <th style={{ textAlign: 'center' }}>Kết quả</th>
+                  <th className="no-print" style={{ textAlign: 'center' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -230,6 +234,15 @@ const ReportsManager = () => {
                       {s.finalStatus === 'ĐẬU' && <span style={{ color: 'var(--success)' }}>ĐẬU</span>}
                       {s.finalStatus === 'RỚT' && <span style={{ color: 'var(--danger)' }}>RỚT</span>}
                       {s.finalStatus === 'CHƯA HOÀN THÀNH' && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>Chưa hoàn thành</span>}
+                    </td>
+                    <td className="no-print" style={{ textAlign: 'center' }}>
+                      <button 
+                        className="btn btn-sm btn-secondary" 
+                        onClick={() => handlePrint([s])}
+                        style={{ padding: '4px 8px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                      >
+                        <Printer size={14} /> In
+                      </button>
                     </td>
                   </tr>
                 ))}
