@@ -295,17 +295,8 @@ const VehicleTypeManager = () => {
                 <option value="active">Đang hoạt động</option>
                 <option value="inactive">Tạm ngưng</option>
               </select>
-              <select className="form-control" style={{ flex: '1 1 150px' }} value={seatsFilter} onChange={e => { setSeatsFilter(e.target.value); setCurrentPage(1); }}>
-                <option value="all">Tất cả số chỗ</option>
-                <option value="4">4 chỗ</option>
-                <option value="5">5 chỗ</option>
-                <option value="7">7 chỗ</option>
-                <option value="16">16 chỗ</option>
-                <option value="29">29 chỗ</option>
-                <option value="45">45 chỗ</option>
-              </select>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', width: '100%', flexWrap: 'nowrap' }}>
               <input 
                 type="file" 
                 accept=".xlsx, .xls" 
@@ -313,14 +304,14 @@ const VehicleTypeManager = () => {
                 ref={fileInputRef}
                 onChange={handleImportExcel}
               />
-              <button className="btn" style={{ background: '#10b981', color: 'white' }} onClick={() => fileInputRef.current?.click()}>
+              <button className="btn" style={{ background: '#10b981', color: 'white', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={() => fileInputRef.current?.click()}>
                 Nhập Excel
               </button>
-              <button className="btn" style={{ background: '#6366f1', color: 'white' }} onClick={handleDownloadSample}>
+              <button className="btn" style={{ background: '#6366f1', color: 'white', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={handleDownloadSample}>
                 Tải file mẫu
               </button>
-              <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>📥 Xuất Excel</span>
+              <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }}>
+                <span>Xuất Excel</span>
               </button>
             </div>
           </div>
