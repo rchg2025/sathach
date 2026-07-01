@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Printer, FileText, AlertTriangle } from 'lucide-react';
+import { Printer, FileText, AlertTriangle, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 import AdminLayout from '../components/AdminLayout';
 import PrintTemplate from '../components/PrintTemplate';
 import PrintErrorTemplate from '../components/PrintErrorTemplate';
@@ -55,8 +57,8 @@ const ReportsManager = () => {
     const trs = student.testResults || [];
     const completedCount = trs.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
     
-    let isCompleted = completedCount >= 3;
     let isFail = false;
+    let isAbsent = false;
     
     let scoreSaHinh = '-';
     let scoreChuZ = '-';
@@ -68,7 +70,7 @@ const ReportsManager = () => {
       
       if (tr.status === 'ABSENT') {
         scoreVal = 'Vắng';
-        isFail = true;
+        isAbsent = true;
       } else if (tr.status === 'IN_PROGRESS') {
         scoreVal = 'Đang thi';
       } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
@@ -83,9 +85,10 @@ const ReportsManager = () => {
     });
 
     let finalStatus = '';
-    if (!isCompleted) finalStatus = 'CHƯA HOÀN THÀNH';
+    if (isAbsent) finalStatus = 'VẮNG';
     else if (isFail) finalStatus = 'RỚT';
-    else finalStatus = 'ĐẬU';
+    else if (completedCount >= 3) finalStatus = 'ĐẬU';
+    else finalStatus = 'CHƯA HOÀN THÀNH';
 
     return {
       ...student,
@@ -98,27 +101,34 @@ const ReportsManager = () => {
 
   const processedStudents = students.map(getStudentReport);
 
-  const filteredStudents = processedStudents.filter(s => {
+  const courseFilteredStudents = processedStudents.filter(s => {
+    if (filterCourse !== 'ALL') {
+      return (s.courseId === parseInt(filterCourse) || s.courseName === filterCourse);
+    }
+    return true;
+  });
+
+  const filteredStudents = courseFilteredStudents.filter(s => {
     let match = true;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
     }
-    if (match && filterCourse !== 'ALL') {
-      match = (s.courseId === parseInt(filterCourse) || s.courseName === filterCourse);
-    }
     if (match && filterStatus !== 'ALL') {
       if (filterStatus === 'PASS' && s.finalStatus !== 'ĐẬU') match = false;
       if (filterStatus === 'FAIL' && s.finalStatus !== 'RỚT') match = false;
+      if (filterStatus === 'ABSENT' && s.finalStatus !== 'VẮNG') match = false;
       if (filterStatus === 'INCOMPLETE' && s.finalStatus !== 'CHƯA HOÀN THÀNH') match = false;
     }
     return match;
   });
 
-  const totalCompleted = filteredStudents.filter(s => s.finalStatus === 'ĐẬU' || s.finalStatus === 'RỚT');
-  const totalPass = totalCompleted.filter(s => s.finalStatus === 'ĐẬU').length;
-  const totalFail = totalCompleted.filter(s => s.finalStatus === 'RỚT').length;
-  const passRate = totalCompleted.length > 0 ? Math.round((totalPass / totalCompleted.length) * 100) : 0;
+  const totalCourseStudents = courseFilteredStudents.length;
+  const totalPass = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU').length;
+  const totalFail = courseFilteredStudents.filter(s => s.finalStatus === 'RỚT').length;
+  const totalAbsent = courseFilteredStudents.filter(s => s.finalStatus === 'VẮNG').length;
+  const totalCompleted = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU' || s.finalStatus === 'RỚT' || s.finalStatus === 'VẮNG').length;
+  const passRate = totalCompleted > 0 ? Math.round((totalPass / totalCompleted) * 100) : 0;
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -129,6 +139,34 @@ const ReportsManager = () => {
     setTimeout(() => {
       window.print();
     }, 500);
+  };
+
+  const exportToExcel = () => {
+    const dataForExcel = filteredStudents.map((s, index) => ({
+      'STT': index + 1,
+      'Họ và Tên': s.name,
+      'CCCD': s.cccd,
+      'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-',
+      'Sa hình': s.scoreSaHinh,
+      'Hình chữ Z': s.scoreChuZ,
+      'Đường trường': s.scoreDuongTruong,
+      'Kết quả': s.finalStatus
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ThongKeKetQua');
+    
+    // Auto size columns
+    const wscols = [
+      { wch: 5 }, { wch: 25 }, { wch: 15 }, { wch: 20 }, 
+      { wch: 10 }, { wch: 12 }, { wch: 15 }, { wch: 15 }
+    ];
+    worksheet['!cols'] = wscols;
+
+    const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
+    const data = new Blob([excelBuffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8' });
+    saveAs(data, `ThongKeKetQua_${new Date().getTime()}.xlsx`);
   };
 
   return (
@@ -150,6 +188,9 @@ const ReportsManager = () => {
         <div className="flex justify-between items-center mb-4 no-print">
           <h2 style={{ margin: 0 }}>Báo cáo - Thống kê Sát hạch</h2>
           <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn btn-success" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Download size={18} /> Xuất Excel
+            </button>
             <button className="btn btn-primary" onClick={() => handlePrint(filteredStudents, 'RESULT')} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <FileText size={18} /> In ĐL Kết quả
             </button>
@@ -169,10 +210,10 @@ const ReportsManager = () => {
         </div>
         
         {/* Statistics Cards */}
-        <div className="grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Tổng học viên</h3>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{filteredStudents.length}</div>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--primary)' }}>{totalCourseStudents}</div>
           </div>
           <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Đậu</h3>
@@ -181,6 +222,10 @@ const ReportsManager = () => {
           <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Rớt</h3>
             <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--danger)' }}>{totalFail}</div>
+          </div>
+          <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Số lượng Vắng</h3>
+            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: 'var(--text-muted)' }}>{totalAbsent}</div>
           </div>
           <div className="card" style={{ padding: '1.5rem', textAlign: 'center' }}>
             <h3 style={{ margin: '0 0 10px 0', fontSize: '1.1rem', color: 'var(--text-muted)' }}>Tỷ lệ Đậu</h3>
@@ -212,6 +257,7 @@ const ReportsManager = () => {
                 <option value="ALL">Tất cả kết quả</option>
                 <option value="PASS">ĐẬU</option>
                 <option value="FAIL">RỚT</option>
+                <option value="ABSENT">VẮNG</option>
                 <option value="INCOMPLETE">Chưa hoàn thành</option>
               </select>
             </div>
@@ -245,6 +291,7 @@ const ReportsManager = () => {
                     <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
                       {s.finalStatus === 'ĐẬU' && <span style={{ color: 'var(--success)' }}>ĐẬU</span>}
                       {s.finalStatus === 'RỚT' && <span style={{ color: 'var(--danger)' }}>RỚT</span>}
+                      {s.finalStatus === 'VẮNG' && <span style={{ color: 'var(--text-muted)' }}>VẮNG</span>}
                       {s.finalStatus === 'CHƯA HOÀN THÀNH' && <span style={{ color: 'var(--text-muted)', fontSize: '0.9em' }}>Chưa hoàn thành</span>}
                     </td>
                     <td className="no-print" style={{ textAlign: 'center' }}>

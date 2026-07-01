@@ -99,7 +99,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
           if (tr.scores && tr.scores.length > 0) {
             tr.scores.forEach((sc: any) => {
               if (sc.criterion) {
-                const deduction = sc.criterion.deductionScore * sc.timesDeducted;
+                const deduction = (sc.criterion.pointsToDeduct || 0) * (sc.timesDeducted || 1);
                 errorList.push({
                   testName,
                   errorName: sc.criterion.name,
