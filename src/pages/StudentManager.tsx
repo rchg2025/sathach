@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
 import CreatableSelect from 'react-select/creatable';
-import { removeAccents } from '../utils/stringUtils';
+import { Pagination } from '../components/Pagination';
 import AdminLayout from '../components/AdminLayout';
 import { Eye, Edit, Trash2 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
@@ -477,16 +477,16 @@ const StudentManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="filter-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', flex: 1, width: '100%' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm tên, CCCD, Mã ĐK..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+                style={{ minWidth: '100%' }}
               />
-              <div style={{ width: '200px' }}>
+              <div style={{ minWidth: '100%' }}>
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))]}
                   value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))].find((opt: any) => opt.value === courseFilter)}
@@ -598,31 +598,11 @@ const StudentManager = () => {
               <span className="text-muted">
                 Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredStudents.length)} trong tổng số {filteredStudents.length}
               </span>
-              <div className="pagination flex" style={{ gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <button 
-                  className="btn btn-outline" 
-                  disabled={currentPage === 1} 
-                  onClick={() => setCurrentPage(prev => prev - 1)}
-                >
-                  Trước
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button 
-                    key={page} 
-                    className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button 
-                  className="btn btn-outline" 
-                  disabled={currentPage === totalPages} 
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                >
-                  Sau
-                </button>
-              </div>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </div>

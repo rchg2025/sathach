@@ -7,7 +7,7 @@ import { Trash2, Download, Edit } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import ConfirmModal from '../components/ConfirmModal';
-
+import { Pagination } from '../components/Pagination';
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   
@@ -403,16 +403,16 @@ const AssignmentManager = () => {
       <div className="card" style={{ padding: '0' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="filter-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', flex: 1, width: '100%' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm tên, username, bài thi..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+                style={{ minWidth: '100%' }}
               />
-              <div style={{ width: '220px' }}>
+              <div style={{ minWidth: '100%' }}>
                 <Select 
                   options={[
                     { value: 'all', label: 'Tất cả Vai trò' },
@@ -433,7 +433,7 @@ const AssignmentManager = () => {
                   }}
                 />
               </div>
-              <div style={{ width: '220px' }}>
+              <div style={{ minWidth: '100%' }}>
                 <Select 
                   options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))].find((opt: any) => opt.value === courseFilter)}
@@ -446,7 +446,7 @@ const AssignmentManager = () => {
                   }}
                 />
               </div>
-              <div style={{ width: '220px' }}>
+              <div style={{ minWidth: '100%' }}>
                 <Select 
                   options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))].find((opt: any) => opt.value === testTypeFilter)}
@@ -530,32 +530,12 @@ const AssignmentManager = () => {
         
         {/* Phân trang */}
         {totalPages > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem', borderTop: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
-              <button 
-                className="btn btn-secondary" 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-              >
-                Trước
-              </button>
-              {Array.from({ length: totalPages }).map((_, i) => (
-                <button
-                  key={i}
-                  className={`btn ${currentPage === i + 1 ? 'btn-primary' : 'btn-secondary'}`}
-                  onClick={() => setCurrentPage(i + 1)}
-                >
-                  {i + 1}
-                </button>
-              ))}
-              <button 
-                className="btn btn-secondary" 
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              >
-                Sau
-              </button>
-            </div>
+          <div className="pagination-wrapper mt-4 mb-4">
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>

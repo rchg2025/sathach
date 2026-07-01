@@ -4,12 +4,9 @@ import { Play, Car, CheckCircle, UserX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
+import { toTitleCase } from '../utils/stringUtils';
+import { Pagination } from '../components/Pagination';
 import { API_BASE_URL } from '../config';
-
-const toTitleCase = (str: string) => {
-  if (!str) return '';
-  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-};
 
 const StationTesting = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -316,7 +313,7 @@ const StationTesting = () => {
               <thead>
                 <tr>
                   <th>STT</th>
-                  <th>Họ và Tên</th>
+                  <th style={{ position: 'sticky', left: 0, background: '#f8fafc', zIndex: 2, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>Họ và Tên</th>
                   <th>CCCD</th>
                   <th>Khóa đào tạo</th>
                   <th>Thời gian thực hiện</th>
@@ -331,7 +328,7 @@ const StationTesting = () => {
                 {paginatedStudents.map((s, index) => (
                   <tr key={s.id}>
                     <td>{(currentPage - 1) * itemsPerPage + index + 1}</td>
-                    <td><strong>{toTitleCase(s.name)}</strong></td>
+                    <td style={{ position: 'sticky', left: 0, background: 'var(--card-bg, white)', zIndex: 1, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}><strong>{toTitleCase(s.name)}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
                     <td>
@@ -481,24 +478,12 @@ const StationTesting = () => {
           </div>
           
           {totalPages > 1 && (
-            <div style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'center', gap: '0.5rem' }}>
-              <button 
-                className="btn" 
-                style={{ padding: '0.3rem 0.8rem', background: '#f3f4f6' }}
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              >
-                Trước
-              </button>
-              <span style={{ padding: '0.3rem 0.8rem' }}>Trang {currentPage} / {totalPages}</span>
-              <button 
-                className="btn" 
-                style={{ padding: '0.3rem 0.8rem', background: '#f3f4f6' }}
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              >
-                Sau
-              </button>
+            <div className="pagination-wrapper mt-4">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </div>
