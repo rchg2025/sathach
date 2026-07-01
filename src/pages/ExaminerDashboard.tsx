@@ -12,6 +12,7 @@ const ExaminerDashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [criteria, setCriteria] = useState<any[]>([]);
+  const [combinedExams, setCombinedExams] = useState<any[]>([]);
   const [errors, setErrors] = useState<{ [criterionId: number]: number }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseScore, setBaseScore] = useState<number>(100);
@@ -44,12 +45,19 @@ const ExaminerDashboard = () => {
 
   const startExam = async (student: any) => {
     try {
-      await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, {
+      const payload: any = {
         studentId: student.id,
         testTypeId: student.testResults[0].testTypeId,
-        examId: student.currentExam.id,
         examinerId: user.id
-      });
+      };
+      
+      if (student.isCombinedExam) {
+        payload.examIds = student.allExams.map((e: any) => e.id);
+      } else {
+        payload.examId = student.currentExam.id;
+      }
+
+      await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, payload);
       toast.success('Đã bắt đầu chấm bài thi');
       fetchData(user.id, false);
     } catch (e) {
@@ -67,8 +75,16 @@ const ExaminerDashboard = () => {
     setIsModalOpen(true);
     
     try {
-      const res = await axios.get(`${API_BASE_URL}/api/examiner/criteria/${student.currentExam.id}`);
-      setCriteria(res.data);
+      if (student.isCombinedExam) {
+        const res = await axios.get(`${API_BASE_URL}/api/examiner/criteria/test-type/${student.currentExam.testTypeId}`);
+        setCombinedExams(res.data);
+        const flatCriteria = res.data.flatMap((e: any) => e.criteria);
+        setCriteria(flatCriteria);
+      } else {
+        setCombinedExams([]);
+        const res = await axios.get(`${API_BASE_URL}/api/examiner/criteria/${student.currentExam.id}`);
+        setCriteria(res.data);
+      }
     } catch (e) {
       toast.error('Lỗi lấy tiêu chí chấm điểm');
     }
@@ -93,13 +109,20 @@ const ExaminerDashboard = () => {
     }));
     
     try {
-      await axios.post(`${API_BASE_URL}/api/examiner/submit-exam`, {
+      const payload: any = {
         studentId: selectedStudent.id,
         testTypeId: selectedStudent.currentExam.testTypeId,
-        examId: selectedStudent.currentExam.id,
         examinerId: user.id,
         errors: errorsList
-      });
+      };
+
+      if (selectedStudent.isCombinedExam) {
+        payload.examIds = selectedStudent.allExams.map((e: any) => e.id);
+      } else {
+        payload.examId = selectedStudent.currentExam.id;
+      }
+
+      await axios.post(`${API_BASE_URL}/api/examiner/submit-exam`, payload);
       
       toast.success('Đã hoàn thành bài thi!');
       setIsModalOpen(false);
@@ -252,44 +275,93 @@ const ExaminerDashboard = () => {
               <p className="text-muted">Tổng điểm hiện tại</p>
             </div>
 
-            <h5 className="mb-3 border-bottom pb-2">Tiêu chí trừ điểm</h5>
-            
-            {criteria.length === 0 ? (
-              <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
-            ) : (
-              <div className="d-flex flex-column">
-                {criteria.map(c => {
-                  const errCount = errors[c.id] || 0;
-                  return (
-                    <div key={c.id} className="d-flex justify-content-between align-items-center py-3 border-bottom" style={{ gap: '10px' }}>
-                      <div style={{ flex: 1, textAlign: 'left' }}>
-                        <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
-                        <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
+            {selectedStudent.isCombinedExam ? (
+              <div className="d-flex flex-column gap-4">
+                {combinedExams.map(exam => (
+                  <div key={exam.id}>
+                    <h5 className="mb-3 border-bottom pb-2" style={{ color: 'var(--primary)' }}>{exam.name}</h5>
+                    {(!exam.criteria || exam.criteria.length === 0) ? (
+                      <div className="text-muted mb-3">Không có lỗi trừ điểm.</div>
+                    ) : (
+                      <div className="d-flex flex-column">
+                        {exam.criteria.map((c: any) => {
+                          const errCount = errors[c.id] || 0;
+                          return (
+                            <div key={c.id} className="d-flex justify-content-between align-items-center py-2 border-bottom" style={{ gap: '10px' }}>
+                              <div style={{ flex: 1, textAlign: 'left' }}>
+                                <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
+                                <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
+                              </div>
+                              <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
+                                <button 
+                                  className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                                  style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                                  onClick={() => updateErrorCount(c.id, -1)}
+                                  disabled={errCount === 0}
+                                >
+                                  <Minus size={20} />
+                                </button>
+                                <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
+                                  {errCount}
+                                </span>
+                                <button 
+                                  className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                                  style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                                  onClick={() => updateErrorCount(c.id, 1)}
+                                >
+                                  <Plus size={20} />
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                      <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
-                        <button 
-                          className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                          style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                          onClick={() => updateErrorCount(c.id, -1)}
-                          disabled={errCount === 0}
-                        >
-                          <Minus size={20} />
-                        </button>
-                        <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
-                          {errCount}
-                        </span>
-                        <button 
-                          className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                          style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                          onClick={() => updateErrorCount(c.id, 1)}
-                        >
-                          <Plus size={20} />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+                    )}
+                  </div>
+                ))}
               </div>
+            ) : (
+              <>
+                <h5 className="mb-3 border-bottom pb-2">Tiêu chí trừ điểm</h5>
+                
+                {criteria.length === 0 ? (
+                  <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
+                ) : (
+                  <div className="d-flex flex-column">
+                    {criteria.map(c => {
+                      const errCount = errors[c.id] || 0;
+                      return (
+                        <div key={c.id} className="d-flex justify-content-between align-items-center py-3 border-bottom" style={{ gap: '10px' }}>
+                          <div style={{ flex: 1, textAlign: 'left' }}>
+                            <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
+                            <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
+                          </div>
+                          <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
+                            <button 
+                              className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                              style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                              onClick={() => updateErrorCount(c.id, -1)}
+                              disabled={errCount === 0}
+                            >
+                              <Minus size={20} />
+                            </button>
+                            <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
+                              {errCount}
+                            </span>
+                            <button 
+                              className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
+                              style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                              onClick={() => updateErrorCount(c.id, 1)}
+                            >
+                              <Plus size={20} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
 
             <div className="mt-4 pt-3 border-top d-flex justify-content-center">

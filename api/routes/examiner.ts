@@ -50,42 +50,82 @@ router.get('/students', async (req, res) => {
       include: {
         student: { include: { testResults: true, course: true } },
         progress: true,
-        vehicle: true
+        vehicle: true,
+        testType: true
       }
     });
 
     const studentsForExaminer = [];
 
     for (const result of testResults) {
-      // Find the first active exam the student has NOT completed
+      const isDuongTruong = result.testType.name.toLowerCase().includes('đường trường');
+      
       const completedExamIds = result.progress.filter((p: any) => p.status === 'COMPLETED').map((p: any) => p.examId);
       
-      const nextExam = activeExams.find(exam => 
-        exam.testTypeId === result.testTypeId && !completedExamIds.includes(exam.id)
-      );
+      if (isDuongTruong) {
+        const allActiveExams = activeExams.filter(exam => exam.testTypeId === result.testTypeId);
+        const uncompletedExams = allActiveExams.filter(exam => !completedExamIds.includes(exam.id));
+        
+        if (uncompletedExams.length > 0) {
+          const myAssignment = assignments.find(a => 
+            a.examinerId === examinerId && 
+            a.testTypeId === result.testTypeId
+          );
 
-      // If there is a next exam, check if the current examiner is assigned to it
-      if (nextExam && nextExam.assignments.some(a => a.examinerId === examinerId)) {
-        const myAssignment = assignments.find(a => 
-          a.examinerId === examinerId && 
-          (a.examId === nextExam.id || (a.testTypeId === nextExam.testTypeId && !a.examId))
+          if (myAssignment) {
+            if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+              const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+              if (!hasVehicle) continue;
+            }
+
+            const inProgressExamIds = result.progress.filter((p: any) => p.status === 'IN_PROGRESS').map((p: any) => p.examId);
+            const anyInProgress = uncompletedExams.some(e => inProgressExamIds.includes(e.id));
+            const currentProgress = anyInProgress ? { status: 'IN_PROGRESS', startTime: result.progress.find((p:any) => p.status === 'IN_PROGRESS')?.startTime } : { status: 'PENDING' };
+            
+            const studentData = { 
+              ...result.student, 
+              currentExam: { name: result.testType.name, testTypeId: result.testTypeId }, 
+              testResultId: result.id,
+              vehicle: result.vehicle,
+              currentProgress,
+              assignmentDate: myAssignment.assignmentDate,
+              isCombinedExam: true,
+              allExams: uncompletedExams
+            };
+            studentsForExaminer.push(studentData);
+          }
+        }
+      } else {
+        // Find the first active exam the student has NOT completed
+        const nextExam = activeExams.find(exam => 
+          exam.testTypeId === result.testTypeId && !completedExamIds.includes(exam.id)
         );
 
-        if (myAssignment && myAssignment.vehicles && myAssignment.vehicles.length > 0) {
-          const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
-          if (!hasVehicle) continue; // Skip if student's vehicle is not assigned to this examiner
-        }
+        // If there is a next exam, check if the current examiner is assigned to it
+        if (nextExam && nextExam.assignments.some(a => a.examinerId === examinerId)) {
+          const myAssignment = assignments.find(a => 
+            a.examinerId === examinerId && 
+            (a.examId === nextExam.id || (a.testTypeId === nextExam.testTypeId && !a.examId))
+          );
 
-        const currentProgress = result.progress.find((p: any) => p.examId === nextExam.id);
-        const studentData = { 
-          ...result.student, 
-          currentExam: nextExam, 
-          testResultId: result.id,
-          vehicle: result.vehicle,
-          currentProgress,
-          assignmentDate: myAssignment?.assignmentDate
-        };
-        studentsForExaminer.push(studentData);
+          if (myAssignment) {
+            if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+              const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+              if (!hasVehicle) continue; // Skip if student's vehicle is not assigned to this examiner
+            }
+
+            const currentProgress = result.progress.find((p: any) => p.examId === nextExam.id);
+            const studentData = { 
+              ...result.student, 
+              currentExam: nextExam, 
+              testResultId: result.id,
+              vehicle: result.vehicle,
+              currentProgress,
+              assignmentDate: myAssignment.assignmentDate
+            };
+            studentsForExaminer.push(studentData);
+          }
+        }
       }
     }
 
@@ -109,35 +149,56 @@ router.get('/criteria/:examId', async (req, res) => {
   }
 });
 
+// Examiner get criteria for all exams of a TEST TYPE
+router.get('/criteria/test-type/:testTypeId', async (req, res) => {
+  try {
+    const exams = await prisma.exam.findMany({
+      where: { testTypeId: Number(req.params.testTypeId) },
+      orderBy: { name: 'asc' },
+      include: { criteria: true }
+    });
+    res.json(exams);
+  } catch (error) { 
+    console.error(error);
+    res.status(500).json({ error: 'Server error' }); 
+  }
+});
+
 // Start exam grading
 router.post('/start-exam', async (req, res) => {
-  const { studentId, testTypeId, examId, examinerId } = req.body;
+  const { studentId, testTypeId, examId, examIds, examinerId } = req.body;
   try {
     let result = await prisma.testResult.findFirst({
       where: { studentId: Number(studentId), testTypeId: Number(testTypeId) }
     });
     if (!result) return res.status(404).json({ error: 'TestResult not found' });
 
-    const progress = await prisma.examProgress.upsert({
-      where: {
-        testResultId_examId: {
+    const targetExamIds = examIds ? examIds : (examId ? [examId] : []);
+
+    const progressPromises = targetExamIds.map((eId: number) => 
+      prisma.examProgress.upsert({
+        where: {
+          testResultId_examId: {
+            testResultId: result.id,
+            examId: Number(eId)
+          }
+        },
+        update: {
+          status: 'IN_PROGRESS',
+          examinerId: Number(examinerId),
+          startTime: new Date()
+        },
+        create: {
           testResultId: result.id,
-          examId: Number(examId)
+          examId: Number(eId),
+          examinerId: Number(examinerId),
+          status: 'IN_PROGRESS',
+          startTime: new Date()
         }
-      },
-      update: {
-        status: 'IN_PROGRESS',
-        examinerId: Number(examinerId),
-        startTime: new Date()
-      },
-      create: {
-        testResultId: result.id,
-        examId: Number(examId),
-        examinerId: Number(examinerId),
-        status: 'IN_PROGRESS',
-        startTime: new Date()
-      }
-    });
+      })
+    );
+
+    const progress = await Promise.all(progressPromises);
     res.json({ success: true, progress });
   } catch (error) {
     console.error(error);
@@ -147,7 +208,7 @@ router.post('/start-exam', async (req, res) => {
 
 // Submit exam grading
 router.post('/submit-exam', async (req, res) => {
-  const { studentId, testTypeId, examId, examinerId, errors } = req.body;
+  const { studentId, testTypeId, examId, examIds, examinerId, errors } = req.body;
   // errors is an array of { criterionId, errorCount }
   
   try {
@@ -157,27 +218,32 @@ router.post('/submit-exam', async (req, res) => {
 
     if (!result) return res.status(404).json({ error: 'TestResult not found' });
 
+    const targetExamIds = examIds ? examIds : (examId ? [examId] : []);
+
     // Mark exam progress as completed
-    await prisma.examProgress.upsert({
-      where: {
-        testResultId_examId: {
+    const progressPromises = targetExamIds.map((eId: number) => 
+      prisma.examProgress.upsert({
+        where: {
+          testResultId_examId: {
+            testResultId: result.id,
+            examId: Number(eId)
+          }
+        },
+        update: {
+          status: 'COMPLETED',
+          examinerId: Number(examinerId),
+          endTime: new Date()
+        },
+        create: {
           testResultId: result.id,
-          examId: Number(examId)
+          examId: Number(eId),
+          examinerId: Number(examinerId),
+          status: 'COMPLETED',
+          endTime: new Date()
         }
-      },
-      update: {
-        status: 'COMPLETED',
-        examinerId: Number(examinerId),
-        endTime: new Date()
-      },
-      create: {
-        testResultId: result.id,
-        examId: Number(examId),
-        examinerId: Number(examinerId),
-        status: 'COMPLETED',
-        endTime: new Date()
-      }
-    });
+      })
+    );
+    await Promise.all(progressPromises);
 
     // Deduct points
     let totalDeducted = 0;
