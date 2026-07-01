@@ -262,7 +262,7 @@ const ExaminerDashboard = () => {
                   const errCount = errors[c.id] || 0;
                   return (
                     <div key={c.id} className="d-flex flex-wrap align-items-center p-3 rounded" style={{ backgroundColor: '#f8f9fa', border: '1px solid #dee2e6', gap: '15px', justifyContent: 'center' }}>
-                      <div style={{ flex: '1 1 100%', textAlign: 'center' }}>
+                      <div style={{ flex: '1 1 100%', textAlign: 'left' }}>
                         <div style={{ fontWeight: '600' }}>{c.name}</div>
                         <div className="text-danger small">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                       </div>
@@ -295,7 +295,7 @@ const ExaminerDashboard = () => {
             <div className="mt-4 pt-3 border-top d-flex justify-content-center">
               <button 
                 className="btn btn-success rounded-pill px-4 py-2" 
-                style={{ fontSize: '1.1rem', fontWeight: 'bold', width: '100%', maxWidth: '300px' }}
+                style={{ fontSize: '1.1rem', fontWeight: 'bold', width: '100%' }}
                 onClick={handleSubmitExam}
                 disabled={isSubmitting}
               >

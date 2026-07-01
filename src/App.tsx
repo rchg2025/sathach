@@ -55,9 +55,33 @@ const PublicHeader = () => {
   );
 };
 
+const GlobalSEOUpdater = () => {
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/api/manager/settings`)
+      .then(res => {
+        const settings = res.data;
+        if (settings.seo_title) {
+          document.title = settings.seo_title;
+          document.querySelector('meta[property="og:title"]')?.setAttribute('content', settings.seo_title);
+        }
+        if (settings.seo_description) {
+          document.querySelector('meta[name="description"]')?.setAttribute('content', settings.seo_description);
+          document.querySelector('meta[property="og:description"]')?.setAttribute('content', settings.seo_description);
+        }
+        if (settings.logo_url) {
+          document.querySelector('meta[property="og:image"]')?.setAttribute('content', settings.logo_url);
+          document.querySelector('link[rel="icon"]')?.setAttribute('href', settings.logo_url);
+        }
+      })
+      .catch(console.error);
+  }, []);
+  return null;
+};
+
 function App() {
   return (
     <BrowserRouter>
+      <GlobalSEOUpdater />
       <Toaster position="top-right" />
       <PublicHeader />
       <Routes>
