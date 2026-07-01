@@ -291,39 +291,43 @@ const ExaminerDashboard = () => {
                     {(!exam.criteria || exam.criteria.length === 0) ? (
                       <div className="text-muted mb-3">Không có lỗi trừ điểm.</div>
                     ) : (
-                      <div className="d-flex flex-column">
+                      <table className="table table-bordered mb-0">
+                        <tbody>
                         {exam.criteria.map((c: any) => {
                           const errCount = errors[c.id] || 0;
                           return (
-                            <div key={c.id} className="d-flex justify-content-between align-items-center py-2 border-bottom" style={{ gap: '10px' }}>
-                              <div style={{ width: '80%', textAlign: 'left', paddingRight: '10px' }}>
+                            <tr key={c.id}>
+                              <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px' }}>
                                 <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                                 <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
-                              </div>
-                              <div className="d-flex align-items-center justify-content-end" style={{ width: '20%', gap: '12px' }}>
-                                <button 
-                                  className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
-                                  style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                                  onClick={() => updateErrorCount(c.id, -1)}
-                                  disabled={errCount === 0}
-                                >
-                                  <Minus size={24} />
-                                </button>
-                                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '32px', textAlign: 'center' }}>
-                                  {errCount}
-                                </span>
-                                <button 
-                                  className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
-                                  style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                                  onClick={() => updateErrorCount(c.id, 1)}
-                                >
-                                  <Plus size={24} />
-                                </button>
-                              </div>
-                            </div>
+                              </td>
+                              <td style={{ width: '20%', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
+                                <div className="d-flex align-items-center justify-content-center" style={{ gap: '8px' }}>
+                                  <button 
+                                    className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                    style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
+                                    onClick={() => updateErrorCount(c.id, -1)}
+                                    disabled={errCount === 0}
+                                  >
+                                    <Minus size={20} />
+                                  </button>
+                                  <span style={{ fontSize: '1.25rem', fontWeight: 'bold', minWidth: '24px', textAlign: 'center' }}>
+                                    {errCount}
+                                  </span>
+                                  <button 
+                                    className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                    style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
+                                    onClick={() => updateErrorCount(c.id, 1)}
+                                  >
+                                    <Plus size={20} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
                           );
                         })}
-                      </div>
+                        </tbody>
+                      </table>
                     )}
                   </div>
                 ))}
@@ -335,39 +339,43 @@ const ExaminerDashboard = () => {
                 {criteria.length === 0 ? (
                   <div className="text-center text-muted my-4">Chưa có tiêu chí nào cho bài thi này.</div>
                 ) : (
-                  <div className="d-flex flex-column">
+                  <table className="table table-bordered mb-0">
+                    <tbody>
                     {criteria.map(c => {
                       const errCount = errors[c.id] || 0;
                       return (
-                        <div key={c.id} className="d-flex justify-content-between align-items-center py-3 border-bottom" style={{ gap: '10px' }}>
-                          <div style={{ width: '80%', textAlign: 'left', paddingRight: '10px' }}>
+                        <tr key={c.id}>
+                          <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px' }}>
                             <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                             <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
-                          </div>
-                          <div className="d-flex align-items-center justify-content-end" style={{ width: '20%', gap: '12px' }}>
-                            <button 
-                              className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
-                              style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                              onClick={() => updateErrorCount(c.id, -1)}
-                              disabled={errCount === 0}
-                            >
-                              <Minus size={24} />
-                            </button>
-                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '32px', textAlign: 'center' }}>
-                              {errCount}
-                            </span>
-                            <button 
-                              className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
-                              style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
-                              onClick={() => updateErrorCount(c.id, 1)}
-                            >
-                              <Plus size={24} />
-                            </button>
-                          </div>
-                        </div>
+                          </td>
+                          <td style={{ width: '20%', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
+                            <div className="d-flex align-items-center justify-content-center" style={{ gap: '8px' }}>
+                              <button 
+                                className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
+                                onClick={() => updateErrorCount(c.id, -1)}
+                                disabled={errCount === 0}
+                              >
+                                <Minus size={20} />
+                              </button>
+                              <span style={{ fontSize: '1.25rem', fontWeight: 'bold', minWidth: '24px', textAlign: 'center' }}>
+                                {errCount}
+                              </span>
+                              <button 
+                                className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
+                                onClick={() => updateErrorCount(c.id, 1)}
+                              >
+                                <Plus size={20} />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
                       );
                     })}
-                  </div>
+                    </tbody>
+                  </table>
                 )}
               </>
             )}
