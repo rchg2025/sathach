@@ -112,15 +112,17 @@ const ResultsManager = () => {
         </div>
         
         <div className="flex" style={{ gap: '1rem', flexWrap: 'wrap', alignItems: 'center', marginBottom: '1rem' }}>
-          <input 
-            type="text" 
-            className="form-control" 
-            placeholder="🔍 Tìm kiếm tên, CCCD, Mã ĐK..." 
-            value={searchKeyword}
-            onChange={e => setSearchKeyword(e.target.value)}
-            style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
-          />
-          <div style={{ width: '200px' }}>
+          <div style={{ flex: '1 1 250px' }}>
+            <input 
+              type="text" 
+              className="form-control" 
+              placeholder="🔍 Tìm kiếm tên, CCCD, Mã ĐK..." 
+              value={searchKeyword}
+              onChange={e => setSearchKeyword(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+          <div style={{ flex: '1 1 200px' }}>
             <Select
               options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))]}
               value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))].find((opt: any) => opt.value === courseFilter)}
@@ -128,7 +130,7 @@ const ResultsManager = () => {
               placeholder="Lọc Khóa đào tạo..."
             />
           </div>
-          <button className="btn btn-primary" onClick={exportToExcel}>
+          <button className="btn btn-primary" onClick={exportToExcel} style={{ flexShrink: 0 }}>
             📥 Xuất Excel
           </button>
         </div>

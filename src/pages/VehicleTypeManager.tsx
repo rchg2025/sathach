@@ -281,21 +281,21 @@ const VehicleTypeManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: 1, flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: '1 1 100%', flexWrap: 'wrap' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm biển số, hãng, chủ xe..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ minWidth: '200px', flex: 1, maxWidth: '250px' }}
+                style={{ flex: '1 1 200px' }}
               />
-              <select className="form-control" style={{ maxWidth: '180px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+              <select className="form-control" style={{ flex: '1 1 150px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                 <option value="all">Tất cả trạng thái</option>
                 <option value="active">Đang hoạt động</option>
                 <option value="inactive">Tạm ngưng</option>
               </select>
-              <select className="form-control" style={{ maxWidth: '150px' }} value={seatsFilter} onChange={e => { setSeatsFilter(e.target.value); setCurrentPage(1); }}>
+              <select className="form-control" style={{ flex: '1 1 150px' }} value={seatsFilter} onChange={e => { setSeatsFilter(e.target.value); setCurrentPage(1); }}>
                 <option value="all">Tất cả số chỗ</option>
                 <option value="4">4 chỗ</option>
                 <option value="5">5 chỗ</option>

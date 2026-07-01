@@ -234,9 +234,9 @@ const UserManager = () => {
   return (
     <AdminLayout user={user}>
       <div className="container">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
           <h2 style={{ margin: 0 }}>Quản lý Thành viên</h2>
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <button className="btn" style={{ background: '#28a745', color: 'white' }} onClick={exportExcel}>Export Excel</button>
             <button className="btn" style={{ background: '#17a2b8', color: 'white' }} onClick={() => fileInputRef.current?.click()}>Import Excel</button>
             <button className="btn" style={{ background: '#6c757d', color: 'white' }} onClick={downloadTemplate}>Tải File Mẫu</button>

@@ -45,7 +45,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
         <button className="menu-btn" onClick={() => setIsSidebarOpen(true)}>
           <Menu size={24} />
         </button>
-        <h3 style={{ margin: 0, fontSize: '1.25rem', cursor: 'pointer' }} onClick={() => window.location.reload()}>Hệ thống Quản lý</h3>
+        <h3 style={{ margin: 0, fontSize: '1.25rem', cursor: 'pointer', color: 'white' }} onClick={() => window.location.reload()}>Hệ thống chấm thi thực hành</h3>
       </div>
 
       {/* Sidebar Overlay */}
