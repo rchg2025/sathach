@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { Play, CheckCircle, Plus, Minus } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -27,7 +27,7 @@ const ExaminerDashboard = () => {
       
       const interval = setInterval(() => {
         fetchData(parsedUser.id, false);
-      }, 5000);
+      }, 15000); // Tăng lên 15s để giảm tải cho Vercel
       return () => clearInterval(interval);
     }
   }, []);
@@ -83,15 +83,6 @@ const ExaminerDashboard = () => {
     });
   };
 
-  const calculateCurrentScore = () => {
-    let deducted = 0;
-    for (const c of criteria) {
-      const count = errors[c.id] || 0;
-      deducted += count * c.pointsToDeduct;
-    }
-    return baseScore - deducted;
-  };
-
   const handleSubmitExam = async () => {
     if (!selectedStudent || isSubmitting) return;
     setIsSubmitting(true);
@@ -123,13 +114,22 @@ const ExaminerDashboard = () => {
     }
   };
 
-  const filteredStudents = students.filter((s: any) => 
-    s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    s.cccd.includes(searchQuery) ||
-    s.currentExam?.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredStudents = useMemo(() => {
+    return students.filter((s: any) => 
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      s.cccd.includes(searchQuery) ||
+      s.currentExam?.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [students, searchQuery]);
 
-  const currentScore = calculateCurrentScore();
+  const currentScore = useMemo(() => {
+    let deducted = 0;
+    for (const c of criteria) {
+      const count = errors[c.id] || 0;
+      deducted += count * c.pointsToDeduct;
+    }
+    return baseScore - deducted;
+  }, [baseScore, criteria, errors]);
 
   return (
     <AdminLayout user={user}>
