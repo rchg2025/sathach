@@ -178,13 +178,15 @@ const StationTesting = () => {
 
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
-    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
-    if (transferredCount >= 3) return 'Hoàn thành bài thi';
+    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
+    if (completedCount >= 3) return 'Hoàn thành bài thi';
     
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
     const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
     if (finished) return 'Đã kết thúc';
+    
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
     if (transferredCount > 0) return 'Đã chuyển điểm';
     return 'Chưa thi';
   };
@@ -192,8 +194,8 @@ const StationTesting = () => {
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     
-    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
-    if (transferredCount >= 3) {
+    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
+    if (completedCount >= 3) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
           <span>Hoàn thành bài thi</span>
@@ -235,6 +237,7 @@ const StationTesting = () => {
       );
     }
     
+    const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
     if (transferredCount > 0) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
