@@ -12,6 +12,7 @@ const ResultsManager = () => {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [courseFilter, setCourseFilter] = useState('all');
   const [availableCourses, setAvailableCourses] = useState<string[]>([]);
+  const [userAssignments, setUserAssignments] = useState<any[]>([]);
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
@@ -28,7 +29,9 @@ const ResultsManager = () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`);
       const data = res.data.students || [];
+      const assignments = res.data.assignments || [];
       setResults(data);
+      setUserAssignments(assignments);
       
       const courses = new Set<string>();
       data.forEach((r: any) => {
@@ -80,16 +83,31 @@ const ResultsManager = () => {
       else if (s.testResults?.find((tr: any) => tr.status === 'FINISHED')) statusStr = 'Đã kết thúc';
       else if (transferredCount > 0) statusStr = 'Đang chờ';
 
-      return {
+      const row: any = {
         'STT': i + 1,
         'Họ và Tên': s.name ? s.name.toLowerCase().replace(/(^|\s)\S/g, (l: string) => l.toUpperCase()) : '',
         'CCCD': s.cccd,
-        'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-',
-        'Sa hình': getScore('sa hình'),
-        'Hình chữ Z': getScore('chữ z'),
-        'Đường trường': getScore('đường trường'),
-        'Trạng thái': statusStr
+        'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-'
       };
+      
+      const userStr = localStorage.getItem('user');
+      const u = userStr ? JSON.parse(userStr) : null;
+      
+      const showCol = (name: string) => {
+        if (u?.role === 'ADMIN' || u?.role === 'MANAGER') return true;
+        if (u?.role === 'STATION_MANAGER') {
+          return userAssignments.some((a: any) => a.testType?.name?.toLowerCase().includes(name.toLowerCase()));
+        }
+        return true;
+      };
+
+      if (showCol('sa hình')) row['Sa hình'] = getScore('sa hình');
+      if (showCol('chữ z')) row['Hình chữ Z'] = getScore('chữ z');
+      if (showCol('đường trường')) row['Đường trường'] = getScore('đường trường');
+      
+      row['Trạng thái'] = statusStr;
+      
+      return row;
     });
     
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -103,6 +121,14 @@ const ResultsManager = () => {
 
   const userStr = localStorage.getItem('user');
   const user = userStr ? JSON.parse(userStr) : null;
+
+  const showCol = (name: string) => {
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') return true;
+    if (user?.role === 'STATION_MANAGER') {
+      return userAssignments.some((a: any) => a.testType?.name?.toLowerCase().includes(name.toLowerCase()));
+    }
+    return true;
+  };
 
   return (
     <AdminLayout user={user}>
@@ -143,9 +169,9 @@ const ResultsManager = () => {
                 <th>Họ và Tên</th>
                 <th>CCCD</th>
                 <th>Khóa đào tạo</th>
-                <th style={{ textAlign: 'center' }}>Sa hình</th>
-                <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
-                <th style={{ textAlign: 'center' }}>Đường trường</th>
+                {showCol('sa hình') && <th style={{ textAlign: 'center' }}>Sa hình</th>}
+                {showCol('chữ z') && <th style={{ textAlign: 'center' }}>Hình chữ Z</th>}
+                {showCol('đường trường') && <th style={{ textAlign: 'center' }}>Đường trường</th>}
                 <th>Trạng thái</th>
               </tr>
             </thead>
@@ -158,27 +184,38 @@ const ResultsManager = () => {
                 
                 const transferredCount = s.testResults?.filter((tr: any) => tr.status === 'TRANSFERRED').length || 0;
                 let statusBadge = <span className="badge badge-secondary">Chưa thi</span>;
-                
-                if (transferredCount >= 3) {
-                  statusBadge = <span className="badge badge-success">Hoàn thành</span>;
-                } else if (s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS')) {
-                  statusBadge = <span className="badge badge-primary">Đang thi</span>;
-                } else if (s.testResults?.find((tr: any) => tr.status === 'FINISHED')) {
-                  statusBadge = <span className="badge badge-info" style={{ background: '#0ea5e9', color: '#fff' }}>Đã kết thúc</span>;
-                } else if (transferredCount > 0) {
-                  statusBadge = <span className="badge badge-warning">Đang chờ ({transferredCount}/3)</span>;
-                }
-                
+                let statusStr = 'Chưa thi';
+                if (transferredCount >= 3) statusStr = 'Hoàn thành';
+                else if (s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS')) statusStr = 'Đang thi';
+                else if (s.testResults?.find((tr: any) => tr.status === 'FINISHED')) statusStr = 'Đã kết thúc';
+                else if (transferredCount > 0) statusStr = 'Đang chờ';
+
                 return (
                   <tr key={s.id}>
                     <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td style={{ textTransform: 'capitalize' }}><strong>{s.name?.toLowerCase()}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('sa hình')}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('chữ z')}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{getScore('đường trường')}</td>
-                    <td>{statusBadge}</td>
+                    {showCol('sa hình') && (
+                      <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                        <span style={{ color: getScore('sa hình') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('sa hình')}</span>
+                      </td>
+                    )}
+                    {showCol('chữ z') && (
+                      <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                        <span style={{ color: getScore('chữ z') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('chữ z')}</span>
+                      </td>
+                    )}
+                    {showCol('đường trường') && (
+                      <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                        <span style={{ color: getScore('đường trường') < 80 ? 'var(--danger)' : 'inherit' }}>{getScore('đường trường')}</span>
+                      </td>
+                    )}
+                    <td>
+                      <div className={`badge ${statusStr === 'Hoàn thành' ? 'badge-success' : statusStr === 'Đang thi' ? 'badge-primary' : statusStr === 'Đã kết thúc' ? 'badge-info' : statusStr === 'Đang chờ' ? 'badge-warning' : 'badge-secondary'}`} style={{ display: 'inline-flex', padding: '0.4rem 0.6rem', color: statusStr === 'Đã kết thúc' ? '#fff' : '' }}>
+                        {statusStr}
+                      </div>
+                    </td>
                   </tr>
                 );
               }) : (

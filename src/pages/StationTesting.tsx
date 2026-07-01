@@ -393,32 +393,51 @@ const StationTesting = () => {
                             <Play size={16} /> Bắt đầu thi
                           </button>
                         )}
-                        {getStudentStatusText(s) === 'Đang thi' && (
-                          <button 
-                            className="btn" 
-                            style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
-                            onClick={() => {
-                              if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
-                                handleEndTest(s);
-                              }
-                            }}
-                          >
-                            <CheckCircle size={16} /> Kết thúc
-                          </button>
-                        )}
-                        {getStudentStatusText(s) === 'Đã kết thúc' && (
-                          <button 
-                            className="btn" 
-                            style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
-                            onClick={() => {
-                              if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
-                                handleTransferScore(s);
-                              }
-                            }}
-                          >
-                            <Send size={16} /> Chuyển điểm
-                          </button>
-                        )}
+                        {(() => {
+                          const statusText = getStudentStatusText(s);
+                          if (statusText === 'Đang thi') {
+                            const inProgressTr = s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS');
+                            if (inProgressTr && inProgressTr.stationManager?.id === user?.id) {
+                              return (
+                                <button 
+                                  className="btn" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
+                                  onClick={() => {
+                                    if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
+                                      handleEndTest(s);
+                                    }
+                                  }}
+                                >
+                                  <CheckCircle size={16} /> Kết thúc
+                                </button>
+                              );
+                            } else {
+                              return <span className="text-muted small">Đang chấm bởi trạm khác</span>;
+                            }
+                          }
+                          
+                          if (statusText === 'Đã kết thúc') {
+                            const finishedTr = s.testResults?.find((tr: any) => tr.status === 'FINISHED');
+                            if (finishedTr && finishedTr.stationManager?.id === user?.id) {
+                              return (
+                                <button 
+                                  className="btn" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#f59e0b', color: 'white' }}
+                                  onClick={() => {
+                                    if(window.confirm(`Xác nhận chuyển điểm phần thi của ${s.name} về cho Admin?`)) {
+                                      handleTransferScore(s);
+                                    }
+                                  }}
+                                >
+                                  <Send size={16} /> Chuyển điểm
+                                </button>
+                              );
+                            } else {
+                              return <span className="text-muted small">Đã chấm bởi trạm khác</span>;
+                            }
+                          }
+                          return null;
+                        })()}
                       </td>
                     )}
                   </tr>

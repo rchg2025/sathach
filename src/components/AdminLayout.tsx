@@ -93,9 +93,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <CheckCircle size={20} /> <span className="sidebar-item-text">Chấm thi</span>
             </Link>
           )}
-          <Link to="/manager/results" className={`sidebar-item ${isActive('/manager/results')}`} onClick={closeSidebar}>
-            <CheckCircle size={20} /> <span className="sidebar-item-text">Kết quả</span>
-          </Link>
+          {user?.role !== 'EXAMINER' && (
+            <Link to="/manager/results" className={`sidebar-item ${isActive('/manager/results')}`} onClick={closeSidebar}>
+              <CheckCircle size={20} /> <span className="sidebar-item-text">Kết quả</span>
+            </Link>
+          )}
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
             <>
               <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`} onClick={closeSidebar}>

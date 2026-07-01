@@ -288,28 +288,28 @@ const ExaminerDashboard = () => {
                           const errCount = errors[c.id] || 0;
                           return (
                             <div key={c.id} className="d-flex justify-content-between align-items-center py-2 border-bottom" style={{ gap: '10px' }}>
-                              <div style={{ flex: 1, textAlign: 'left' }}>
+                              <div style={{ width: '80%', textAlign: 'left', paddingRight: '10px' }}>
                                 <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                                 <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                               </div>
-                              <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
+                              <div className="d-flex align-items-center justify-content-end" style={{ width: '20%', gap: '12px' }}>
                                 <button 
-                                  className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                                  style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                                  className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                  style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                                   onClick={() => updateErrorCount(c.id, -1)}
                                   disabled={errCount === 0}
                                 >
-                                  <Minus size={20} />
+                                  <Minus size={24} />
                                 </button>
-                                <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
+                                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '32px', textAlign: 'center' }}>
                                   {errCount}
                                 </span>
                                 <button 
-                                  className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                                  style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                                  className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                                  style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                                   onClick={() => updateErrorCount(c.id, 1)}
                                 >
-                                  <Plus size={20} />
+                                  <Plus size={24} />
                                 </button>
                               </div>
                             </div>
@@ -332,28 +332,28 @@ const ExaminerDashboard = () => {
                       const errCount = errors[c.id] || 0;
                       return (
                         <div key={c.id} className="d-flex justify-content-between align-items-center py-3 border-bottom" style={{ gap: '10px' }}>
-                          <div style={{ flex: 1, textAlign: 'left' }}>
+                          <div style={{ width: '80%', textAlign: 'left', paddingRight: '10px' }}>
                             <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                             <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                           </div>
-                          <div className="d-flex align-items-center justify-content-end" style={{ gap: '8px', minWidth: '110px' }}>
+                          <div className="d-flex align-items-center justify-content-end" style={{ width: '20%', gap: '12px' }}>
                             <button 
-                              className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                              style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                              className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                              style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                               onClick={() => updateErrorCount(c.id, -1)}
                               disabled={errCount === 0}
                             >
-                              <Minus size={20} />
+                              <Minus size={24} />
                             </button>
-                            <span style={{ fontSize: '1.25rem', fontWeight: 'bold', width: '28px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', width: '32px', textAlign: 'center' }}>
                               {errCount}
                             </span>
                             <button 
-                              className="btn btn-light p-1 d-flex align-items-center justify-content-center" 
-                              style={{ width: '36px', height: '36px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
+                              className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
+                              style={{ width: '45px', height: '45px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px' }}
                               onClick={() => updateErrorCount(c.id, 1)}
                             >
-                              <Plus size={20} />
+                              <Plus size={24} />
                             </button>
                           </div>
                         </div>
