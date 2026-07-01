@@ -73,6 +73,42 @@ const AssignmentManager = () => {
     setSelectedVehicles([]);
   }, [roleType]);
 
+  const availableVehicles = React.useMemo(() => {
+    if (!assignmentDate) return vehicles;
+
+    const dateStr = assignmentDate;
+    const assignmentsOnDate = assignments.filter(a => {
+      if (!a.assignmentDate) return false;
+      const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
+      if (editingId && a.id === editingId) return false;
+      return aDate === dateStr;
+    });
+
+    if (roleType === 'STATION_MANAGER') {
+      const assignedVehicleIds = new Set<string>();
+      assignmentsOnDate.forEach(a => {
+        if (a.examiner?.role === 'STATION_MANAGER') {
+          a.vehicles?.forEach((v: any) => assignedVehicleIds.add(String(v.id)));
+        }
+      });
+      return vehicles.filter(v => !assignedVehicleIds.has(String(v.id)));
+    } else if (roleType === 'EXAMINER') {
+      if (!selectedTestType) return [];
+      
+      const smAssignment = assignmentsOnDate.find(a => 
+        a.examiner?.role === 'STATION_MANAGER' && 
+        String(a.testType?.id) === String(selectedTestType)
+      );
+
+      if (!smAssignment || !smAssignment.vehicles) return [];
+      
+      const smVehicleIds = new Set(smAssignment.vehicles.map((v: any) => String(v.id)));
+      return vehicles.filter(v => smVehicleIds.has(String(v.id)));
+    }
+
+    return vehicles;
+  }, [vehicles, assignments, roleType, assignmentDate, selectedTestType, editingId]);
+
   useEffect(() => {
     setSelectedExams([]);
   }, [selectedTestType]);
@@ -318,11 +354,13 @@ const AssignmentManager = () => {
             )}
 
             <div className="form-group">
-              <label className="form-label">Số xe</label>
+              <label className="form-label">
+                Số xe {roleType === 'EXAMINER' ? '(Theo Trưởng trạm)' : ''}
+              </label>
               <Select
                 isMulti
-                options={vehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
-                value={vehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                options={availableVehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                value={availableVehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
                 onChange={(selected: any) => {
                   setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
                 }}
