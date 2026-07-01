@@ -128,9 +128,20 @@ const StudentSearch = () => {
 
         {student && (
           <div style={{ textAlign: 'left' }}>
-            <div style={{ background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>{student.name}</h4>
-              <p style={{ margin: 0, color: 'var(--text-muted)' }}>CCCD: {student.cccd}</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+              <div>
+                <h4 style={{ margin: '0 0 0.5rem 0' }}>{student.name}</h4>
+                <p style={{ margin: 0, color: 'var(--text-muted)' }}>CCCD: {student.cccd}</p>
+              </div>
+              {student.testResults && student.testResults.length === 3 && (
+                <div>
+                  {student.testResults.every((r: any) => r.totalScore >= 80 && r.status !== 'FAILED') ? (
+                    <span className="badge badge-success" style={{ fontSize: '1.2rem', padding: '0.5rem 1rem' }}>ĐẬU</span>
+                  ) : (
+                    <span className="badge badge-danger" style={{ fontSize: '1.2rem', padding: '0.5rem 1rem' }}>RỚT</span>
+                  )}
+                </div>
+              )}
             </div>
 
             {student.testResults && student.testResults.length > 0 ? (
@@ -157,9 +168,9 @@ const StudentSearch = () => {
                     <div style={{ textAlign: 'right' }}>
                       <div className="text-muted text-sm">Trạng thái</div>
                       <h4>
-                        {result.status === 'PASSED' ? <span className="text-success">ĐẠT</span> : 
-                         result.status === 'FAILED' || result.totalScore < 80 ? <span className="text-danger">KHÔNG ĐẠT</span> : 
-                         <span className="text-warning">ĐANG THI</span>}
+                        {result.totalScore < 80 || result.status === 'FAILED' ? <span className="text-danger">RỚT</span> : 
+                         result.status === 'PENDING' ? <span className="text-warning">ĐANG THI</span> : 
+                         <span className="text-success">ĐẬU</span>}
                       </h4>
                     </div>
                   </div>
