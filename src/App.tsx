@@ -18,6 +18,7 @@ import Profile from './pages/Profile';
 import SettingsManager from './pages/SettingsManager';
 import StationTesting from './pages/StationTesting';
 import SystemLogs from './pages/SystemLogs';
+import ReportsManager from './pages/ReportsManager';
 import './index.css';
 
 const PublicHeader = () => {
@@ -97,6 +98,7 @@ function App() {
         <Route path="/manager/settings" element={<SettingsManager />} />
         <Route path="/manager/testing" element={<StationTesting />} />
         <Route path="/manager/system-logs" element={<SystemLogs />} />
+        <Route path="/manager/reports" element={<ReportsManager />} />
         <Route path="/examiner" element={<ExaminerDashboard />} />
         <Route path="/profile" element={<Profile />} />
       </Routes>

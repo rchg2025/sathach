@@ -13,7 +13,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
-  CheckCircle
+  CheckCircle,
+  FileText
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -139,6 +140,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               </Link>
               <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`} onClick={closeSidebar}>
                 <Shield size={20} /> <span className="sidebar-item-text">Quản lý Thành viên</span>
+              </Link>
+              <Link to="/manager/reports" className={`sidebar-item ${isActive('/manager/reports')}`} onClick={closeSidebar}>
+                <FileText size={20} /> <span className="sidebar-item-text">Báo cáo - Thống kê</span>
               </Link>
             </>
           )}
