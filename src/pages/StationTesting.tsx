@@ -259,7 +259,7 @@ const StationTesting = () => {
     if (transferredCount > 0) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
-          <span>Đã chuyển điểm ({transferredCount}/3 trạm)</span>
+          <span>Đã chuyển điểm ({transferredCount}/{displayedTestTypes.length || 3} trạm)</span>
         </div>
       );
     }
