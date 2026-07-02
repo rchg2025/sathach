@@ -303,7 +303,7 @@ const CriterionManager = () => {
             </div>
             <div className="form-group">
               <label>Số điểm trừ (Mặc định: 5)</label>
-              <input type="number" className="form-control" value={pointsToDeduct} onChange={e => setPointsToDeduct(Number(e.target.value))} required min={1} max={100} />
+              <input type="number" className="form-control" value={pointsToDeduct} onChange={e => setPointsToDeduct(Number(e.target.value))} required min={0.1} max={100} step="any" />
             </div>
             <button type="submit" className="btn btn-primary mt-4">Lưu Tiêu chí</button>
           </form>

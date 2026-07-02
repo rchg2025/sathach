@@ -96,7 +96,6 @@ const ReportsManager = () => {
       let tr = todayTrs.find((t: any) => t.testTypeId === tt.id);
       
       // 2. If no today's result, find a PAST PASSED result (Bảo lưu)
-      let isPreserved = false;
       if (!tr) {
         const pastPassed = pastTrs.filter(t => 
           t.testTypeId === tt.id && 
@@ -107,7 +106,6 @@ const ReportsManager = () => {
         
         if (pastPassed.length > 0) {
           tr = pastPassed[0];
-          isPreserved = true;
         }
       }
 
