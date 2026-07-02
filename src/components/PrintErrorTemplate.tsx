@@ -88,7 +88,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
         `}
       </style>
 
-      {students.map((student) => {
+      {students.map((student, index) => {
         // Collect errors
         const trs = student.testResults || [];
         const errorList: any[] = [];
@@ -123,7 +123,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
         const isKhongDat = student.finalStatus === 'RỚT';
 
         return (
-          <div key={student.id} className="print-page page-break">
+          <div key={student.id} className={`print-page ${index < students.length - 1 ? 'page-break' : ''}`}>
             <table className="header-table">
               <tbody>
                 <tr>

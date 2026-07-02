@@ -82,7 +82,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [] 
         `}
       </style>
 
-      {students.map((student) => {
+      {students.map((student, index) => {
         const getDiemTru = (max: number, score: any) => {
           if (score === 'Vắng') return 'Vắng';
           if (score === 'Đang thi') return '';
@@ -96,7 +96,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [] 
         const isKhongDat = student.finalStatus === 'RỚT';
 
         return (
-          <div key={student.id} className="print-page page-break">
+          <div key={student.id} className={`print-page ${index < students.length - 1 ? 'page-break' : ''}`}>
             <table className="header-table">
               <tbody>
                 <tr>

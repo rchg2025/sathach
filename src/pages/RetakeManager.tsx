@@ -138,9 +138,9 @@ const RetakeManager = () => {
 
       {activeTab === 'pending' && (
         <div className="card">
-          <div className="flex flex-col mb-4" style={{ gap: '1rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
               <select className="form-control" value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
                 <option value="">-- Chọn Khóa học sẽ ghép thi --</option>
                 {courses.filter(c => !c.isCompleted).map(c => (

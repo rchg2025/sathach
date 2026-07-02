@@ -309,7 +309,7 @@ const StationTesting = () => {
         
         <div className="card" style={{ padding: '0' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ flex: '1 1 300px' }}>
+            <div style={{ flex: '1 1 100%', minWidth: '250px' }}>
               <input 
                 type="text" 
                 className="form-control" 
@@ -318,7 +318,7 @@ const StationTesting = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div style={{ flex: '1 1 200px' }}>
+            <div style={{ flex: '1 1 100%', minWidth: '250px' }}>
               <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="NOT_STARTED">Chưa thi</option>
