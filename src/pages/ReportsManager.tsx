@@ -129,13 +129,8 @@ const ReportsManager = () => {
           if (tr.status === 'FAILED') isFail = true;
         }
         
-        if (isPreserved && typeof scoreVal === 'number') {
-           scores[tt.id] = scoreVal + ' (BL)';
-           originalScores[tt.id] = scoreVal;
-        } else {
-           scores[tt.id] = scoreVal;
-           originalScores[tt.id] = scoreVal;
-        }
+        scores[tt.id] = scoreVal;
+        originalScores[tt.id] = scoreVal;
       }
     });
 
