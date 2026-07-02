@@ -21,6 +21,7 @@ const ReportsManager = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
   
   const [printStudents, setPrintStudents] = useState<any[]>([]);
   const [printType, setPrintType] = useState<'RESULT' | 'ERROR'>('RESULT');
@@ -39,16 +40,16 @@ const ReportsManager = () => {
         window.location.href = '/manager';
         return;
       }
-      fetchData(parsedUser);
+      fetchData(parsedUser, new Date().toISOString().split('T')[0]);
     } else {
       window.location.href = '/login';
     }
   }, []);
 
-  const fetchData = async (currentUser: any) => {
+  const fetchData = async (currentUser: any, date: string) => {
     try {
       const [studentsRes, coursesRes, testTypesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`),
+        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${date}`),
         axios.get(`${API_BASE_URL}/api/manager/courses`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`)
       ]);

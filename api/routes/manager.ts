@@ -937,16 +937,27 @@ router.get('/station/students', async (req, res) => {
 });
 
 router.get('/station/students-v2', async (req, res) => {
-  const { userId, role } = req.query;
+  const { userId, role, date } = req.query;
   if (!userId || !role) return res.status(400).json({ error: 'Missing parameters' });
   
   try {
-    const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
-    const vnTime = new Date(vnTimeString);
-    const vnYear = vnTime.getFullYear();
-    const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
-    const vnDate = String(vnTime.getDate()).padStart(2, '0');
-    const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+    let targetDateMidnight: Date;
+    let nextDateMidnight: Date;
+
+    if (date && typeof date === 'string') {
+      targetDateMidnight = new Date(`${date}T00:00:00+07:00`);
+      nextDateMidnight = new Date(`${date}T00:00:00+07:00`);
+      nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
+    } else {
+      const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+      const vnTime = new Date(vnTimeString);
+      const vnYear = vnTime.getFullYear();
+      const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+      const vnDate = String(vnTime.getDate()).padStart(2, '0');
+      targetDateMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+      nextDateMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+      nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
+    }
 
     let studentWhere: any = {};
     let assignments: any[] = [];
@@ -960,7 +971,12 @@ router.get('/station/students-v2', async (req, res) => {
           examiner: { role: 'STATION_MANAGER' },
           OR: [
             { assignmentDate: null },
-            { assignmentDate: { gte: todayUtcMidnight } }
+            { 
+              assignmentDate: { 
+                gte: targetDateMidnight,
+                lt: nextDateMidnight
+              } 
+            }
           ]
         },
         include: { testType: true, course: true, vehicles: true }
@@ -971,7 +987,12 @@ router.get('/station/students-v2', async (req, res) => {
           examinerId: Number(userId),
           OR: [
             { assignmentDate: null },
-            { assignmentDate: { gte: todayUtcMidnight } }
+            { 
+              assignmentDate: { 
+                gte: targetDateMidnight,
+                lt: nextDateMidnight
+              } 
+            }
           ]
         },
         include: { testType: true, course: true, vehicles: true }
@@ -1005,6 +1026,12 @@ router.get('/station/students-v2', async (req, res) => {
       include: { 
         course: true, 
         testResults: {
+          where: {
+            createdAt: {
+              gte: targetDateMidnight,
+              lt: nextDateMidnight
+            }
+          },
           include: { 
             stationManager: true, 
             vehicle: true, 
@@ -1225,7 +1252,12 @@ router.get('/system-logs', async (req, res) => {
           examinerId: Number(userId),
           OR: [
             { assignmentDate: null },
-            { assignmentDate: { gte: todayUtcMidnight } }
+            { 
+              assignmentDate: { 
+                gte: targetDateMidnight,
+                lt: nextDateMidnight
+              } 
+            }
           ]
         }
       });
