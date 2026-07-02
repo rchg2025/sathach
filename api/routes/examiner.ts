@@ -24,7 +24,11 @@ router.get('/students', async (req, res) => {
           { assignmentDate: { gte: todayUtcMidnight } }
         ]
       },
-      include: { vehicles: true }
+      include: { 
+        vehicles: {
+          where: { isActive: true }
+        } 
+      }
     });
     
     if (assignments.length === 0) return res.json([]);

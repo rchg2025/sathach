@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import nodemailer from 'nodemailer';
 import prisma from '../prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
@@ -408,7 +409,10 @@ router.get('/assignments', async (req, res) => {
         testType: { select: { id: true, name: true } },
         exam: { select: { id: true, name: true } },
         course: { select: { id: true, name: true } },
-        vehicles: { select: { id: true, name: true } }
+        vehicles: { 
+          where: { isActive: true },
+          select: { id: true, name: true } 
+        }
       },
       orderBy: { createdAt: 'desc' }
     });
@@ -1615,5 +1619,101 @@ router.get('/retake-eligibility', async (req, res) => {
   }
 });
 
+const getSetting = async (key: string) => {
+  const setting = await prisma.setting.findUnique({ where: { key } });
+  return setting?.value;
+};
+
+router.get('/cron/check-vehicles', async (req, res) => {
+  try {
+    const vehicles = await prisma.vehicleType.findMany({
+      where: { isActive: true }
+    });
+
+    const now = new Date();
+    const emailsToSend: any[] = [];
+
+    for (const v of vehicles) {
+      if (v.inspectionExpiry) {
+        const inspDiff = Math.ceil((new Date(v.inspectionExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (inspDiff === 30) emailsToSend.push({ ...v, reason: 'Hạn kiểm định', date: v.inspectionExpiry });
+      }
+      if (v.contractEnd) {
+        const contDiff = Math.ceil((new Date(v.contractEnd).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+        if (contDiff === 30) emailsToSend.push({ ...v, reason: 'Hạn hợp đồng', date: v.contractEnd });
+      }
+    }
+
+    if (emailsToSend.length === 0) {
+      return res.json({ success: true, message: 'Không có xe nào cần thông báo' });
+    }
+
+    const adminsAndManagers = await prisma.user.findMany({
+      where: {
+        role: { in: ['ADMIN', 'MANAGER'] },
+        isActive: true,
+        email: { not: null }
+      }
+    });
+
+    if (adminsAndManagers.length === 0) {
+      return res.json({ success: true, message: 'Không có người nhận email' });
+    }
+
+    const host = await getSetting('smtp_host') || 'smtp.gmail.com';
+    const port = parseInt(await getSetting('smtp_port') || '465');
+    const secure = port === 465;
+    const userEmail = await getSetting('smtp_user');
+    const pass = await getSetting('smtp_app_password');
+    const senderName = await getSetting('smtp_sender_name') || 'Hệ Thống Sát Hạch';
+
+    if (!userEmail || !pass) {
+      return res.status(500).json({ error: 'Chưa cấu hình SMTP' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure,
+      auth: { user: userEmail, pass }
+    });
+
+    const htmlContent = `
+      <h3>Cảnh báo xe sắp hết hạn (còn 30 ngày)</h3>
+      <table border="1" cellpadding="5" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Tên / Biển số</th>
+            <th>Loại hạn</th>
+            <th>Ngày hết hạn</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${emailsToSend.map(v => `
+            <tr>
+              <td>${v.name}</td>
+              <td>${v.reason}</td>
+              <td>${new Date(v.date).toLocaleDateString('vi-VN')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+
+    const toEmails = adminsAndManagers.map(u => u.email).join(',');
+
+    await transporter.sendMail({
+      from: `"${senderName}" <${userEmail}>`,
+      to: toEmails,
+      subject: 'Cảnh báo hạn kiểm định / hợp đồng xe',
+      html: htmlContent
+    });
+
+    res.json({ success: true, message: `Đã gửi email cảnh báo tới ${adminsAndManagers.length} người dùng.` });
+  } catch (error) {
+    console.error('Error in cron check-vehicles:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 export default router;

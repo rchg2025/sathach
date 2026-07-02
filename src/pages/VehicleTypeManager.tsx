@@ -228,6 +228,30 @@ const VehicleTypeManager = () => {
   };
 
 
+  const getExpiryDays = (dateStr: string) => {
+    if (!dateStr) return Infinity;
+    const d = new Date(dateStr);
+    const now = new Date();
+    return Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  };
+
+  const getPriority = (v: any) => {
+    const inspDays = getExpiryDays(v.inspectionExpiry);
+    const contDays = getExpiryDays(v.contractEnd);
+
+    let priority = 10000;
+    
+    // Inspection expiry has highest priority
+    if (inspDays <= 30) {
+      priority = inspDays; 
+    } 
+    // Contract expiry next priority
+    else if (contDays <= 30) {
+      priority = 100 + contDays;
+    }
+    return priority;
+  };
+
   const filteredVehicles = vehicleTypes.filter((v: any) => {
     const keyword = removeAccents(searchKeyword);
     const matchSearch = removeAccents(v.name).includes(keyword) || 
@@ -236,6 +260,14 @@ const VehicleTypeManager = () => {
                         removeAccents(v.owner || '').includes(keyword);
     const matchStatus = statusFilter === 'all' ? true : (statusFilter === 'active' ? v.isActive : !v.isActive);
     return matchSearch && matchStatus;
+  }).sort((a: any, b: any) => {
+    const pA = getPriority(a);
+    const pB = getPriority(b);
+    
+    if (pA !== pB) return pA - pB;
+    
+    // Fallback: sort by name
+    return a.name.localeCompare(b.name, 'vi');
   });
   const totalPages = Math.ceil(filteredVehicles.length / itemsPerPage);
   const displayedVehicles = filteredVehicles.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
