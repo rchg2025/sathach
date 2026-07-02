@@ -120,34 +120,34 @@ const SettingsManager = () => {
         <h2 className="mb-4">Cấu hình Hệ thống</h2>
 
         {/* Tabs Navigation */}
-        <div className="tabs mb-4" style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '1rem' }}>
+        <div className="tabs mb-4 tabs-container" style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '0.5rem', flexWrap: 'nowrap', overflowX: 'auto' }}>
           <button 
             className={`tab-btn ${activeTab === 'seo' ? 'active' : ''}`}
             onClick={() => setActiveTab('seo')}
-            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'seo' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'seo' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'seo' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'seo' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'seo' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'seo' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
           >
-            <Globe size={18} /> SEO & Logo
+            <Globe size={16} /> SEO & Logo
           </button>
           <button 
             className={`tab-btn ${activeTab === 'drive' ? 'active' : ''}`}
             onClick={() => setActiveTab('drive')}
-            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'drive' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'drive' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'drive' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'drive' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'drive' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'drive' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
           >
-            <Folder size={18} /> Google Drive
+            <Folder size={16} /> Google Drive
           </button>
           <button 
             className={`tab-btn ${activeTab === 'smtp' ? 'active' : ''}`}
             onClick={() => setActiveTab('smtp')}
-            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'smtp' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'smtp' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'smtp' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'smtp' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'smtp' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'smtp' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
           >
-            <Mail size={18} /> SMTP Gmail
+            <Mail size={16} /> SMTP Gmail
           </button>
           <button 
             className={`tab-btn ${activeTab === 'googleAuth' ? 'active' : ''}`}
             onClick={() => setActiveTab('googleAuth')}
-            style={{ padding: '0.75rem 1rem', background: 'none', border: 'none', borderBottom: activeTab === 'googleAuth' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'googleAuth' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'googleAuth' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'googleAuth' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'googleAuth' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'googleAuth' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
           >
-            <Globe size={18} /> Login Google
+            <Globe size={16} /> Login Google
           </button>
         </div>
         
@@ -211,11 +211,11 @@ const SettingsManager = () => {
             </div>
           </div>
           
-          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button className="btn" style={{ border: '1px solid #007bff', color: '#007bff', background: 'white' }} onClick={() => toast('Đã gửi yêu cầu ép Google Index', { icon: '🚀' })}>
-              🚀 Ép Google Index
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'nowrap' }}>
+            <button className="btn" style={{ border: '1px solid #007bff', color: '#007bff', background: 'white', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => toast('Đã gửi yêu cầu ép Google Index', { icon: '🚀' })}>
+              🚀 Ép Index
             </button>
-            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('SEO & Logo')}>
+            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => handleSave('SEO & Logo')}>
               ✓ Lưu cấu hình
             </button>
           </div>
@@ -244,11 +244,11 @@ const SettingsManager = () => {
             <input type="text" className="form-control" name="drive_folder_id" value={settings.drive_folder_id} onChange={handleChange} placeholder="1dDKXJyt8du7UimS8mRtS..." />
           </div>
           
-          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button className="btn" style={{ border: '1px solid #f39c12', color: '#f39c12', background: 'white' }} onClick={handleTestDrive}>
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'nowrap' }}>
+            <button className="btn" style={{ border: '1px solid #f39c12', color: '#f39c12', background: 'white', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={handleTestDrive}>
               ⚡ Test kết nối
             </button>
-            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('Google Drive')}>
+            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => handleSave('Google Drive')}>
               ✓ Lưu cấu hình
             </button>
           </div>
@@ -285,11 +285,11 @@ const SettingsManager = () => {
             </div>
           </div>
           
-          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button className="btn" style={{ border: '1px solid #6f42c1', color: '#6f42c1', background: 'white' }} onClick={() => toast.success('Gửi email test thành công! (Mô phỏng)')}>
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'nowrap' }}>
+            <button className="btn" style={{ border: '1px solid #6f42c1', color: '#6f42c1', background: 'white', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => toast.success('Gửi email test thành công! (Mô phỏng)')}>
               ✉️ Test gửi mail
             </button>
-            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('SMTP')}>
+            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => handleSave('SMTP')}>
               ✓ Lưu cấu hình
             </button>
           </div>
@@ -319,8 +319,8 @@ const SettingsManager = () => {
             </ul>
           </div>
           
-          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745' }} onClick={() => handleSave('Login Google')}>
+          <div style={{ textAlign: 'right', marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', flexWrap: 'nowrap' }}>
+            <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => handleSave('Login Google')}>
               ✓ Lưu cấu hình
             </button>
           </div>
