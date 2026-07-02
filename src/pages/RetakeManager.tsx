@@ -140,8 +140,8 @@ const RetakeManager = () => {
         <div className="card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <select className="form-control" value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+              <select className="form-control" style={{ flex: 1, minWidth: '300px', width: 'auto' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
                 <option value="">-- Chọn Khóa học sẽ ghép thi --</option>
                 {courses.filter(c => !c.isCompleted).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
