@@ -25,6 +25,9 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
             .page-break {
               page-break-after: always;
             }
+            .print-page:last-child {
+              page-break-after: auto;
+            }
             .print-page {
               width: 100%;
               padding: 1.5cm;

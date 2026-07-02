@@ -438,7 +438,7 @@ const StationTesting = () => {
 
                           if (unstartedAssignments.length > 0) {
                             return (
-                              <div style={{ display: 'flex', gap: '5px', justifyContent: 'flex-end' }}>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                                 <button 
                                   className="btn btn-primary" 
                                   style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}

@@ -279,6 +279,7 @@ const ReportsManager = () => {
             body { background: white !important; margin: 0 !important; padding: 0 !important; }
             .container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
             .card { box-shadow: none !important; border: none !important; background: transparent !important; }
+            html, body, #root, .admin-layout, .main-content { height: auto !important; overflow: visible !important; }
           }
           .print-only { display: none; }
         `}

@@ -138,8 +138,8 @@ const RetakeManager = () => {
 
       {activeTab === 'pending' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem' }}>
-            <p>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
+          <div className="flex flex-col mb-4" style={{ gap: '1rem' }}>
+            <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
             <div className="flex items-center gap-2">
               <select className="form-control" value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
                 <option value="">-- Chọn Khóa học sẽ ghép thi --</option>

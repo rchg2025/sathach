@@ -116,7 +116,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           </p>
         </div>
 
-        <nav className="sidebar-nav">
+        <nav className="sidebar-nav" style={{ flex: 1, overflowY: 'auto' }}>
           <Link to="/manager" className={`sidebar-item ${isActive('/manager')}`} onClick={closeSidebar}>
             <LayoutDashboard size={20} /> <span className="sidebar-item-text">Bảng điều khiển</span>
           </Link>
