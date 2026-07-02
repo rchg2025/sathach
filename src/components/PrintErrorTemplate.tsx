@@ -2,9 +2,10 @@ import React from 'react';
 
 interface PrintErrorTemplateProps {
   students: any[];
+  testTypes?: any[];
 }
 
-const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => {
+const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testTypes = [] }) => {
   return (
     <div className="print-error-template-container">
       <style>
@@ -199,18 +200,20 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students }) => 
             <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>KẾT QUẢ:</div>
             <table className="summary-table">
               <tbody>
-                <tr>
-                  <td>Điểm trừ Trạm Sa hình: <strong>{diemTruSaHinh}</strong></td>
-                  <td>Điểm còn lại: <strong>{scoreSaHinh}</strong></td>
-                </tr>
-                <tr>
-                  <td>Điểm trừ Trạm Hình chữ Z: <strong>{diemTruChuZ}</strong></td>
-                  <td>Điểm còn lại: <strong>{scoreChuZ}</strong></td>
-                </tr>
-                <tr>
-                  <td>Điểm trừ Trạm Đường trường: <strong>{diemTruDuongTruong}</strong></td>
-                  <td>Điểm còn lại: <strong>{scoreDuongTruong}</strong></td>
-                </tr>
+                {testTypes.map((tt: any) => {
+                  const scoreVal = student.scores && student.scores[tt.id] !== '-' ? student.scores[tt.id] : '';
+                  const maxScore = tt.maxScore || 100;
+                  const diemTru = getDiemTru(maxScore, scoreVal);
+                  return (
+                    <tr key={tt.id}>
+                      <td>Điểm trừ {tt.name}: <strong>{diemTru}</strong></td>
+                      <td>Điểm còn lại: <strong>{scoreVal}</strong></td>
+                    </tr>
+                  );
+                })}
+                {testTypes.length === 0 && (
+                  <tr><td colSpan={2}>Không có dữ liệu trạm thi</td></tr>
+                )}
               </tbody>
             </table>
 
