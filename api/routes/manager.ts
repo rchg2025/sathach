@@ -1005,7 +1005,7 @@ router.get('/station/students-v2', async (req, res) => {
           OR: [
             { courseId: { in: courseIds } },
             { courseName: { in: courseNames } },
-            { retakeSessions: { some: { targetCourseId: { in: courseIds } } } }
+            { RetakeSession: { some: { targetCourseId: { in: courseIds } } } }
           ]
         };
       } else {
@@ -1246,6 +1246,9 @@ router.get('/system-logs', async (req, res) => {
       userIdsToFetch = users.map(u => u.id);
     } else if (role === 'STATION_MANAGER') {
       // Find assignments for this station manager today or null date
+      const nextDateMidnight = new Date(todayUtcMidnight);
+      nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
+      
       const smAssignments = await prisma.testAssignment.findMany({
         where: {
           examinerId: Number(userId),
@@ -1253,7 +1256,7 @@ router.get('/system-logs', async (req, res) => {
             { assignmentDate: null },
             { 
               assignmentDate: { 
-                gte: targetDateMidnight,
+                gte: todayUtcMidnight,
                 lt: nextDateMidnight
               } 
             }
@@ -1270,14 +1273,19 @@ router.get('/system-logs', async (req, res) => {
             testTypeId: { in: assignedTestTypeIds },
             OR: [
               { assignmentDate: null },
-              { assignmentDate: { gte: todayUtcMidnight } }
+              { 
+                assignmentDate: { 
+                  gte: todayUtcMidnight,
+                  lt: nextDateMidnight
+                } 
+              }
             ]
           },
           include: { examiner: true }
         });
         
         const examiners = examinerAssignments.map(a => a.examiner).filter(u => u && u.role === 'EXAMINER');
-        userIdsToFetch = [...new Set(examiners.map(e => e.id))];
+        userIdsToFetch = [...new Set([...examiners.map(e => e.id), Number(userId)])];
       }
     }
 

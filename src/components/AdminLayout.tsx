@@ -133,10 +133,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             </Link>
           )}
           
-          <hr style={{ margin: '0.5rem 1rem', borderColor: 'var(--border)' }} />
-          
           {((user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri')) && (
             <>
+              <hr style={{ margin: '0.5rem 1rem', borderColor: 'var(--border)' }} />
               <Link to="/manager/categories" className={`sidebar-item ${isActive('/manager/categories')}`} onClick={closeSidebar}>
                 <BookOpen size={20} /> <span className="sidebar-item-text">Quản lý Danh mục</span>
               </Link>
