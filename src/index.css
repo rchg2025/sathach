@@ -526,9 +526,18 @@ input:checked + .toggle-slider:before {
     background: rgba(0, 0, 0, 0.5);
     z-index: 999;
   }
-  .dashboard-grid.grid-cols-4,
+  .dashboard-grid.grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
   .dashboard-grid.grid-cols-2 {
     grid-template-columns: 1fr;
+  }
+  .summary-card {
+    padding: 1rem;
+  }
+  .summary-card .value {
+    font-size: 1.5rem;
   }
   .sidebar-header {
     padding: 1rem;
