@@ -509,24 +509,26 @@ const StudentManager = () => {
             </div>
             
             <div className="flex" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button className="btn btn-outline" onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span>📋 Tải File Mẫu</span>
-              </button>
-              
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                onChange={handleFileUpload} 
-                accept=".xlsx, .xls" 
-                style={{ display: 'none' }} 
-              />
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => fileInputRef.current?.click()} 
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-              >
-                <span>⬆️ Nhập Excel</span>
-              </button>
+              <div className="import-export-group" style={{ display: 'flex', gap: '0.5rem' }}>
+                <button className="btn btn-outline" onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                  <span>📋 File Mẫu</span>
+                </button>
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileUpload} 
+                  accept=".xlsx, .xls" 
+                  style={{ display: 'none' }} 
+                />
+                <button 
+                  className="btn btn-secondary" 
+                  onClick={() => fileInputRef.current?.click()} 
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                >
+                  <span>⬆️ Nhập Excel</span>
+                </button>
+              </div>
 
               <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>📥 Xuất Excel</span>
