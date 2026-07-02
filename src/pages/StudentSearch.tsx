@@ -69,7 +69,8 @@ const StudentSearch = () => {
         const latestResult = data.testResults[data.testResults.length - 1];
         
         // Stop polling if test is finished (FAILED or PASSED) or score drops below 80
-        if (latestResult.status !== 'PENDING' || latestResult.totalScore < 80) {
+        const passScore = latestResult.testType?.passingScore ?? 80;
+        if (latestResult.status !== 'PENDING' || latestResult.totalScore < passScore) {
           stopPolling();
         }
       } else {
@@ -160,7 +161,7 @@ const StudentSearch = () => {
                   <div className="flex justify-between items-center mb-4">
                     <div>
                       <div className="text-muted text-sm">Điểm số</div>
-                      <div style={{ fontSize: '3rem', fontWeight: 'bold', color: result.totalScore >= 80 ? 'var(--success)' : 'var(--danger)', lineHeight: 1 }}>
+                      <div style={{ fontSize: '3rem', fontWeight: 'bold', color: result.totalScore >= (result.testType?.passingScore ?? 80) ? 'var(--success)' : 'var(--danger)', lineHeight: 1 }}>
                         {result.totalScore}
                       </div>
                     </div>
@@ -168,7 +169,7 @@ const StudentSearch = () => {
                     <div style={{ textAlign: 'right' }}>
                       <div className="text-muted text-sm">Trạng thái</div>
                       <h4>
-                        {result.totalScore < 80 || result.status === 'FAILED' ? <span className="text-danger">RỚT</span> : 
+                        {result.totalScore < (result.testType?.passingScore ?? 80) || result.status === 'FAILED' ? <span className="text-danger">RỚT</span> : 
                          result.status === 'PENDING' ? <span className="text-warning">ĐANG THI</span> : 
                          <span className="text-success">ĐẬU</span>}
                       </h4>

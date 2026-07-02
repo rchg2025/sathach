@@ -40,11 +40,11 @@ const ReportsManager = () => {
         window.location.href = '/manager';
         return;
       }
-      fetchData(parsedUser, new Date().toISOString().split('T')[0]);
+      fetchData(parsedUser, filterDate);
     } else {
       window.location.href = '/login';
     }
-  }, []);
+  }, [filterDate]);
 
   const fetchData = async (currentUser: any, date: string) => {
     try {
@@ -91,7 +91,8 @@ const ReportsManager = () => {
         } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
           scoreVal = tr.totalScore;
           completedCount++;
-          if (tr.totalScore < 80) isFail = true;
+          const passingScore = tt.passingScore ?? 80;
+          if (tr.totalScore < passingScore) isFail = true;
           if (tr.status === 'FAILED') isFail = true;
         }
         scores[tt.id] = scoreVal;
@@ -189,7 +190,7 @@ const ReportsManager = () => {
       }
       toast.success('Đã cập nhật điểm thi thành công!');
       setEditingStudent(null);
-      fetchData(user);
+      fetchData(user, filterDate);
     } catch (e: any) {
       toast.error(e.response?.data?.error || 'Lỗi cập nhật điểm thi');
     }
@@ -308,6 +309,7 @@ const ReportsManager = () => {
               </select>
             </div>
             <div style={{ minWidth: '100%' }}>
+              <input type="date" className="form-control mb-2" value={filterDate} onChange={(e) => { setFilterDate(e.target.value); setCurrentPage(1); }} />
               <select className="form-control" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
                 <option value="ALL">Tất cả kết quả</option>
                 <option value="PASS">ĐẬU</option>
