@@ -954,6 +954,17 @@ router.get('/station/students-v2', async (req, res) => {
     if (role === 'ADMIN' || role === 'MANAGER') {
       // Admin/Manager can see all students
       studentWhere = {}; 
+      // Admin/Manager needs assignments to know which test types are active today
+      assignments = await prisma.testAssignment.findMany({
+        where: { 
+          examiner: { role: 'STATION_MANAGER' },
+          OR: [
+            { assignmentDate: null },
+            { assignmentDate: { gte: todayUtcMidnight } }
+          ]
+        },
+        include: { testType: true, course: true, vehicles: true }
+      });
     } else if (role === 'STATION_MANAGER') {
       assignments = await prisma.testAssignment.findMany({
         where: { 
