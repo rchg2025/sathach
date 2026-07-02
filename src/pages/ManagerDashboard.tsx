@@ -143,7 +143,7 @@ const ManagerDashboard = () => {
 
       {/* 2 Tables Area */}
       <div className="dashboard-grid grid-cols-2">
-        <div className="card" style={{ marginBottom: 0 }}>
+        <div className="card" style={{ marginBottom: 0, minWidth: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Học viên thi gần đây</h4>
             <Link to="/manager/testing" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
@@ -194,7 +194,7 @@ const ManagerDashboard = () => {
           </div>
         </div>
 
-        <div className="card" style={{ marginBottom: 0 }}>
+        <div className="card" style={{ marginBottom: 0, minWidth: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Giám khảo hoạt động nhiều nhất</h4>
             <Link to="/manager/users" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
