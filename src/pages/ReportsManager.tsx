@@ -309,7 +309,9 @@ const ReportsManager = () => {
               </select>
             </div>
             <div style={{ minWidth: '100%' }}>
-              <input type="date" className="form-control mb-2" value={filterDate} onChange={(e) => { setFilterDate(e.target.value); setCurrentPage(1); }} />
+              <input type="date" className="form-control" value={filterDate} onChange={(e) => { setFilterDate(e.target.value); setCurrentPage(1); }} />
+            </div>
+            <div style={{ minWidth: '100%' }}>
               <select className="form-control" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }}>
                 <option value="ALL">Tất cả kết quả</option>
                 <option value="PASS">ĐẬU</option>
