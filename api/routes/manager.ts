@@ -1004,7 +1004,8 @@ router.get('/station/students-v2', async (req, res) => {
         studentWhere = {
           OR: [
             { courseId: { in: courseIds } },
-            { courseName: { in: courseNames } }
+            { courseName: { in: courseNames } },
+            { retakeSessions: { some: { targetCourseId: { in: courseIds } } } }
           ]
         };
       } else {
@@ -1026,12 +1027,6 @@ router.get('/station/students-v2', async (req, res) => {
       include: { 
         course: true, 
         testResults: {
-          where: {
-            createdAt: {
-              gte: targetDateMidnight,
-              lt: nextDateMidnight
-            }
-          },
           include: { 
             stationManager: true, 
             vehicle: true, 
@@ -1043,11 +1038,12 @@ router.get('/station/students-v2', async (req, res) => {
                 }
               }
             }
-          }
+          },
+          orderBy: { createdAt: 'desc' }
         }
       },
       orderBy: { id: 'desc' },
-      take: 200 // Limit to avoid massive payloads for admin
+      take: 500 // Limit to avoid massive payloads for admin
     });
 
     res.json({ students, assignments });
@@ -1061,8 +1057,9 @@ router.get('/station/students-v2', async (req, res) => {
 router.post('/station/start-test', async (req, res) => {
   const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;
   try {
-    let testResult = await prisma.testResult.findUnique({
-      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    let testResult = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      orderBy: { createdAt: 'desc' }
     });
     
     const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
@@ -1101,8 +1098,9 @@ router.post('/station/start-test', async (req, res) => {
 router.post('/station/end-test', async (req, res) => {
   const { studentId, testTypeId } = req.body;
   try {
-    const testResult = await prisma.testResult.findUnique({
-      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    const testResult = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      orderBy: { createdAt: 'desc' }
     });
     
     if (testResult) {
@@ -1123,8 +1121,9 @@ router.post('/station/end-test', async (req, res) => {
 router.post('/station/mark-absent', async (req, res) => {
   const { studentId, testTypeId, stationManagerId } = req.body;
   try {
-    let testResult = await prisma.testResult.findUnique({
-      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    let testResult = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      orderBy: { createdAt: 'desc' }
     });
     
     if (testResult) {
@@ -1377,10 +1376,11 @@ router.post('/scores/import', async (req, res) => {
       }
 
       // Check if test result already exists
-      const existingResult = await prisma.testResult.findUnique({
+      const existingResult = await prisma.testResult.findFirst({
         where: {
-          studentId_testTypeId: { studentId: student.id, testTypeId: testType.id }
-        }
+          studentId: student.id, testTypeId: testType.id
+        },
+        orderBy: { createdAt: 'desc' }
       });
       if (existingResult) {
         logs.push({ status: 'error', message: 'Học viên đã có điểm ở Trạm thi này', row });
@@ -1497,5 +1497,97 @@ router.put('/test-results/:id/score', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
+// --- RETAKE SESSION ENDPOINTS ---
+
+router.get('/retakes', async (req, res) => {
+  try {
+    const sessions = await prisma.retakeSession.findMany({
+      include: {
+        student: true,
+        targetCourse: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(sessions);
+  } catch (error) {
+    console.error('Error fetching retake sessions:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/retakes', async (req, res) => {
+  const { studentIds, targetCourseId } = req.body;
+  try {
+    if (!studentIds || !targetCourseId || !Array.isArray(studentIds)) {
+      return res.status(400).json({ error: 'Invalid payload' });
+    }
+    
+    let createdCount = 0;
+    for (const studentId of studentIds) {
+      // Create if not exists
+      const existing = await prisma.retakeSession.findUnique({
+        where: {
+          studentId_targetCourseId: {
+            studentId: Number(studentId),
+            targetCourseId: Number(targetCourseId)
+          }
+        }
+      });
+      if (!existing) {
+        await prisma.retakeSession.create({
+          data: {
+            studentId: Number(studentId),
+            targetCourseId: Number(targetCourseId)
+          }
+        });
+        createdCount++;
+      }
+    }
+    
+    res.json({ success: true, message: `Đã thêm ${createdCount} học viên vào danh sách thi lại` });
+  } catch (error) {
+    console.error('Error creating retake session:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.delete('/retakes/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await prisma.retakeSession.delete({
+      where: { id }
+    });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting retake session:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/retake-eligibility', async (req, res) => {
+  try {
+    // Find students who have failed or absent (but no need to overcomplicate for now, we just list all students and let frontend filter, or we can filter here)
+    const students = await prisma.student.findMany({
+      include: {
+        course: true,
+        testResults: {
+          include: { testType: true }
+        }
+      },
+      orderBy: { id: 'desc' },
+      take: 1000
+    });
+    
+    // We filter students who have at least one test result with FAILED or ABSENT, OR students without full completion.
+    // Actually, letting frontend filter is better for a comprehensive UI.
+    res.json(students);
+  } catch (error) {
+    console.error('Error fetching students for retake:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 export default router;

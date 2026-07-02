@@ -3,29 +3,29 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  username  String   @unique
-  password  String
-  name      String
-  phone     String?
-  email     String?
-  role      String   // "ADMIN", "MANAGER", "EXAMINER"
-  isActive   Boolean  @default(true)
-  avatarUrl  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  assignments TestAssignment[]
-  managedTests  TestResult[] @relation("StationManagerTests")
-  examProgress  ExamProgress[]
+  id             Int              @id @default(autoincrement())
+  username       String           @unique
+  password       String
+  name           String
+  phone          String?
+  email          String?
+  role           String // "ADMIN", "MANAGER", "EXAMINER"
+  isActive       Boolean          @default(true)
+  avatarUrl      String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  assignments    TestAssignment[]
+  managedTests   TestResult[]     @relation("StationManagerTests")
+  examProgress   ExamProgress[]
   resetOtp       String?
   resetOtpExpiry DateTime?
-  isOnline       Boolean  @default(false)
+  isOnline       Boolean          @default(false)
   lastPingAt     DateTime?
   logs           SystemLog[]
 }
@@ -34,145 +34,145 @@ model SystemLog {
   id        Int      @id @default(autoincrement())
   userId    Int
   user      User     @relation(fields: [userId], references: [id])
-  action    String   // 'LOGIN' or 'LOGOUT'
+  action    String // 'LOGIN' or 'LOGOUT'
   createdAt DateTime @default(now())
 }
 
 model Student {
-  id                Int      @id @default(autoincrement())
-  registrationCode  String?  // Mã ĐK
-  name              String   // Họ tên
-  dob               String?  // Ngày sinh
-  cccd              String   @unique // CCCD
-  address           String?  // Địa chỉ
-  licenseNumber     String?  // Số GPLX
-  licenseClass      String?  // Hạng
-  licenseIssueDate  String?  // Ngày cấp
-  passDate          String?  // Ngày trúng tuyển
-  licenseExpiryDate String?  // Ngày hết hạn
-  licenseDuration   String?  // Thời gian GPLX
-  
-  courseName        String?  // Tên khóa học (Raw from Excel)
-  courseId          Int?
-  course            Course?  @relation(fields: [courseId], references: [id])
-  testResults       TestResult[]
-  
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                Int     @id @default(autoincrement())
+  registrationCode  String? // Mã ĐK
+  name              String // Họ tên
+  dob               String? // Ngày sinh
+  cccd              String  @unique // CCCD
+  address           String? // Địa chỉ
+  licenseNumber     String? // Số GPLX
+  licenseClass      String? // Hạng
+  licenseIssueDate  String? // Ngày cấp
+  passDate          String? // Ngày trúng tuyển
+  licenseExpiryDate String? // Ngày hết hạn
+  licenseDuration   String? // Thời gian GPLX
+
+  courseName  String? // Tên khóa học (Raw from Excel)
+  courseId    Int?
+  course      Course?      @relation(fields: [courseId], references: [id])
+  testResults TestResult[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  RetakeSession RetakeSession[]
 }
 
 model Course {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  startDate   DateTime?
-  endDate     DateTime?
-  isCompleted Boolean  @default(false)
-  students    Student[]
-  assignments TestAssignment[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id             Int              @id @default(autoincrement())
+  name           String
+  description    String?
+  startDate      DateTime?
+  endDate        DateTime?
+  isCompleted    Boolean          @default(false)
+  students       Student[]
+  assignments    TestAssignment[]
+  retakeSessions RetakeSession[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
 }
 
 model VehicleType {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  seats       Int?
-  brand       String?
-  owner       String?
+  id                Int              @id @default(autoincrement())
+  name              String
+  description       String?
+  seats             Int?
+  brand             String?
+  owner             String?
   manufacturingYear Int?
   inspectionExpiry  DateTime?
-  contractStart DateTime?
-  contractEnd   DateTime?
-  isActive    Boolean  @default(true)
-  testResults TestResult[]
-  assignments TestAssignment[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  contractStart     DateTime?
+  contractEnd       DateTime?
+  isActive          Boolean          @default(true)
+  testResults       TestResult[]
+  assignments       TestAssignment[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 }
 
 model TestType {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  maxScore    Int      @default(100)
-  passingScore Int     @default(80)
-  exams       Exam[]
-  assignments TestAssignment[]
-  testResults TestResult[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int              @id @default(autoincrement())
+  name         String
+  description  String?
+  maxScore     Int              @default(100)
+  passingScore Int              @default(80)
+  exams        Exam[]
+  assignments  TestAssignment[]
+  testResults  TestResult[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
 }
 
 model Exam {
-  id          Int      @id @default(autoincrement())
+  id          Int              @id @default(autoincrement())
   name        String
   description String?
   testTypeId  Int
-  testType    TestType @relation(fields: [testTypeId], references: [id])
+  testType    TestType         @relation(fields: [testTypeId], references: [id])
   criteria    Criterion[]
   assignments TestAssignment[]
   progress    ExamProgress[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 }
 
 model Criterion {
-  id             Int      @id @default(autoincrement())
+  id             Int     @id @default(autoincrement())
   name           String
-  pointsToDeduct Int      @default(5)
+  pointsToDeduct Int     @default(5)
   examId         Int
-  exam           Exam     @relation(fields: [examId], references: [id])
+  exam           Exam    @relation(fields: [examId], references: [id])
   scores         Score[]
 }
 
 model TestAssignment {
-  id             Int      @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   examinerId     Int
-  examiner       User     @relation(fields: [examinerId], references: [id])
+  examiner       User          @relation(fields: [examinerId], references: [id])
   testTypeId     Int
-  testType       TestType @relation(fields: [testTypeId], references: [id])
+  testType       TestType      @relation(fields: [testTypeId], references: [id])
   examId         Int?
-  exam           Exam?    @relation(fields: [examId], references: [id])
+  exam           Exam?         @relation(fields: [examId], references: [id])
   courseId       Int?
-  course         Course?  @relation(fields: [courseId], references: [id])
+  course         Course?       @relation(fields: [courseId], references: [id])
   vehicles       VehicleType[]
   assignmentDate DateTime?
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
 }
 
 model TestResult {
-  id          Int      @id @default(autoincrement())
-  studentId   Int
-  student     Student  @relation(fields: [studentId], references: [id])
-  testTypeId  Int
-  testType    TestType @relation(fields: [testTypeId], references: [id])
-  vehicleId   Int?
-  vehicle     VehicleType? @relation(fields: [vehicleId], references: [id])
-  totalScore  Int      @default(100)
-  status      String   @default("PENDING") // PENDING, PASSED, FAILED
-  startTime   DateTime?
-  endTime     DateTime?
+  id               Int            @id @default(autoincrement())
+  studentId        Int
+  student          Student        @relation(fields: [studentId], references: [id])
+  testTypeId       Int
+  testType         TestType       @relation(fields: [testTypeId], references: [id])
+  vehicleId        Int?
+  vehicle          VehicleType?   @relation(fields: [vehicleId], references: [id])
+  totalScore       Int            @default(100)
+  status           String         @default("PENDING") // PENDING, PASSED, FAILED
+  startTime        DateTime?
+  endTime          DateTime?
   stationManagerId Int?
-  stationManager   User?   @relation("StationManagerTests", fields: [stationManagerId], references: [id])
-  scores      Score[]
-  progress    ExamProgress[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([studentId, testTypeId])
+  stationManager   User?          @relation("StationManagerTests", fields: [stationManagerId], references: [id])
+  scores           Score[]
+  progress         ExamProgress[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
 
 model Score {
-  id             Int        @id @default(autoincrement())
-  testResultId   Int
-  testResult     TestResult @relation(fields: [testResultId], references: [id])
-  criterionId    Int
-  criterion      Criterion  @relation(fields: [criterionId], references: [id])
-  timesDeducted  Int        @default(1)
-  createdAt      DateTime   @default(now())
+  id            Int        @id @default(autoincrement())
+  testResultId  Int
+  testResult    TestResult @relation(fields: [testResultId], references: [id])
+  criterionId   Int
+  criterion     Criterion  @relation(fields: [criterionId], references: [id])
+  timesDeducted Int        @default(1)
+  createdAt     DateTime   @default(now())
 }
 
 model Setting {
@@ -194,6 +194,17 @@ model ExamProgress {
   endTime      DateTime?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
-  
+
   @@unique([testResultId, examId])
+}
+
+model RetakeSession {
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  student        Student  @relation(fields: [studentId], references: [id])
+  targetCourseId Int
+  targetCourse   Course   @relation(fields: [targetCourseId], references: [id])
+  createdAt      DateTime @default(now())
+
+  @@unique([studentId, targetCourseId])
 }

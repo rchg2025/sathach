@@ -19,6 +19,7 @@ const StationTesting = lazy(() => import('./pages/StationTesting'));
 const SystemLogs = lazy(() => import('./pages/SystemLogs'));
 const ReportsManager = lazy(() => import('./pages/ReportsManager'));
 const ScoreImport = lazy(() => import('./pages/ScoreImport'));
+const RetakeManager = lazy(() => import('./pages/RetakeManager').then(m => ({ default: m.RetakeManager })));
 
 import './index.css';
 
@@ -98,6 +99,7 @@ function App() {
           <Route path="/manager/courses" element={<CourseManager />} />
           <Route path="/manager/students" element={<StudentManager />} />
           <Route path="/manager/assignments" element={<AssignmentManager />} />
+          <Route path="/manager/retakes" element={<RetakeManager />} />
           <Route path="/manager/users" element={<UserManager />} />
           <Route path="/manager/settings" element={<SettingsManager />} />
           <Route path="/manager/testing" element={<StationTesting />} />
