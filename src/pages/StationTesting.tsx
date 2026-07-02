@@ -11,6 +11,7 @@ import { API_BASE_URL } from '../config';
 const StationTesting = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [testTypes, setTestTypes] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   
@@ -37,13 +38,15 @@ const StationTesting = () => {
 
   const fetchData = async (currentUser: any) => {
     try {
-      const [studentsRes, vehiclesRes] = await Promise.all([
+      const [studentsRes, vehiclesRes, testTypesRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`),
-        axios.get(`${API_BASE_URL}/api/manager/vehicle-types`)
+        axios.get(`${API_BASE_URL}/api/manager/vehicle-types`),
+        axios.get(`${API_BASE_URL}/api/manager/test-types`)
       ]);
       setStudents(studentsRes.data.students);
       setAssignments(studentsRes.data.assignments);
       setVehicles(vehiclesRes.data.filter((v: any) => v.isActive));
+      setTestTypes(testTypesRes.data);
     } catch (e) {
       console.error(e);
       toast.error('Lỗi lấy dữ liệu');
@@ -334,9 +337,9 @@ const StationTesting = () => {
                   <th>Khóa đào tạo</th>
                   <th>Thời gian thực hiện</th>
                   <th>Trạng thái</th>
-                  <th style={{ textAlign: 'center' }}>Sa hình</th>
-                  <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
-                  <th style={{ textAlign: 'center' }}>Đường trường</th>
+                  {testTypes.map((tt: any) => (
+                    <th key={tt.id} style={{ textAlign: 'center' }}>{tt.name}</th>
+                  ))}
                   {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
                 </tr>
               </thead>
@@ -382,42 +385,20 @@ const StationTesting = () => {
                         {getStudentStatus(s)}
                       </div>
                     </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                      {(() => {
-                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('sa hình'));
-                        if (!tr) return '-';
-                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
-                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
-                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
-                        }
-                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
-                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
-                      })()}
-                    </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                      {(() => {
-                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('chữ z'));
-                        if (!tr) return '-';
-                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
-                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
-                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
-                        }
-                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
-                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
-                      })()}
-                    </td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
-                      {(() => {
-                        const tr = s.testResults?.find((t: any) => t.testType?.name?.toLowerCase().includes('đường trường'));
-                        if (!tr) return '-';
-                        if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
-                          const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
-                          if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
-                        }
-                        if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
-                        return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
-                      })()}
-                    </td>
+                    {testTypes.map((tt: any) => (
+                      <td key={tt.id} style={{ textAlign: 'center', fontWeight: 'bold' }}>
+                        {(() => {
+                          const tr = s.testResults?.find((t: any) => t.testTypeId === tt.id);
+                          if (!tr) return '-';
+                          if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
+                            const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                            if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
+                          }
+                          if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
+                          return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                        })()}
+                      </td>
+                    ))}
                     {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && (
                       <td className="sticky-col-right" style={{ textAlign: 'right' }}>
                         {(() => {

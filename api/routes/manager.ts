@@ -1011,6 +1011,9 @@ router.post('/station/start-test', async (req, res) => {
       where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
     });
     
+    const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
+    const maxScore = testType?.maxScore || 100;
+
     if (testResult) {
       testResult = await prisma.testResult.update({
         where: { id: testResult.id },
@@ -1018,7 +1021,8 @@ router.post('/station/start-test', async (req, res) => {
           status: 'IN_PROGRESS', 
           vehicleId: Number(vehicleId),
           stationManagerId: stationManagerId ? Number(stationManagerId) : null,
-          startTime: new Date()
+          startTime: new Date(),
+          totalScore: testResult.status === 'PENDING' ? maxScore : testResult.totalScore
         }
       });
     } else {
@@ -1028,6 +1032,7 @@ router.post('/station/start-test', async (req, res) => {
           testTypeId: Number(testTypeId), 
           vehicleId: Number(vehicleId),
           status: 'IN_PROGRESS',
+          totalScore: maxScore,
           stationManagerId: stationManagerId ? Number(stationManagerId) : null,
           startTime: new Date()
         }

@@ -85,6 +85,7 @@ router.get('/students', async (req, res) => {
             const studentData = { 
               ...result.student, 
               currentExam: { name: result.testType.name, testTypeId: result.testTypeId }, 
+              testType: result.testType,
               testResultId: result.id,
               vehicle: result.vehicle,
               currentProgress,
@@ -123,6 +124,7 @@ router.get('/students', async (req, res) => {
             const studentData = { 
               ...result.student, 
               currentExam: activeExamToUse, 
+              testType: result.testType,
               allAvailableExams: myUncompletedExams,
               testResultId: result.id,
               vehicle: result.vehicle,

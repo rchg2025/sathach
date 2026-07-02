@@ -92,7 +92,7 @@ const ExaminerDashboard = () => {
     setErrors({});
     
     const tr = student.testResults?.find((r: any) => r.id === student.testResultId);
-    setBaseScore(tr ? tr.totalScore : 100);
+    setBaseScore(tr ? tr.totalScore : (student.testType?.maxScore || 100));
     
     setIsModalOpen(true);
     
@@ -214,7 +214,7 @@ const ExaminerDashboard = () => {
                 <tr><td colSpan={10} className="text-center">Không có học viên nào đang chờ phần thi của bạn.</td></tr>
               ) : filteredStudents.map((s: any, index: number) => {
                 const tr = s.testResults?.find((r: any) => r.id === s.testResultId);
-                const score = tr ? tr.totalScore : 100;
+                const score = tr ? tr.totalScore : (s.testType?.maxScore || 100);
                 
                 let statusInfo = <span className="text-muted">Đang chờ chấm...</span>;
                 if (s.currentProgress && s.currentProgress.status === 'IN_PROGRESS') {
@@ -289,7 +289,7 @@ const ExaminerDashboard = () => {
               <h5>{selectedStudent.currentExam?.name}</h5>
               <h1 style={{ 
                 fontSize: '4rem', 
-                color: currentScore >= 80 ? 'var(--success)' : 'var(--danger)',
+                color: currentScore >= (selectedStudent.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)',
                 margin: '1rem 0'
               }}>
                 {currentScore}
