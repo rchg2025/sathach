@@ -1692,25 +1692,46 @@ router.get('/cron/check-vehicles', async (req, res) => {
     });
 
     const htmlContent = `
-      <h3>Cảnh báo xe sắp hết hạn (còn 30 ngày)</h3>
-      <table border="1" cellpadding="5" cellspacing="0">
-        <thead>
-          <tr>
-            <th>Tên / Biển số</th>
-            <th>Loại hạn</th>
-            <th>Ngày hết hạn</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${emailsToSend.map(v => `
-            <tr>
-              <td>${v.name}</td>
-              <td>${v.reason}</td>
-              <td>${new Date(v.date).toLocaleDateString('vi-VN')}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <div style="background-color: #1a73e8; color: white; padding: 20px; text-align: center;">
+          <h2 style="margin: 0; font-size: 24px;">Hệ Thống Quản Lý Sát Hạch</h2>
+          <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Thông báo tự động</p>
+        </div>
+        
+        <div style="padding: 20px;">
+          <h3 style="color: #d32f2f; margin-top: 0;">⚠️ Cảnh báo: Các xe sắp hết hạn (còn 30 ngày)</h3>
+          <p style="color: #555; line-height: 1.5;">Chào bạn,</p>
+          <p style="color: #555; line-height: 1.5;">Hệ thống phát hiện có một số xe sắp hết hạn <strong>Kiểm định (GĐK)</strong> hoặc <strong>Hợp đồng</strong> trong vòng 30 ngày tới. Vui lòng kiểm tra và xử lý kịp thời:</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <thead>
+              <tr style="background-color: #f5f5f5;">
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Tên / Biển số</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Loại hạn</th>
+                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Ngày hết hạn</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${emailsToSend.map(v => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 12px; color: #444; font-weight: bold;">${v.name}</td>
+                  <td style="padding: 12px; color: #d32f2f;">${v.reason}</td>
+                  <td style="padding: 12px; color: #444;">${new Date(v.date).toLocaleDateString('vi-VN')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
+            <a href="https://sathach.vercel.app/manager/categories" style="display: inline-block; background-color: #1a73e8; color: white; padding: 10px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Truy cập Hệ thống</a>
+          </div>
+        </div>
+        
+        <div style="background-color: #f9f9f9; padding: 15px; text-align: center; color: #888; font-size: 12px;">
+          <p style="margin: 0;">Email này được gửi tự động từ Hệ Thống Quản Lý Sát Hạch.</p>
+          <p style="margin: 5px 0 0 0;">Vui lòng không trả lời email này.</p>
+        </div>
+      </div>
     `;
 
     const toEmails = adminsAndManagers.map(u => u.email).join(',');
