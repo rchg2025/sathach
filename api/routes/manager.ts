@@ -230,12 +230,25 @@ router.post('/vehicle-types/bulk-import', async (req, res) => {
 
 router.put('/vehicle-types/:id', async (req, res) => {
   const { id } = req.params;
-  const { isActive, manufacturingYear, inspectionExpiry } = req.body;
+  const { 
+    name, description, seats, brand, owner, 
+    contractStart, contractEnd, manufacturingYear, 
+    inspectionExpiry, isActive 
+  } = req.body;
+  
   try {
     const data: any = {};
-    if (isActive !== undefined) data.isActive = isActive;
+    if (name !== undefined) data.name = name;
+    if (description !== undefined) data.description = description;
+    if (seats !== undefined) data.seats = Number(seats) || null;
+    if (brand !== undefined) data.brand = brand;
+    if (owner !== undefined) data.owner = owner;
+    if (contractStart) data.contractStart = new Date(contractStart);
+    if (contractEnd) data.contractEnd = new Date(contractEnd);
     if (manufacturingYear) data.manufacturingYear = Number(manufacturingYear);
     if (inspectionExpiry) data.inspectionExpiry = new Date(inspectionExpiry);
+    if (isActive !== undefined) data.isActive = isActive;
+    
     const vehicleType = await prisma.vehicleType.update({ where: { id: Number(id) }, data });
     res.json(vehicleType);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
