@@ -89,17 +89,9 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
         // Collect errors
         const trs = student.testResults || [];
         const errorList: any[] = [];
-        let diemTruSaHinh = 0;
-        let diemTruChuZ = 0;
-        let diemTruDuongTruong = 0;
-
-        let scoreSaHinh = student.scoreSaHinh;
-        let scoreChuZ = student.scoreChuZ;
-        let scoreDuongTruong = student.scoreDuongTruong;
-
+        
         trs.forEach((tr: any) => {
           const testName = tr.testType?.name || 'Chưa rõ';
-          const testNameLower = testName.toLowerCase();
           
           if (tr.scores && tr.scores.length > 0) {
             tr.scores.forEach((sc: any) => {
@@ -110,14 +102,19 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
                   errorName: sc.criterion.name,
                   deduction
                 });
-
-                if (testNameLower.includes('sa hình')) diemTruSaHinh += deduction;
-                if (testNameLower.includes('chữ z')) diemTruChuZ += deduction;
-                if (testNameLower.includes('đường trường')) diemTruDuongTruong += deduction;
               }
             });
           }
         });
+
+        const getDiemTru = (max: number, score: any) => {
+          if (score === 'Vắng') return 'Vắng';
+          if (score === 'Đang thi') return '';
+          if (score === '' || score === '-') return '';
+          const num = Number(score);
+          if (!isNaN(num)) return max - num;
+          return '';
+        };
 
         const isDat = student.finalStatus === 'ĐẬU';
         const isKhongDat = student.finalStatus === 'RỚT';
