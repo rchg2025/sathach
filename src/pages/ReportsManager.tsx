@@ -13,6 +13,8 @@ import { useDebounce } from '../hooks/useDebounce';
 const ReportsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
+  const [testTypes, setTestTypes] = useState<any[]>([]);
+  const [assignments, setAssignments] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,65 +47,70 @@ const ReportsManager = () => {
 
   const fetchData = async (currentUser: any) => {
     try {
-      const [studentsRes, coursesRes] = await Promise.all([
+      const [studentsRes, coursesRes, testTypesRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`),
-        axios.get(`${API_BASE_URL}/api/manager/courses`)
+        axios.get(`${API_BASE_URL}/api/manager/courses`),
+        axios.get(`${API_BASE_URL}/api/manager/test-types`)
       ]);
       setStudents(studentsRes.data.students || []);
+      setAssignments(studentsRes.data.assignments || []);
       setCourses(coursesRes.data || []);
+      setTestTypes(testTypesRes.data || []);
     } catch (e) {
       console.error(e);
       toast.error('Lỗi lấy dữ liệu');
     }
   };
 
-  const getStudentReport = (student: any) => {
+  const displayedTestTypes = useMemo(() => {
+    const assignedIds = new Set(assignments.map((a: any) => a.testTypeId));
+    return testTypes.filter(tt => assignedIds.has(tt.id));
+  }, [testTypes, assignments]);
+
+  const getStudentReport = (student: any, activeTestTypes: any[]) => {
     const trs = student.testResults || [];
-    const completedCount = trs.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
-    
     let isFail = false;
     let isAbsent = false;
+    let completedCount = 0;
     
-    let scoreSaHinh = '-';
-    let scoreChuZ = '-';
-    let scoreDuongTruong = '-';
+    const scores: any = {};
     
-    trs.forEach((tr: any) => {
-      const name = tr.testType?.name?.toLowerCase() || '';
-      let scoreVal: number | string = '-';
-      
-      if (tr.status === 'ABSENT') {
-        scoreVal = 'Vắng';
-        isAbsent = true;
-      } else if (tr.status === 'IN_PROGRESS') {
-        scoreVal = 'Đang thi';
-      } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
-        scoreVal = tr.totalScore;
-        if (tr.totalScore < 80) isFail = true;
-        if (tr.status === 'FAILED') isFail = true; // Legacy support
+    activeTestTypes.forEach((tt: any) => {
+      const tr = trs.find((t: any) => t.testTypeId === tt.id);
+      if (!tr) {
+         scores[tt.id] = '-';
+      } else {
+        let scoreVal: number | string = '-';
+        if (tr.status === 'ABSENT') {
+          scoreVal = 'Vắng';
+          isAbsent = true;
+          completedCount++;
+        } else if (tr.status === 'IN_PROGRESS') {
+          scoreVal = 'Đang thi';
+        } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
+          scoreVal = tr.totalScore;
+          completedCount++;
+          if (tr.totalScore < 80) isFail = true;
+          if (tr.status === 'FAILED') isFail = true;
+        }
+        scores[tt.id] = scoreVal;
       }
-      
-      if (name.includes('sa hình')) scoreSaHinh = scoreVal as any;
-      if (name.includes('chữ z')) scoreChuZ = scoreVal as any;
-      if (name.includes('đường trường')) scoreDuongTruong = scoreVal as any;
     });
 
     let finalStatus = '';
     if (isAbsent) finalStatus = 'VẮNG';
     else if (isFail) finalStatus = 'RỚT';
-    else if (completedCount >= 3) finalStatus = 'ĐẬU';
+    else if (activeTestTypes.length > 0 && completedCount >= activeTestTypes.length) finalStatus = 'ĐẬU';
     else finalStatus = 'CHƯA HOÀN THÀNH';
 
     return {
       ...student,
-      scoreSaHinh,
-      scoreChuZ,
-      scoreDuongTruong,
+      scores,
       finalStatus
     };
   };
 
-  const processedStudents = useMemo(() => students.map(getStudentReport), [students]);
+  const processedStudents = useMemo(() => students.map(s => getStudentReport(s, displayedTestTypes)), [students, displayedTestTypes]);
 
   const courseFilteredStudents = useMemo(() => {
     return processedStudents.filter(s => {
@@ -188,16 +195,19 @@ const ReportsManager = () => {
   };
 
   const exportToExcel = () => {
-    const dataForExcel = filteredStudents.map((s, index) => ({
-      'STT': index + 1,
-      'Họ và Tên': s.name,
-      'CCCD': s.cccd,
-      'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-',
-      'Sa hình': s.scoreSaHinh,
-      'Hình chữ Z': s.scoreChuZ,
-      'Đường trường': s.scoreDuongTruong,
-      'Kết quả': s.finalStatus
-    }));
+    const dataForExcel = filteredStudents.map((s, index) => {
+      const row: any = {
+        'STT': index + 1,
+        'Họ và Tên': s.name,
+        'CCCD': s.cccd,
+        'Khóa đào tạo': s.courseName || (s.course && s.course.name) || '-',
+      };
+      displayedTestTypes.forEach(tt => {
+        row[tt.name] = s.scores[tt.id];
+      });
+      row['Kết quả'] = s.finalStatus;
+      return row;
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(dataForExcel);
     const workbook = XLSX.utils.book_new();
@@ -315,9 +325,9 @@ const ReportsManager = () => {
                   <th>Họ và Tên</th>
                   <th>CCCD</th>
                   <th>Khóa đào tạo</th>
-                  <th style={{ textAlign: 'center' }}>Sa hình</th>
-                  <th style={{ textAlign: 'center' }}>Hình chữ Z</th>
-                  <th style={{ textAlign: 'center' }}>Đường trường</th>
+                  {displayedTestTypes.map(tt => (
+                    <th key={tt.id} style={{ textAlign: 'center' }}>{tt.name}</th>
+                  ))}
                   <th style={{ textAlign: 'center' }}>Kết quả</th>
                   <th className="no-print sticky-col-right" style={{ textAlign: 'center' }}>Thao tác</th>
                 </tr>
@@ -329,9 +339,9 @@ const ReportsManager = () => {
                     <td><strong>{s.name}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.scoreSaHinh}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.scoreChuZ}</td>
-                    <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.scoreDuongTruong}</td>
+                    {displayedTestTypes.map(tt => (
+                      <td key={tt.id} style={{ textAlign: 'center', fontWeight: 'bold' }}>{s.scores[tt.id]}</td>
+                    ))}
                     <td style={{ textAlign: 'center', fontWeight: 'bold' }}>
                       {s.finalStatus === 'ĐẬU' && <span style={{ color: 'var(--success)' }}>ĐẬU</span>}
                       {s.finalStatus === 'RỚT' && <span style={{ color: 'var(--danger)' }}>RỚT</span>}
