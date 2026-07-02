@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
+import AdminLayout from '../components/AdminLayout';
 
 const RetakeManager = () => {
+  const [user, setUser] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
   const [retakeSessions, setRetakeSessions] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -13,6 +15,10 @@ const RetakeManager = () => {
   const [activeTab, setActiveTab] = useState<'pending' | 'scheduled'>('pending');
 
   useEffect(() => {
+    const u = localStorage.getItem('user');
+    if (u) {
+      setUser(JSON.parse(u));
+    }
     fetchData();
   }, []);
 
@@ -107,7 +113,8 @@ const RetakeManager = () => {
   if (loading) return <div>Đang tải dữ liệu...</div>;
 
   return (
-    <div>
+    <AdminLayout user={user}>
+      <div className="container mt-4">
       <div className="flex justify-between items-center mb-6">
         <h2>Tổ chức Thi lại (Ghép khóa)</h2>
       </div>
@@ -244,7 +251,8 @@ const RetakeManager = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 
