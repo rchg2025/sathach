@@ -67,7 +67,7 @@ const AssignmentManager = () => {
   };
 
   const filteredUsers = users.filter(u => u.role === roleType && u.isActive);
-  const filteredExams = exams.filter(e => e.testTypeId === Number(selectedTestTypes[0]));
+  const filteredExams = exams.filter(e => selectedTestTypes.includes(String(e.testTypeId)));
 
   // Reset dependent fields when parent selection changes
   useEffect(() => {
@@ -332,7 +332,7 @@ const AssignmentManager = () => {
             <div className="form-group">
               <label className="form-label">Trạm thi</label>
               <Select 
-                isMulti={roleType === 'STATION_MANAGER' && !editingId}
+                isMulti={!editingId}
                 options={testTypes.map(tt => ({ value: String(tt.id), label: tt.name }))}
                 value={testTypes.filter(tt => selectedTestTypes.includes(String(tt.id))).map(tt => ({ value: String(tt.id), label: tt.name }))}
                 onChange={(selected: any) => {
