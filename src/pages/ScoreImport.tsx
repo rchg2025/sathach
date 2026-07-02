@@ -99,10 +99,10 @@ const ScoreImport = () => {
   return (
     <AdminLayout user={user}>
       <div className="p-4" style={{ height: 'calc(100vh - 60px)', overflowY: 'auto' }}>
-        <div className="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4" style={{ gap: '1rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text)' }}>Import Điểm Thi</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, color: 'var(--text)' }}>Import Điểm Thi</h2>
           
-          <div className="d-flex flex-column flex-sm-row" style={{ gap: '0.5rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             <button className="btn" style={{ background: '#6c757d', color: 'white' }} onClick={downloadTemplate}>
               <Download size={18} className="me-2" /> Tải File Mẫu
             </button>
