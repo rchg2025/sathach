@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 
@@ -91,6 +91,74 @@ const StudentSearch = () => {
   useEffect(() => {
     return () => stopPolling();
   }, []);
+
+  const uniqueDates = useMemo(() => {
+    if (!student?.testResults) return [];
+    const dts = [...new Set(student.testResults.map((r: any) => {
+      const d = new Date(r.createdAt);
+      return new Date(d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
+    }))];
+    return (dts as string[]).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+  }, [student]);
+
+  const [selectedDate, setSelectedDate] = useState<string>('');
+
+  useEffect(() => {
+    if (uniqueDates.length > 0 && (!selectedDate || !uniqueDates.includes(selectedDate))) {
+      setSelectedDate(uniqueDates[0]);
+    }
+  }, [uniqueDates, selectedDate]);
+
+  const displayResults = useMemo(() => {
+    if (!student?.testResults || !selectedDate) return [];
+    return student.testResults.filter((r: any) => {
+      const d = new Date(r.createdAt);
+      const dateStr = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
+      return dateStr === selectedDate;
+    });
+  }, [student, selectedDate]);
+
+  const overallResult = useMemo(() => {
+    if (!student || !selectedDate) return null;
+    
+    const courseId = student.courseId;
+    const courseName = student.course?.name;
+    const activeAssignments = (student.assignments || []).filter((a: any) => {
+      let dateMatch = true;
+      if (a.assignmentDate) {
+        const ad = new Date(a.assignmentDate);
+        const adStr = new Date(ad.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
+        dateMatch = adStr === selectedDate;
+      }
+      const courseMatch = a.courseId === courseId || (courseName && a.course?.name === courseName);
+      return dateMatch && courseMatch;
+    });
+
+    const activeTestTypes = new Set(activeAssignments.map((a: any) => a.testType?.id));
+    
+    let isFail = false;
+    let isAbsent = false;
+    let completedCount = 0;
+    
+    activeTestTypes.forEach(ttId => {
+      const tr = displayResults.find((r: any) => r.testTypeId === ttId);
+      if (tr) {
+        if (tr.status === 'ABSENT') {
+          isAbsent = true;
+          completedCount++;
+        } else if (['TRANSFERRED', 'FINISHED', 'FAILED'].includes(tr.status)) {
+          completedCount++;
+          const passScore = tr.testType?.passingScore ?? 80;
+          if (tr.totalScore < passScore || tr.status === 'FAILED') isFail = true;
+        }
+      }
+    });
+
+    if (isAbsent) return 'VẮNG';
+    if (isFail) return 'RỚT';
+    if (activeTestTypes.size > 0 && completedCount >= activeTestTypes.size) return 'ĐẬU';
+    return 'ĐANG THI';
+  }, [student, selectedDate, displayResults]);
 
   return (
     <div style={{
