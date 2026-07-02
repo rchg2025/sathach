@@ -409,65 +409,69 @@ const AssignmentManager = () => {
       <div className="card" style={{ padding: '0' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="filter-group" style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
-              <input 
-                type="text" 
-                className="form-control" 
-                placeholder="🔍 Tìm tên, username, bài thi..." 
-                value={searchKeyword}
-                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ flex: 1, minWidth: 0 }}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <Select 
-                  options={[
-                    { value: 'all', label: 'Tất cả Vai trò' },
-                    { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
-                    { value: 'EXAMINER', label: 'Giám khảo' }
-                  ]}
-                  value={[
-                    { value: 'all', label: 'Tất cả Vai trò' },
-                    { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
-                    { value: 'EXAMINER', label: 'Giám khảo' }
-                  ].find(opt => opt.value === roleFilter)}
-                  onChange={(selected: any) => { setRoleFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
-                  placeholder="Lọc Vai trò..."
-                  isClearable={false}
-                  styles={{ 
-                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                    menu: (base: any) => ({ ...base, zIndex: 9999 })
-                  }}
+            <div className="filter-group" style={{ display: 'flex', gap: '0.5rem', flex: 1, minWidth: 0, alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', flex: '1 1 300px', flexWrap: 'nowrap' }}>
+                <input 
+                  type="text" 
+                  className="form-control" 
+                  placeholder="🔍 Tìm tên, user..." 
+                  value={searchKeyword}
+                  onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                  style={{ flex: 1, minWidth: 0, fontSize: '0.85rem', padding: '0.5rem' }}
                 />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Select 
+                    options={[
+                      { value: 'all', label: 'Tất cả Vai trò' },
+                      { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
+                      { value: 'EXAMINER', label: 'Giám khảo' }
+                    ]}
+                    value={[
+                      { value: 'all', label: 'Tất cả Vai trò' },
+                      { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
+                      { value: 'EXAMINER', label: 'Giám khảo' }
+                    ].find(opt => opt.value === roleFilter)}
+                    onChange={(selected: any) => { setRoleFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                    placeholder="Lọc Vai trò..."
+                    isClearable={false}
+                    styles={{ 
+                      control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '34px', fontSize: '0.85rem', boxShadow: 'none' }),
+                      menu: (base: any) => ({ ...base, zIndex: 9999, fontSize: '0.85rem' })
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <Select 
-                  options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))]}
-                  value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))].find((opt: any) => opt.value === courseFilter)}
-                  onChange={(selected: any) => { setCourseFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
-                  placeholder="Lọc Khóa đào tạo..."
-                  isClearable={false}
-                  styles={{ 
-                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                    menu: (base: any) => ({ ...base, zIndex: 9999 })
-                  }}
-                />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <Select 
-                  options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))]}
-                  value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))].find((opt: any) => opt.value === testTypeFilter)}
-                  onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
-                  placeholder="Lọc Trạm thi..."
-                  isClearable={false}
-                  styles={{ 
-                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                    menu: (base: any) => ({ ...base, zIndex: 9999 })
-                  }}
-                />
+              <div style={{ display: 'flex', gap: '0.5rem', flex: '1 1 300px', flexWrap: 'nowrap' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Select 
+                    options={[{ value: 'all', label: 'Tất cả Khóa' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))]}
+                    value={[{ value: 'all', label: 'Tất cả Khóa' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))].find((opt: any) => opt.value === courseFilter)}
+                    onChange={(selected: any) => { setCourseFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                    placeholder="Lọc Khóa đào tạo..."
+                    isClearable={false}
+                    styles={{ 
+                      control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '34px', fontSize: '0.85rem', boxShadow: 'none' }),
+                      menu: (base: any) => ({ ...base, zIndex: 9999, fontSize: '0.85rem' })
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Select 
+                    options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))]}
+                    value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))].find((opt: any) => opt.value === testTypeFilter)}
+                    onChange={(selected: any) => { setTestTypeFilter(selected ? selected.value : 'all'); setCurrentPage(1); }}
+                    placeholder="Lọc Trạm thi..."
+                    isClearable={false}
+                    styles={{ 
+                      control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '34px', fontSize: '0.85rem', boxShadow: 'none' }),
+                      menu: (base: any) => ({ ...base, zIndex: 9999, fontSize: '0.85rem' })
+                    }}
+                  />
+                </div>
               </div>
             </div>
-            <button className="btn btn-success flex items-center btn-export" style={{ gap: '0.5rem', height: 'fit-content', flexShrink: 0 }} onClick={exportToExcel}>
-              <Download size={18} /> Xuất Excel
+            <button className="btn btn-success flex items-center justify-center btn-export" style={{ gap: '0.5rem', height: 'fit-content', flexShrink: 0, padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} onClick={exportToExcel}>
+              <Download size={16} /> Xuất Excel
             </button>
           </div>
         </div>
