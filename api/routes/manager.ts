@@ -963,8 +963,6 @@ router.get('/station/students-v2', async (req, res) => {
     let assignments: any[] = [];
 
     if (role === 'ADMIN' || role === 'MANAGER') {
-      // Admin/Manager can see all students
-      studentWhere = {}; 
       // Admin/Manager needs assignments to know which test types are active today
       assignments = await prisma.testAssignment.findMany({
         where: { 
@@ -981,6 +979,12 @@ router.get('/station/students-v2', async (req, res) => {
         },
         include: { testType: true, course: true, vehicles: true }
       });
+      const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
+      if (courseIds.length > 0) {
+        studentWhere = { courseId: { in: courseIds } };
+      } else {
+        studentWhere = { id: -1 }; // no students
+      }
     } else if (role === 'STATION_MANAGER') {
       assignments = await prisma.testAssignment.findMany({
         where: { 

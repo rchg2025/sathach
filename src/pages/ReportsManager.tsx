@@ -423,7 +423,7 @@ const ReportsManager = () => {
                 {filteredStudents.length === 0 && (
                   <tr>
                     <td colSpan={8} className="text-center text-muted" style={{ padding: '2rem' }}>
-                      Không tìm thấy dữ liệu thống kê phù hợp
+                      Chưa có lịch thi hoặc chưa có phân công phù hợp trong ngày này
                     </td>
                   </tr>
                 )}
