@@ -153,16 +153,16 @@ const ExamManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: 1, alignItems: 'center' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm bài thi, mô tả..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ maxWidth: '300px' }}
+                style={{ flex: 1, minWidth: 0 }}
               />
-              <div style={{ width: '250px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: t.id, label: t.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: t.id, label: t.name }))].find((opt: any) => opt.value.toString() === testTypeFilter)}
@@ -172,7 +172,7 @@ const ExamManager = () => {
                 />
               </div>
             </div>
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
+            <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content', flexShrink: 0 }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>

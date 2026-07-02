@@ -164,18 +164,18 @@ const CriterionManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: '1 1 100%', flexWrap: 'wrap', alignItems: 'center' }}>
-              <div style={{ flex: '1 1 250px' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <input 
                   type="text" 
                   className="form-control" 
                   placeholder="🔍 Tìm kiếm tiêu chí..." 
                   value={searchKeyword}
                   onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                  style={{ width: '100%' }}
+                  style={{ width: '100%', minWidth: 0 }}
                 />
               </div>
-              <div style={{ flex: '1 1 200px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...availableTestTypes.map((t: any) => ({ value: t.id, label: t.name }))].find((opt: any) => opt.value.toString() === testTypeFilter)}
@@ -184,7 +184,7 @@ const CriterionManager = () => {
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
                 />
               </div>
-              <div style={{ flex: '1 1 220px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Bài thi' }, ...availableExamsForFilter.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))]}
                   value={[{ value: 'all', label: 'Tất cả Bài thi' }, ...availableExamsForFilter.map((e: any) => ({ value: e.id, label: `${e.testType?.name} ➔ ${e.name}` }))].find((opt: any) => opt.value.toString() === examFilter)}
@@ -194,7 +194,7 @@ const CriterionManager = () => {
                 />
               </div>
             </div>
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content', flexShrink: 0 }}>
+            <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content', flexShrink: 0 }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>

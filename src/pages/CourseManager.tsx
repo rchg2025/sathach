@@ -166,22 +166,22 @@ const CourseManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: 1 }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, minWidth: 0 }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm tên khóa học, mô tả..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ maxWidth: '300px' }}
+                style={{ flex: 1, minWidth: 0 }}
               />
-              <select className="form-control" style={{ maxWidth: '200px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+              <select className="form-control" style={{ flex: 1, minWidth: 0 }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                 <option value="all">Tất cả trạng thái</option>
                 <option value="active">Đang diễn ra</option>
                 <option value="completed">Đã hoàn thành</option>
               </select>
             </div>
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
+            <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content' }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>

@@ -401,6 +401,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-muted);
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 
 .tab:hover {
@@ -552,6 +553,10 @@ input:checked + .toggle-slider:before {
   .sidebar-item {
     padding: 0.75rem 1.5rem;
     font-size: 1rem;
+  }
+  .btn-export {
+    width: 100%;
+    justify-content: center;
   }
 }
 @media (min-width: 769px) {

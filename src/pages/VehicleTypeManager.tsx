@@ -313,22 +313,22 @@ const VehicleTypeManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="flex" style={{ gap: '1rem', flex: '1 1 100%', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm biển số, hãng, chủ xe..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ flex: '1 1 200px' }}
+                style={{ flex: 1, minWidth: 0 }}
               />
-              <select className="form-control" style={{ flex: '1 1 150px' }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
+              <select className="form-control" style={{ flex: 1, minWidth: 0 }} value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setCurrentPage(1); }}>
                 <option value="all">Tất cả trạng thái</option>
                 <option value="active">Đang hoạt động</option>
                 <option value="inactive">Tạm ngưng</option>
               </select>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', width: '100%', flexWrap: 'nowrap' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <input 
                 type="file" 
                 accept=".xlsx, .xls" 
@@ -336,13 +336,13 @@ const VehicleTypeManager = () => {
                 ref={fileInputRef}
                 onChange={handleImportExcel}
               />
-              <button className="btn" style={{ background: '#10b981', color: 'white', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={() => fileInputRef.current?.click()}>
+              <button className="btn" style={{ background: '#10b981', color: 'white', padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={() => fileInputRef.current?.click()}>
                 Nhập Excel
               </button>
-              <button className="btn" style={{ background: '#6366f1', color: 'white', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={handleDownloadSample}>
+              <button className="btn" style={{ background: '#6366f1', color: 'white', padding: '0.5rem 0.25rem', fontSize: '0.85rem' }} onClick={handleDownloadSample}>
                 Tải file mẫu
               </button>
-              <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem 0.25rem', fontSize: '0.85rem' }}>
+              <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', padding: '0.5rem 0.25rem', fontSize: '0.85rem' }}>
                 <span>Xuất Excel</span>
               </button>
             </div>

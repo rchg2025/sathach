@@ -488,16 +488,16 @@ const StudentManager = () => {
       {activeTab === 'list' && (
         <div className="card">
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="filter-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', flex: 1, width: '100%' }}>
+            <div className="filter-group" style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm kiếm tên, CCCD, Mã ĐK..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ minWidth: '100%' }}
+                style={{ flex: 1, minWidth: 0 }}
               />
-              <div style={{ minWidth: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select
                   options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))]}
                   value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...availableCourses.map((c: any) => ({ value: c, label: c }))].find((opt: any) => opt.value === courseFilter)}
@@ -528,7 +528,7 @@ const StudentManager = () => {
                 <span>⬆️ Nhập Excel</span>
               </button>
 
-              <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span>📥 Xuất Excel</span>
               </button>
 

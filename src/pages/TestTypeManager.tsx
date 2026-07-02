@@ -134,16 +134,18 @@ const TestTypeManager = () => {
 
       {activeTab === 'list' && (
         <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <input 
-              type="text" 
-              className="form-control" 
-              placeholder="🔍 Tìm kiếm tên trạm, mô tả..." 
-              value={searchKeyword}
-              onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-              style={{ maxWidth: '300px' }}
-            />
-            <button className="btn btn-primary" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex" style={{ gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm tên trạm, mô tả..." 
+                value={searchKeyword}
+                onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+            </div>
+            <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', height: 'fit-content', flexShrink: 0 }}>
               <span>📥 Xuất Excel</span>
             </button>
           </div>

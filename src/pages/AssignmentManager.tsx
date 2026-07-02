@@ -409,16 +409,16 @@ const AssignmentManager = () => {
       <div className="card" style={{ padding: '0' }}>
         <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
           <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div className="filter-group" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', flex: 1, width: '100%' }}>
+            <div className="filter-group" style={{ display: 'flex', gap: '1rem', flex: 1, minWidth: 0, alignItems: 'center' }}>
               <input 
                 type="text" 
                 className="form-control" 
                 placeholder="🔍 Tìm tên, username, bài thi..." 
                 value={searchKeyword}
                 onChange={e => { setSearchKeyword(e.target.value); setCurrentPage(1); }}
-                style={{ minWidth: '100%' }}
+                style={{ flex: 1, minWidth: 0 }}
               />
-              <div style={{ minWidth: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select 
                   options={[
                     { value: 'all', label: 'Tất cả Vai trò' },
@@ -439,7 +439,7 @@ const AssignmentManager = () => {
                   }}
                 />
               </div>
-              <div style={{ minWidth: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select 
                   options={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Khóa đào tạo' }, ...courses.map((c: any) => ({ value: String(c.id), label: c.name }))].find((opt: any) => opt.value === courseFilter)}
@@ -452,7 +452,7 @@ const AssignmentManager = () => {
                   }}
                 />
               </div>
-              <div style={{ minWidth: '100%' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <Select 
                   options={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))]}
                   value={[{ value: 'all', label: 'Tất cả Trạm thi' }, ...testTypes.map((t: any) => ({ value: String(t.id), label: t.name }))].find((opt: any) => opt.value === testTypeFilter)}
@@ -466,11 +466,9 @@ const AssignmentManager = () => {
                 />
               </div>
             </div>
-            <div>
-              <button className="btn btn-success flex items-center" style={{ gap: '0.5rem' }} onClick={exportToExcel}>
-                <Download size={18} /> Xuất Excel
-              </button>
-            </div>
+            <button className="btn btn-success flex items-center btn-export" style={{ gap: '0.5rem', height: 'fit-content', flexShrink: 0 }} onClick={exportToExcel}>
+              <Download size={18} /> Xuất Excel
+            </button>
           </div>
         </div>
 
