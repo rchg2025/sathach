@@ -238,9 +238,9 @@ const UserManager = () => {
         <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
           <h2 style={{ margin: 0 }}>Quản lý Thành viên</h2>
           <div className="import-export-group" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
-            <button className="btn" style={{ background: '#28a745', color: 'white', flex: 1, padding: '0.5rem 0.2rem', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={exportExcel}>Export</button>
-            <button className="btn" style={{ background: '#17a2b8', color: 'white', flex: 1, padding: '0.5rem 0.2rem', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={() => fileInputRef.current?.click()}>Import</button>
-            <button className="btn" style={{ background: '#6c757d', color: 'white', flex: 1, padding: '0.5rem 0.2rem', fontSize: '0.8rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={downloadTemplate}>File Mẫu</button>
+            <button className="btn" style={{ background: '#28a745', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={exportExcel}>Export</button>
+            <button className="btn" style={{ background: '#17a2b8', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={() => fileInputRef.current?.click()}>Import</button>
+            <button className="btn" style={{ background: '#6c757d', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={downloadTemplate}>File Mẫu</button>
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleImport} />
           </div>
         </div>
