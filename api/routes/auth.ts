@@ -142,8 +142,31 @@ router.post('/forgot-password', async (req, res) => {
     const mailOptions = {
       from: `"${senderName}" <${userEmail}>`,
       to: email,
-      subject: 'Mã xác thực khôi phục mật khẩu',
-      html: `<p>Xin chào ${user.name},</p><p>Mã xác thực (OTP) của bạn là: <b>${otp}</b></p><p>Mã này có hiệu lực trong 10 phút.</p>`
+      subject: 'Mã xác thực khôi phục mật khẩu - Hệ Thống Sát Hạch',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <div style="background-color: #1a73e8; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 24px;">Hệ Thống Quản Lý Sát Hạch</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Yêu cầu khôi phục mật khẩu</p>
+          </div>
+          
+          <div style="padding: 30px 20px; text-align: center;">
+            <p style="color: #555; line-height: 1.5; font-size: 16px; margin-bottom: 20px;">Xin chào <strong>${user.name}</strong>,</p>
+            <p style="color: #555; line-height: 1.5; font-size: 16px; margin-bottom: 30px;">Hệ thống vừa nhận được yêu cầu khôi phục mật khẩu cho tài khoản của bạn. Vui lòng sử dụng mã xác thực dưới đây:</p>
+            
+            <div style="background-color: #f4f8ff; border: 2px dashed #1a73e8; border-radius: 8px; padding: 20px; display: inline-block; margin: 0 auto;">
+              <span style="font-size: 32px; font-weight: bold; color: #1a73e8; letter-spacing: 5px;">${otp}</span>
+            </div>
+            
+            <p style="color: #d32f2f; margin-top: 30px; font-size: 14px;"><em>* Lưu ý: Mã xác thực này chỉ có hiệu lực trong vòng 10 phút. Không chia sẻ mã này cho bất kỳ ai.</em></p>
+          </div>
+          
+          <div style="background-color: #f9f9f9; padding: 15px; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #eee;">
+            <p style="margin: 0;">Email này được gửi tự động từ Hệ Thống Quản Lý Sát Hạch.</p>
+            <p style="margin: 5px 0 0 0;">Nếu bạn không yêu cầu đổi mật khẩu, vui lòng bỏ qua email này.</p>
+          </div>
+        </div>
+      `
     };
 
     await transporter.sendMail(mailOptions);
