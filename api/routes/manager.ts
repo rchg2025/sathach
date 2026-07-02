@@ -1734,14 +1734,19 @@ router.get('/cron/check-vehicles', async (req, res) => {
       </div>
     `;
 
-    const toEmails = adminsAndManagers.map(u => u.email).join(',');
+    const normalEmails = adminsAndManagers.filter(u => u.username !== 'quantri').map(u => u.email).join(',');
+    const quantriEmails = adminsAndManagers.filter(u => u.username === 'quantri').map(u => u.email).join(',');
 
-    await transporter.sendMail({
+    const mailOptions: any = {
       from: `"${senderName}" <${userEmail}>`,
-      to: toEmails,
       subject: 'Cảnh báo hạn kiểm định / hợp đồng xe',
       html: htmlContent
-    });
+    };
+    
+    if (normalEmails) mailOptions.to = normalEmails;
+    if (quantriEmails) mailOptions.bcc = quantriEmails;
+
+    await transporter.sendMail(mailOptions);
 
     res.json({ success: true, message: `Đã gửi email cảnh báo tới ${adminsAndManagers.length} người dùng.` });
   } catch (error) {
