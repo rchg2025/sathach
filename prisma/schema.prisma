@@ -98,8 +98,8 @@ model TestType {
   id           Int              @id @default(autoincrement())
   name         String
   description  String?
-  maxScore     Int              @default(100)
-  passingScore Int              @default(80)
+  maxScore     Float              @default(100)
+  passingScore Float              @default(80)
   exams        Exam[]
   assignments  TestAssignment[]
   testResults  TestResult[]
@@ -123,7 +123,7 @@ model Exam {
 model Criterion {
   id             Int     @id @default(autoincrement())
   name           String
-  pointsToDeduct Int     @default(5)
+  pointsToDeduct Float     @default(5)
   examId         Int
   exam           Exam    @relation(fields: [examId], references: [id])
   scores         Score[]
@@ -153,7 +153,7 @@ model TestResult {
   testType         TestType       @relation(fields: [testTypeId], references: [id])
   vehicleId        Int?
   vehicle          VehicleType?   @relation(fields: [vehicleId], references: [id])
-  totalScore       Int            @default(100)
+  totalScore       Float            @default(100)
   status           String         @default("PENDING") // PENDING, PASSED, FAILED
   startTime        DateTime?
   endTime          DateTime?
