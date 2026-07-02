@@ -16,6 +16,8 @@ const ExaminerDashboard = () => {
   const [errors, setErrors] = useState<{ [criterionId: number]: number }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseScore, setBaseScore] = useState<number>(100);
+  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
+  const [examToStart, setExamToStart] = useState<any>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -43,7 +45,17 @@ const ExaminerDashboard = () => {
     }
   };
 
-  const startExam = async (student: any) => {
+  const openStartModal = (student: any) => {
+    setSelectedStudent(student);
+    if (!student.isCombinedExam && student.allAvailableExams && student.allAvailableExams.length > 1) {
+      setExamToStart(student.allAvailableExams[0]);
+    } else {
+      setExamToStart(student.currentExam);
+    }
+    setIsStartModalOpen(true);
+  };
+
+  const startExam = async (student: any, selectedExam: any) => {
     try {
       const payload: any = {
         studentId: student.id,
@@ -54,15 +66,17 @@ const ExaminerDashboard = () => {
       if (student.isCombinedExam) {
         payload.examIds = student.allExams.map((e: any) => e.id);
       } else {
-        payload.examId = student.currentExam.id;
+        payload.examId = selectedExam.id;
       }
 
       await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, payload);
       toast.success('Đã bắt đầu chấm bài thi');
       
-      // Auto-open modal
+      setIsStartModalOpen(false);
+      
       const updatedStudent = { 
-        ...student, 
+        ...student,
+        currentExam: selectedExam,
         currentProgress: { status: 'IN_PROGRESS', startTime: new Date() } 
       };
       openGradingModal(updatedStudent);
@@ -232,7 +246,7 @@ const ExaminerDashboard = () => {
                       {(!s.currentProgress || s.currentProgress.status === 'PENDING') ? (
                         <button 
                           className="btn btn-warning btn-sm rounded-pill px-3"
-                          onClick={() => startExam(s)}
+                          onClick={() => openStartModal(s)}
                         >
                           Bắt đầu chấm
                         </button>
@@ -389,6 +403,59 @@ const ExaminerDashboard = () => {
               >
                 <CheckCircle size={20} className="me-2" /> 
                 {isSubmitting ? 'Đang lưu...' : 'Hoàn thành bài thi'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isStartModalOpen && selectedStudent && (
+        <div className="modal-backdrop" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div className="modal-content" style={{
+            background: 'white', padding: '2rem', borderRadius: '15px',
+            width: '100%', maxWidth: '500px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
+          }}>
+            <h4 style={{ margin: '0 0 20px 0', color: 'var(--primary)' }}>
+              Bắt đầu chấm điểm
+            </h4>
+            
+            <div className="mb-3">
+              <label className="form-label" style={{ fontWeight: 'bold' }}>Học viên</label>
+              <input type="text" className="form-control bg-light" value={selectedStudent.name} readOnly />
+            </div>
+
+            <div className="mb-4">
+              <label className="form-label" style={{ fontWeight: 'bold' }}>Bài thi</label>
+              {(!selectedStudent.isCombinedExam && selectedStudent.allAvailableExams && selectedStudent.allAvailableExams.length > 1) ? (
+                <select 
+                  className="form-select"
+                  value={examToStart?.id || ''}
+                  onChange={(e) => {
+                    const ex = selectedStudent.allAvailableExams.find((x: any) => x.id === Number(e.target.value));
+                    if (ex) setExamToStart(ex);
+                  }}
+                >
+                  {selectedStudent.allAvailableExams.map((ex: any) => (
+                    <option key={ex.id} value={ex.id}>{ex.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input type="text" className="form-control bg-light" value={selectedStudent.isCombinedExam ? "Thi đường trường (Tất cả bài)" : examToStart?.name} readOnly />
+              )}
+            </div>
+
+            <div className="d-flex justify-content-end gap-2">
+              <button className="btn btn-light" onClick={() => setIsStartModalOpen(false)}>Hủy</button>
+              <button 
+                className="btn btn-primary"
+                onClick={() => startExam(selectedStudent, examToStart)}
+              >
+                Bắt đầu
               </button>
             </div>
           </div>
