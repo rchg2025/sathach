@@ -114,14 +114,14 @@ const RetakeManager = () => {
 
       <div className="mb-4" style={{ borderBottom: '1px solid var(--border)' }}>
         <button
-          className={\`btn \${activeTab === 'pending' ? 'btn-primary' : 'btn-secondary'}\`}
+          className={`btn ${activeTab === 'pending' ? 'btn-primary' : 'btn-secondary'}`}
           style={{ marginRight: '1rem', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
           onClick={() => setActiveTab('pending')}
         >
           Học viên cần thi lại ({students.length})
         </button>
         <button
-          className={\`btn \${activeTab === 'scheduled' ? 'btn-primary' : 'btn-secondary'}\`}
+          className={`btn ${activeTab === 'scheduled' ? 'btn-primary' : 'btn-secondary'}`}
           style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
           onClick={() => setActiveTab('scheduled')}
         >
@@ -185,7 +185,7 @@ const RetakeManager = () => {
                       <td>{student.course?.name || student.courseName}</td>
                       <td>
                         {failedOrAbsent.map((tr: any) => (
-                          <span key={tr.id} className={\`badge \${tr.status === 'ABSENT' ? 'badge-warning' : 'badge-danger'}\`} style={{ marginRight: '5px' }}>
+                          <span key={tr.id} className={`badge ${tr.status === 'ABSENT' ? 'badge-warning' : 'badge-danger'}`} style={{ marginRight: '5px' }}>
                             {tr.testType?.name} ({tr.status === 'ABSENT' ? 'Vắng' : 'Rớt'})
                           </span>
                         ))}
