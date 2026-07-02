@@ -243,10 +243,10 @@ router.put('/vehicle-types/:id', async (req, res) => {
     if (seats !== undefined) data.seats = Number(seats) || null;
     if (brand !== undefined) data.brand = brand;
     if (owner !== undefined) data.owner = owner;
-    if (contractStart) data.contractStart = new Date(contractStart);
-    if (contractEnd) data.contractEnd = new Date(contractEnd);
+    if (contractStart !== undefined) data.contractStart = contractStart ? new Date(contractStart) : null;
+    if (contractEnd !== undefined) data.contractEnd = contractEnd ? new Date(contractEnd) : null;
     if (manufacturingYear) data.manufacturingYear = Number(manufacturingYear);
-    if (inspectionExpiry) data.inspectionExpiry = new Date(inspectionExpiry);
+    if (inspectionExpiry !== undefined) data.inspectionExpiry = inspectionExpiry ? new Date(inspectionExpiry) : null;
     if (isActive !== undefined) data.isActive = isActive;
     
     const vehicleType = await prisma.vehicleType.update({ where: { id: Number(id) }, data });
@@ -1645,20 +1645,49 @@ router.get('/cron/check-vehicles', async (req, res) => {
 
     const now = new Date();
     const emailsToSend: any[] = [];
+    const suspendedVehicles: any[] = [];
+    const vehicleIdsToSuspend: number[] = [];
 
     for (const v of vehicles) {
+      let isSuspended = false;
+      let suspendReason = '';
+      let suspendDate: any = null;
+
       if (v.inspectionExpiry) {
         const inspDiff = Math.ceil((new Date(v.inspectionExpiry).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (inspDiff === 30) emailsToSend.push({ ...v, reason: 'Hạn kiểm định', date: v.inspectionExpiry });
+        else if (inspDiff <= 0) {
+          isSuspended = true;
+          suspendReason = 'Hết hạn GĐK';
+          suspendDate = v.inspectionExpiry;
+        }
       }
+      
       if (v.contractEnd) {
         const contDiff = Math.ceil((new Date(v.contractEnd).getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
         if (contDiff === 30) emailsToSend.push({ ...v, reason: 'Hạn hợp đồng', date: v.contractEnd });
+        else if (contDiff <= 0 && !isSuspended) {
+          isSuspended = true;
+          suspendReason = 'Hết hạn hợp đồng';
+          suspendDate = v.contractEnd;
+        }
+      }
+
+      if (isSuspended) {
+        suspendedVehicles.push({ ...v, reason: suspendReason, date: suspendDate });
+        vehicleIdsToSuspend.push(v.id);
       }
     }
 
-    if (emailsToSend.length === 0) {
-      return res.json({ success: true, message: 'Không có xe nào cần thông báo' });
+    if (vehicleIdsToSuspend.length > 0) {
+      await prisma.vehicleType.updateMany({
+        where: { id: { in: vehicleIdsToSuspend } },
+        data: { isActive: false }
+      });
+    }
+
+    if (emailsToSend.length === 0 && suspendedVehicles.length === 0) {
+      return res.json({ success: true, message: 'Không có xe nào cần thông báo hoặc tạm ngưng' });
     }
 
     const adminsAndManagers = await prisma.user.findMany({
@@ -1691,46 +1720,87 @@ router.get('/cron/check-vehicles', async (req, res) => {
       auth: { user: userEmail, pass }
     });
 
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-        <div style="background-color: #1a73e8; color: white; padding: 20px; text-align: center;">
-          <h2 style="margin: 0; font-size: 24px;">Hệ Thống Quản Lý Sát Hạch</h2>
-          <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Thông báo tự động</p>
-        </div>
-        
-        <div style="padding: 20px;">
-          <h3 style="color: #d32f2f; margin-top: 0;">⚠️ Cảnh báo: Các xe sắp hết hạn (còn 30 ngày)</h3>
-          <p style="color: #555; line-height: 1.5;">Chào bạn,</p>
-          <p style="color: #555; line-height: 1.5;">Hệ thống phát hiện có một số xe sắp hết hạn <strong>Kiểm định (GĐK)</strong> hoặc <strong>Hợp đồng</strong> trong vòng 30 ngày tới. Vui lòng kiểm tra và xử lý kịp thời:</p>
+    let htmlContent = '';
+    
+    if (emailsToSend.length > 0) {
+      htmlContent += `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto 20px auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <div style="background-color: #1a73e8; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 24px;">Hệ Thống Quản Lý Sát Hạch</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Thông báo tự động</p>
+          </div>
           
-          <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-            <thead>
-              <tr style="background-color: #f5f5f5;">
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Tên / Biển số</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Loại hạn</th>
-                <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Ngày hết hạn</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${emailsToSend.map(v => `
-                <tr style="border-bottom: 1px solid #eee;">
-                  <td style="padding: 12px; color: #444; font-weight: bold;">${v.name}</td>
-                  <td style="padding: 12px; color: #d32f2f;">${v.reason}</td>
-                  <td style="padding: 12px; color: #444;">${new Date(v.date).toLocaleDateString('vi-VN')}</td>
+          <div style="padding: 20px;">
+            <h3 style="color: #f57c00; margin-top: 0;">⚠️ Cảnh báo: Các xe sắp hết hạn (còn 30 ngày)</h3>
+            <p style="color: #555; line-height: 1.5;">Chào bạn,</p>
+            <p style="color: #555; line-height: 1.5;">Hệ thống phát hiện có một số xe sắp hết hạn <strong>Kiểm định (GĐK)</strong> hoặc <strong>Hợp đồng</strong> trong vòng 30 ngày tới. Vui lòng kiểm tra và xử lý kịp thời:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background-color: #f5f5f5;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Tên / Biển số</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Loại hạn</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Ngày hết hạn</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          </table>
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center;">
-            <a href="https://sathach.vercel.app/manager/categories" style="display: inline-block; background-color: #1a73e8; color: white; padding: 10px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Truy cập Hệ thống</a>
+              </thead>
+              <tbody>
+                ${emailsToSend.map(v => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; color: #444; font-weight: bold;">${v.name}</td>
+                    <td style="padding: 12px; color: #f57c00;">${v.reason}</td>
+                    <td style="padding: 12px; color: #444;">${new Date(v.date).toLocaleDateString('vi-VN')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
           </div>
         </div>
-        
-        <div style="background-color: #f9f9f9; padding: 15px; text-align: center; color: #888; font-size: 12px;">
-          <p style="margin: 0;">Email này được gửi tự động từ Hệ Thống Quản Lý Sát Hạch.</p>
-          <p style="margin: 5px 0 0 0;">Vui lòng không trả lời email này.</p>
+      `;
+    }
+
+    if (suspendedVehicles.length > 0) {
+      htmlContent += `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+          <div style="background-color: #d32f2f; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0; font-size: 24px;">Hệ Thống Quản Lý Sát Hạch</h2>
+            <p style="margin: 5px 0 0 0; font-size: 14px; opacity: 0.9;">Thông báo Tạm ngưng phương tiện</p>
+          </div>
+          
+          <div style="padding: 20px;">
+            <h3 style="color: #d32f2f; margin-top: 0;">⛔ Cảnh báo khẩn: Các xe ĐÃ BỊ TẠM NGƯNG</h3>
+            <p style="color: #555; line-height: 1.5;">Chào bạn,</p>
+            <p style="color: #555; line-height: 1.5;">Hệ thống vừa <strong>tự động chuyển trạng thái Tạm ngưng</strong> đối với các xe dưới đây do đã quá hạn GĐK hoặc Hợp đồng. Các xe này sẽ không được phép tham gia phân công sát hạch:</p>
+            
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+              <thead>
+                <tr style="background-color: #f5f5f5;">
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Tên / Biển số</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Lý do tạm ngưng</th>
+                  <th style="padding: 12px; text-align: left; border-bottom: 2px solid #ddd; color: #333;">Ngày hết hạn</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${suspendedVehicles.map(v => `
+                  <tr style="border-bottom: 1px solid #eee;">
+                    <td style="padding: 12px; color: #444; font-weight: bold;">${v.name}</td>
+                    <td style="padding: 12px; color: #d32f2f; font-weight: bold;">${v.reason}</td>
+                    <td style="padding: 12px; color: #444;">${new Date(v.date).toLocaleDateString('vi-VN')}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
         </div>
+      `;
+    }
+
+    htmlContent += `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto 0 auto; text-align: center;">
+        <a href="https://sathach.vercel.app/manager/categories" style="display: inline-block; background-color: #1a73e8; color: white; padding: 10px 24px; text-decoration: none; border-radius: 4px; font-weight: bold;">Truy cập Hệ thống</a>
+      </div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto 0 auto; background-color: #f9f9f9; padding: 15px; text-align: center; color: #888; font-size: 12px; border-top: 1px solid #eee;">
+        <p style="margin: 0;">Email này được gửi tự động từ Hệ Thống Quản Lý Sát Hạch.</p>
+        <p style="margin: 5px 0 0 0;">Vui lòng không trả lời email này.</p>
       </div>
     `;
 
@@ -1739,7 +1809,7 @@ router.get('/cron/check-vehicles', async (req, res) => {
 
     const mailOptions: any = {
       from: `"${senderName}" <${userEmail}>`,
-      subject: 'Cảnh báo hạn kiểm định / hợp đồng xe',
+      subject: suspendedVehicles.length > 0 ? '⛔ Cảnh báo khẩn: Xe bị tạm ngưng do hết hạn' : 'Cảnh báo hạn kiểm định / hợp đồng xe',
       html: htmlContent
     };
     
