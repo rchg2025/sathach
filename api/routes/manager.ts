@@ -981,7 +981,15 @@ router.get('/station/students-v2', async (req, res) => {
       });
       const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
       if (courseIds.length > 0) {
-        studentWhere = { courseId: { in: courseIds } };
+        const courses = await prisma.course.findMany({ where: { id: { in: courseIds } } });
+        const courseNames = courses.map(c => c.name);
+        studentWhere = { 
+          OR: [
+            { courseId: { in: courseIds } },
+            { courseName: { in: courseNames } },
+            { RetakeSession: { some: { targetCourseId: { in: courseIds } } } }
+          ]
+        };
       } else {
         studentWhere = { id: -1 }; // no students
       }
