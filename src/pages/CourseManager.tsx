@@ -127,6 +127,7 @@ const CourseManager = () => {
       'STT': index + 1,
       'Tên khóa học': c.name,
       'Mô tả': c.description || '',
+      'Số lượng học viên': c._count?.students || 0,
       'Ngày bắt đầu': new Date(c.startDate).toLocaleDateString('vi-VN'),
       'Ngày kết thúc': new Date(c.endDate).toLocaleDateString('vi-VN'),
       'Trạng thái': c.isCompleted ? 'Hoàn thành' : 'Chưa hoàn thành',
@@ -192,6 +193,7 @@ const CourseManager = () => {
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Tên khóa học</th>
                 <th>Mô tả</th>
+                <th>Số lượng học viên</th>
                 <th>Ngày bắt đầu</th>
                 <th>Ngày kết thúc</th>
                 <th>Trạng thái</th>
@@ -204,6 +206,7 @@ const CourseManager = () => {
                   <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{course.name}</strong></td>
                   <td>{course.description || '-'}</td>
+                  <td>{course._count?.students || 0}</td>
                   <td>{new Date(course.startDate).toLocaleDateString()}</td>
                   <td>{new Date(course.endDate).toLocaleDateString()}</td>
                   <td>
@@ -287,6 +290,7 @@ const CourseManager = () => {
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Tên khóa học</th>
                 <th>Mô tả</th>
+                <th>Số lượng học viên</th>
                 <th>Ngày bắt đầu</th>
                 <th>Ngày kết thúc</th>
                 <th className="sticky-col-right">Hành động</th>
@@ -298,6 +302,7 @@ const CourseManager = () => {
                   <td>{idx + 1}</td>
                   <td><strong>{course.name}</strong></td>
                   <td>{course.description || '-'}</td>
+                  <td>{course._count?.students || 0}</td>
                   <td>{new Date(course.startDate).toLocaleDateString()}</td>
                   <td>{new Date(course.endDate).toLocaleDateString()}</td>
                   <td>

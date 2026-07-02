@@ -91,7 +91,13 @@ router.get('/dashboard/stats', async (req, res) => {
 // Courses CRUD
 router.get('/courses', async (req, res) => {
   try {
-    const courses = await prisma.course.findMany();
+    const courses = await prisma.course.findMany({
+      include: {
+        _count: {
+          select: { students: true }
+        }
+      }
+    });
     res.json(courses);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });
