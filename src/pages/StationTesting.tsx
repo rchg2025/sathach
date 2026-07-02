@@ -27,6 +27,8 @@ const StationTesting = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  const displayedTestTypes = testTypes.filter(tt => assignments.some((a: any) => a.testTypeId === tt.id));
+
   useEffect(() => {
     const u = localStorage.getItem('user');
     if (u) {
@@ -337,7 +339,7 @@ const StationTesting = () => {
                   <th>Khóa đào tạo</th>
                   <th>Thời gian thực hiện</th>
                   <th>Trạng thái</th>
-                  {testTypes.map((tt: any) => (
+                  {displayedTestTypes.map((tt: any) => (
                     <th key={tt.id} style={{ textAlign: 'center' }}>{tt.name}</th>
                   ))}
                   {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
@@ -385,7 +387,7 @@ const StationTesting = () => {
                         {getStudentStatus(s)}
                       </div>
                     </td>
-                    {testTypes.map((tt: any) => (
+                    {displayedTestTypes.map((tt: any) => (
                       <td key={tt.id} style={{ textAlign: 'center', fontWeight: 'bold' }}>
                         {(() => {
                           const tr = s.testResults?.find((t: any) => t.testTypeId === tt.id);
