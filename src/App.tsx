@@ -19,7 +19,7 @@ const StationTesting = lazy(() => import('./pages/StationTesting'));
 const SystemLogs = lazy(() => import('./pages/SystemLogs'));
 const ReportsManager = lazy(() => import('./pages/ReportsManager'));
 const ScoreImport = lazy(() => import('./pages/ScoreImport'));
-const RetakeManager = lazy(() => import('./pages/RetakeManager').then(m => ({ default: m.RetakeManager })));
+const RetakeManager = lazy(() => import('./pages/RetakeManager'));
 
 import './index.css';
 

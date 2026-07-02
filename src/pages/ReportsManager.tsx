@@ -75,8 +75,6 @@ const ReportsManager = () => {
     const pastTrs: any[] = [];
     
     allTrs.forEach((t: any) => {
-      const tDate = new Date(t.createdAt).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }).split(',')[0];
-      const fDate = new Date(filterDate).toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }).split(',')[0];
       // simplified comparison, filterDate is YYYY-MM-DD
       const tDateObj = new Date(t.createdAt);
       const tDateStr = new Date(tDateObj.getTime() + 7*3600*1000).toISOString().split('T')[0];
