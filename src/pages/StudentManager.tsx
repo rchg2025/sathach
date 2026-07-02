@@ -200,10 +200,11 @@ const StudentManager = () => {
     }
     
     try {
+      const cId = courseName ? dbCourses.find(c => c.name === courseName)?.id : null;
       const payload = { 
         registrationCode, name, dob, cccd, address, licenseNumber, 
         licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-        licenseDuration, courseName 
+        licenseDuration, courseName, courseId: cId
       };
       
       if (editingId) {
@@ -430,20 +431,25 @@ const StudentManager = () => {
         }
 
         // Map Excel headers to payload
-        const payload = data.map((row: any) => ({
-          courseName: row['Khóa đào tạo']?.toString() || '',
-          registrationCode: row['Mã ĐK']?.toString() || '',
-          name: row['Họ tên']?.toString() || '',
-          dob: row['Ngày sinh']?.toString() || '',
-          cccd: row['CCCD']?.toString() || '',
-          address: row['Địa chỉ']?.toString() || '',
-          licenseNumber: row['Số GPLX']?.toString() || '',
-          licenseClass: row['Hạng']?.toString() || '',
-          licenseIssueDate: row['Ngày cấp']?.toString() || '',
-          passDate: row['Ngày trúng tuyển']?.toString() || '',
-          licenseExpiryDate: row['Ngày hết hạn']?.toString() || '',
-          licenseDuration: row['Thời gian GPLX']?.toString() || ''
-        }));
+        const payload = data.map((row: any) => {
+          const cName = row['Khóa đào tạo']?.toString() || '';
+          const cId = cName ? dbCourses.find(c => c.name === cName)?.id : null;
+          return {
+            courseName: cName,
+            courseId: cId,
+            registrationCode: row['Mã ĐK']?.toString() || '',
+            name: row['Họ tên']?.toString() || '',
+            dob: row['Ngày sinh']?.toString() || '',
+            cccd: row['CCCD']?.toString() || '',
+            address: row['Địa chỉ']?.toString() || '',
+            licenseNumber: row['Số GPLX']?.toString() || '',
+            licenseClass: row['Hạng']?.toString() || '',
+            licenseIssueDate: row['Ngày cấp']?.toString() || '',
+            passDate: row['Ngày trúng tuyển']?.toString() || '',
+            licenseExpiryDate: row['Ngày hết hạn']?.toString() || '',
+            licenseDuration: row['Thời gian GPLX']?.toString() || ''
+          };
+        });
 
         const toastId = toast.loading('Đang xử lý dữ liệu...');
         
