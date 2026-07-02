@@ -119,17 +119,17 @@ const RetakeManager = () => {
         <h2>Tổ chức Thi lại (Ghép khóa)</h2>
       </div>
 
-      <div className="mb-4" style={{ borderBottom: '1px solid var(--border)' }}>
+      <div className="mb-4 tabs-container" style={{ display: 'flex', borderBottom: '1px solid var(--border)', flexWrap: 'nowrap', overflowX: 'auto' }}>
         <button
           className={`btn ${activeTab === 'pending' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ marginRight: '1rem', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ marginRight: '0.5rem', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: 'nowrap', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
           onClick={() => setActiveTab('pending')}
         >
           Học viên cần thi lại ({students.length})
         </button>
         <button
           className={`btn ${activeTab === 'scheduled' ? 'btn-primary' : 'btn-secondary'}`}
-          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}
+          style={{ borderBottomLeftRadius: 0, borderBottomRightRadius: 0, whiteSpace: 'nowrap', fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}
           onClick={() => setActiveTab('scheduled')}
         >
           Lịch thi đã xếp ({retakeSessions.length})
@@ -140,14 +140,14 @@ const RetakeManager = () => {
         <div className="card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-              <select className="form-control" style={{ flex: 1, minWidth: '300px', width: 'auto' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
-                <option value="">-- Chọn Khóa học sẽ ghép thi --</option>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap' }}>
+              <select className="form-control" style={{ flex: 1, minWidth: 0, width: 'auto', fontSize: '0.85rem', padding: '0.5rem' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
+                <option value="">-- Chọn Khóa học ghép thi --</option>
                 {courses.filter(c => !c.isCompleted).map(c => (
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap' }}>
+              <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
                 Xếp lịch
               </button>
             </div>
