@@ -119,6 +119,23 @@ const ExaminerDashboard = () => {
         const text = `Lỗi: ${criterion.name}, trừ ${criterion.pointsToDeduct} điểm`;
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'vi-VN';
+        
+        const voices = window.speechSynthesis.getVoices();
+        const viVoices = voices.filter(v => v.lang.includes('vi'));
+        
+        if (viVoices.length > 0) {
+          // Cố gắng tìm giọng nữ, ưu tiên miền Nam nếu có (tùy thuộc vào thiết bị/trình duyệt)
+          const southernFemaleVoice = viVoices.find(v => 
+            v.name.toLowerCase().includes('nam') || 
+            v.name.toLowerCase().includes('ho chi minh') ||
+            v.name.toLowerCase().includes('female')
+          );
+          utterance.voice = southernFemaleVoice || viVoices[0];
+        }
+        
+        // Tăng cao độ (pitch) lên một chút để giọng nghe thanh hơn, giống giọng nữ
+        utterance.pitch = 1.3; 
+        
         window.speechSynthesis.speak(utterance);
       }
     }
