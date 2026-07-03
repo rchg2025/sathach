@@ -114,11 +114,27 @@ const ExaminerDashboard = () => {
 
   const updateErrorCount = (criterion: any, delta: number) => {
     if (delta > 0) {
-      try {
-        const audio = new Audio('/voice_htv.mp3');
-        audio.play().catch(e => console.error('Audio play failed:', e));
-      } catch (e) {
-        console.error('Audio initialization failed', e);
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const text = `Lỗi: ${criterion.name}, trừ ${criterion.pointsToDeduct} điểm`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'vi-VN';
+        
+        const voices = window.speechSynthesis.getVoices();
+        const viVoices = voices.filter(v => v.lang.includes('vi'));
+        
+        if (viVoices.length > 0) {
+          const southernFemaleVoice = viVoices.find(v => 
+            v.name.toLowerCase().includes('nam') || 
+            v.name.toLowerCase().includes('ho chi minh') ||
+            v.name.toLowerCase().includes('female')
+          );
+          utterance.voice = southernFemaleVoice || viVoices[0];
+        }
+        
+        utterance.pitch = 1.3; 
+        
+        window.speechSynthesis.speak(utterance);
       }
     }
 
