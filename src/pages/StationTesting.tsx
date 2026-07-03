@@ -35,6 +35,11 @@ const StationTesting = () => {
       const parsedUser = JSON.parse(u);
       setUser(parsedUser);
       fetchData(parsedUser);
+
+      const interval = setInterval(() => {
+        fetchData(parsedUser);
+      }, 15000); // 15 seconds polling for near real-time updates
+      return () => clearInterval(interval);
     }
   }, []);
 
