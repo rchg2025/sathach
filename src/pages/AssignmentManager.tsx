@@ -76,40 +76,39 @@ const AssignmentManager = () => {
   }, [roleType]);
 
   const availableVehicles = React.useMemo(() => {
-    if (!assignmentDate) return vehicles;
+    if (roleType === 'EXAMINER') {
+      if (!assignmentDate || selectedTestTypes.length === 0 || !selectedCourse) return [];
+      
+      const dateStr = assignmentDate;
+      const smAssignments = assignments.filter(a => {
+        if (!a.assignmentDate) return false;
+        const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
+        return aDate === dateStr &&
+               a.examiner?.role === 'STATION_MANAGER' && 
+               selectedTestTypes.includes(String(a.testType?.id)) &&
+               String(a.courseId) === String(selectedCourse);
+      });
 
-    const dateStr = assignmentDate;
-    const assignmentsOnDate = assignments.filter(a => {
-      if (!a.assignmentDate) return false;
-      const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
-      if (editingId && a.id === editingId) return false;
-      return aDate === dateStr;
-    });
-
-    if (roleType === 'STATION_MANAGER') {
+      const smVehicleIds = new Set<string>();
+      smAssignments.forEach(a => {
+        a.vehicles?.forEach((v: any) => smVehicleIds.add(String(v.id)));
+      });
+      return vehicles.filter(v => smVehicleIds.has(String(v.id)));
+    } else {
+      if (!assignmentDate) return vehicles;
+      const dateStr = assignmentDate;
       const assignedVehicleIds = new Set<string>();
-      assignmentsOnDate.forEach(a => {
-        if (a.examiner?.role === 'STATION_MANAGER') {
+      assignments.forEach(a => {
+        if (!a.assignmentDate) return;
+        const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
+        if (aDate === dateStr && a.examiner?.role === 'STATION_MANAGER') {
+          if (editingId && a.id === editingId) return;
           a.vehicles?.forEach((v: any) => assignedVehicleIds.add(String(v.id)));
         }
       });
       return vehicles.filter(v => !assignedVehicleIds.has(String(v.id)));
-    } else if (roleType === 'EXAMINER') {
-      if (selectedTestTypes.length === 0) return [];
-      
-      const smAssignment = assignmentsOnDate.find(a => 
-        a.examiner?.role === 'STATION_MANAGER' && 
-        selectedTestTypes.includes(String(a.testType?.id))
-      );
-
-      if (!smAssignment || !smAssignment.vehicles) return [];
-      
-      const smVehicleIds = new Set(smAssignment.vehicles.map((v: any) => String(v.id)));
-      return vehicles.filter(v => smVehicleIds.has(String(v.id)));
     }
-
-    return vehicles;
-  }, [vehicles, assignments, roleType, assignmentDate, selectedTestTypes, editingId]);
+  }, [vehicles, assignments, roleType, assignmentDate, selectedTestTypes, selectedCourse, editingId]);
 
   useEffect(() => {
     setSelectedExams([]);
@@ -118,6 +117,7 @@ const AssignmentManager = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedUser) return toast.error('Vui lòng chọn người được phân công');
+    if (!selectedCourse) return toast.error('Vui lòng chọn Khóa đào tạo');
     if (selectedTestTypes.length === 0) return toast.error('Vui lòng chọn Trạm thi');
     if (roleType === 'EXAMINER' && selectedExams.length === 0) return toast.error('Vui lòng chọn ít nhất 1 Bài thi');
     if (!assignmentDate) return toast.error('Vui lòng chọn Ngày thực hiện');
@@ -305,7 +305,7 @@ const AssignmentManager = () => {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Khóa đào tạo (Tùy chọn)</label>
+              <label className="form-label">Khóa đào tạo</label>
               <Select
                 options={[{ value: '', label: '-- Chọn Khóa đào tạo --' }, ...courses.map(c => ({ value: c.id, label: c.name }))]}
                 value={
