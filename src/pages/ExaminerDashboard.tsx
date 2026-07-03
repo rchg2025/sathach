@@ -262,7 +262,7 @@ const ExaminerDashboard = () => {
                       </div>
                     </td>
                     <td>{statusInfo}</td>
-                    <td style={{ fontWeight: 'bold' }}>{score}</td>
+                    <td style={{ fontWeight: 'bold' }}>{s.showScore !== false ? score : <span className="text-muted" style={{ fontStyle: 'italic' }}>Ẩn</span>}</td>
                     <td className="sticky-col-right" style={{ textAlign: 'center' }}>
                       {(!s.currentProgress || s.currentProgress.status === 'PENDING') ? (
                         <button 
@@ -308,14 +308,22 @@ const ExaminerDashboard = () => {
             
             <div className="mb-4 text-center">
               <h5>{selectedStudent.currentExam?.name}</h5>
-              <h1 style={{ 
-                fontSize: '4rem', 
-                color: currentScore >= (selectedStudent.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)',
-                margin: '1rem 0'
-              }}>
-                {currentScore}
-              </h1>
-              <p className="text-muted">Tổng điểm hiện tại</p>
+              {selectedStudent.showScore !== false ? (
+                <>
+                  <h1 style={{ 
+                    fontSize: '4rem', 
+                    color: currentScore >= (selectedStudent.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)',
+                    margin: '1rem 0'
+                  }}>
+                    {currentScore}
+                  </h1>
+                  <p className="text-muted">Tổng điểm hiện tại</p>
+                </>
+              ) : (
+                <div style={{ margin: '2rem 0', padding: '1rem', background: '#f8f9fa', borderRadius: '8px' }}>
+                  <span className="text-muted" style={{ fontStyle: 'italic' }}>Điểm hiện tại đang được ẩn để đảm bảo tính khách quan.</span>
+                </div>
+              )}
             </div>
 
             {selectedStudent.isCombinedExam ? (

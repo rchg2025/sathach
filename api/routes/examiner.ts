@@ -94,6 +94,7 @@ router.get('/students', async (req, res) => {
               vehicle: result.vehicle,
               currentProgress,
               assignmentDate: myAssignment.assignmentDate,
+              showScore: myAssignment.showScore,
               isCombinedExam: true,
               allExams: uncompletedExams
             };
@@ -133,7 +134,8 @@ router.get('/students', async (req, res) => {
               testResultId: result.id,
               vehicle: result.vehicle,
               currentProgress: currentProgress || { status: 'PENDING' },
-              assignmentDate: myAssignment.assignmentDate
+              assignmentDate: myAssignment.assignmentDate,
+              showScore: myAssignment.showScore
             };
             studentsForExaminer.push(studentData);
           }

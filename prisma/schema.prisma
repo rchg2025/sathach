@@ -141,6 +141,7 @@ model TestAssignment {
   course         Course?       @relation(fields: [courseId], references: [id])
   vehicles       VehicleType[]
   assignmentDate DateTime?
+  showScore      Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @default(now()) @updatedAt
 }

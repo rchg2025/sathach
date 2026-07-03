@@ -27,6 +27,7 @@ const AssignmentManager = () => {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [assignmentDate, setAssignmentDate] = useState('');
+  const [showScore, setShowScore] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   // Delete modal state
@@ -130,7 +131,8 @@ const AssignmentManager = () => {
           examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
           courseId: selectedCourse ? selectedCourse : undefined,
           vehicleIds: selectedVehicles,
-          assignmentDate
+          assignmentDate,
+          showScore: roleType === 'EXAMINER' ? showScore : undefined
         });
         toast.success('Cập nhật phân công thành công!');
       } else {
@@ -140,7 +142,8 @@ const AssignmentManager = () => {
           examIds: roleType === 'EXAMINER' ? selectedExams : undefined,
           courseId: selectedCourse ? selectedCourse : undefined,
           vehicleIds: selectedVehicles,
-          assignmentDate
+          assignmentDate,
+          showScore: roleType === 'EXAMINER' ? showScore : undefined
         });
         toast.success('Phân công thành công!');
       }
@@ -153,6 +156,7 @@ const AssignmentManager = () => {
       setSelectedCourse('');
       setSelectedVehicles([]);
       setAssignmentDate('');
+      setShowScore(true);
       
       fetchData();
     } catch (err: any) {
@@ -180,6 +184,7 @@ const AssignmentManager = () => {
       if (assignment.assignmentDate) {
         setAssignmentDate(new Date(assignment.assignmentDate).toISOString().split('T')[0]);
       }
+      setShowScore(assignment.showScore ?? true);
     }, 50);
   };
 
@@ -261,6 +266,7 @@ const AssignmentManager = () => {
                 setSelectedCourse('');
                 setSelectedVehicles([]);
                 setAssignmentDate('');
+                setShowScore(true);
               }}
             >
               Hủy cập nhật
@@ -398,6 +404,20 @@ const AssignmentManager = () => {
                 onChange={(e) => setAssignmentDate(e.target.value)}
               />
             </div>
+
+            {roleType === 'EXAMINER' && (
+              <div className="form-group" style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '10px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', userSelect: 'none' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={showScore}
+                    onChange={(e) => setShowScore(e.target.checked)}
+                    style={{ marginRight: '8px', width: '18px', height: '18px' }}
+                  />
+                  <span>Cho phép hiển thị điểm hiện tại khi chấm thi</span>
+                </label>
+              </div>
+            )}
           </div>
 
             <div style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>

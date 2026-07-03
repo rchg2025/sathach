@@ -434,7 +434,7 @@ router.get('/assignments', async (req, res) => {
 });
 
 router.post('/assignments', async (req, res) => {
-  const { examinerId, testTypeIds, testTypeId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
+  const { examinerId, testTypeIds, testTypeId, examIds, courseId, assignmentDate, vehicleIds, showScore } = req.body;
   try {
     const tIds = testTypeIds && Array.isArray(testTypeIds) && testTypeIds.length > 0 ? testTypeIds : [testTypeId];
     let count = 0;
@@ -461,7 +461,7 @@ router.post('/assignments', async (req, res) => {
           return res.status(400).json({ error: `Bài thi "${exam.name}" đã được phân công cho người này với cùng khóa đào tạo và thời gian.` });
         }
 
-        const baseData = { ...recordWhere };
+        const baseData = { ...recordWhere, showScore: showScore !== undefined ? showScore : true };
         if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
           baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
         }
@@ -480,7 +480,7 @@ router.post('/assignments', async (req, res) => {
         if (courseId) whereData.courseId = Number(courseId);
         if (assignmentDate) whereData.assignmentDate = new Date(assignmentDate);
 
-        const baseData = { ...whereData };
+        const baseData = { ...whereData, showScore: showScore !== undefined ? showScore : true };
         if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
           baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
         }
@@ -501,7 +501,7 @@ router.post('/assignments', async (req, res) => {
 
 router.put('/assignments/:id', async (req, res) => {
   const { id } = req.params;
-  const { examinerId, testTypeId, examId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
+  const { examinerId, testTypeId, examId, examIds, courseId, assignmentDate, vehicleIds, showScore } = req.body;
   try {
     const mainExamId = examIds && examIds.length > 0 ? Number(examIds[0]) : (examId ? Number(examId) : null);
     
@@ -512,6 +512,10 @@ router.put('/assignments/:id', async (req, res) => {
       courseId: courseId ? Number(courseId) : null,
       assignmentDate: assignmentDate ? new Date(assignmentDate) : null,
     };
+    
+    if (showScore !== undefined) {
+      data.showScore = showScore;
+    }
 
     if (vehicleIds && Array.isArray(vehicleIds)) {
       data.vehicles = { set: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
@@ -537,7 +541,7 @@ router.put('/assignments/:id', async (req, res) => {
 
         const existing = await prisma.testAssignment.findFirst({ where: recordWhere });
         if (!existing) {
-          const baseData = { ...recordWhere };
+          const baseData = { ...recordWhere, showScore: showScore !== undefined ? showScore : true };
           if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
             baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
           }
