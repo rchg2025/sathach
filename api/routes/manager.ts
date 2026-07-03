@@ -501,12 +501,14 @@ router.post('/assignments', async (req, res) => {
 
 router.put('/assignments/:id', async (req, res) => {
   const { id } = req.params;
-  const { examinerId, testTypeId, examId, courseId, assignmentDate, vehicleIds } = req.body;
+  const { examinerId, testTypeId, examId, examIds, courseId, assignmentDate, vehicleIds } = req.body;
   try {
+    const mainExamId = examIds && examIds.length > 0 ? Number(examIds[0]) : (examId ? Number(examId) : null);
+    
     const data: any = {
       examinerId: Number(examinerId),
       testTypeId: Number(testTypeId),
-      examId: examId ? Number(examId) : null,
+      examId: mainExamId,
       courseId: courseId ? Number(courseId) : null,
       assignmentDate: assignmentDate ? new Date(assignmentDate) : null,
     };
@@ -521,6 +523,29 @@ router.put('/assignments/:id', async (req, res) => {
       where: { id: Number(id) },
       data
     });
+
+    if (examIds && Array.isArray(examIds) && examIds.length > 1) {
+      const remainingExamIds = examIds.slice(1);
+      for (const eId of remainingExamIds) {
+        const recordWhere: any = {
+          examinerId: Number(examinerId),
+          testTypeId: Number(testTypeId),
+          examId: Number(eId)
+        };
+        if (courseId) recordWhere.courseId = Number(courseId);
+        if (assignmentDate) recordWhere.assignmentDate = new Date(assignmentDate);
+
+        const existing = await prisma.testAssignment.findFirst({ where: recordWhere });
+        if (!existing) {
+          const baseData = { ...recordWhere };
+          if (vehicleIds && Array.isArray(vehicleIds) && vehicleIds.length > 0) {
+            baseData.vehicles = { connect: vehicleIds.map((vId: any) => ({ id: Number(vId) })) };
+          }
+          await prisma.testAssignment.create({ data: baseData });
+        }
+      }
+    }
+
     res.json(assignment);
   } catch (error) { 
     console.error('Update assignment error:', error);
