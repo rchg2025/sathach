@@ -355,10 +355,20 @@ const AssignmentManager = () => {
               <div className="form-group">
                 <label className="form-label">Bài thi</label>
                 <Select
-                  isMulti
+                  isMulti={!editingId}
                   options={filteredExams.map(e => ({ value: String(e.id), label: e.name }))}
-                  value={filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))}
-                  onChange={(selected: any) => setSelectedExams(selected ? selected.map((s: any) => s.value) : [])}
+                  value={
+                    !editingId
+                      ? filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))
+                      : filteredExams.filter(e => selectedExams[0] === String(e.id)).map(e => ({ value: String(e.id), label: e.name }))[0]
+                  }
+                  onChange={(selected: any) => {
+                    if (!editingId) {
+                      setSelectedExams(selected ? selected.map((s: any) => s.value) : [])
+                    } else {
+                      setSelectedExams(selected ? [selected.value] : [])
+                    }
+                  }}
                   placeholder="Tìm chọn bài thi..."
                   styles={{ 
                     control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),

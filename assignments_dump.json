@@ -1,0 +1,94 @@
+[
+  {
+    "id": 37,
+    "examinerId": 5,
+    "testTypeId": 6,
+    "examId": null,
+    "courseId": 1,
+    "assignmentDate": "2026-07-02T00:00:00.000Z",
+    "createdAt": "2026-07-02T07:57:45.343Z",
+    "updatedAt": "2026-07-02T07:57:45.343Z",
+    "examiner": {
+      "id": 5,
+      "username": "dvtuan",
+      "password": "$2b$10$cAbmuwYi0UMhqazhLEObhe8gI7xRweacdmvaB9NDb8lQVJAUDTdyi",
+      "name": "Đỗ Văn Tuấn",
+      "phone": "",
+      "email": "tuan@namsaigon.edu.vn",
+      "role": "STATION_MANAGER",
+      "isActive": true,
+      "avatarUrl": null,
+      "createdAt": "2026-06-30T07:35:25.579Z",
+      "updatedAt": "2026-07-02T06:14:54.374Z",
+      "resetOtp": null,
+      "resetOtpExpiry": null,
+      "isOnline": false,
+      "lastPingAt": "2026-07-02T06:14:50.923Z"
+    },
+    "course": {
+      "id": 1,
+      "name": "Khóa 186",
+      "description": "Ô tô hạng B số sàn khóa 186",
+      "startDate": "2026-06-30T00:00:00.000Z",
+      "endDate": "2026-07-12T00:00:00.000Z",
+      "isCompleted": false,
+      "createdAt": "2026-06-30T05:04:42.681Z",
+      "updatedAt": "2026-07-01T01:15:55.082Z"
+    },
+    "testType": {
+      "id": 6,
+      "name": "Mô phỏng",
+      "description": "",
+      "maxScore": 100,
+      "passingScore": 80,
+      "createdAt": "2026-07-02T01:36:56.477Z",
+      "updatedAt": "2026-07-02T01:36:56.477Z"
+    }
+  },
+  {
+    "id": 38,
+    "examinerId": 4,
+    "testTypeId": 6,
+    "examId": 16,
+    "courseId": 1,
+    "assignmentDate": "2026-07-02T00:00:00.000Z",
+    "createdAt": "2026-07-02T07:59:38.458Z",
+    "updatedAt": "2026-07-02T07:59:38.458Z",
+    "examiner": {
+      "id": 4,
+      "username": "nvhanh",
+      "password": "$2b$10$WXj5wP.tNmCSmFYVXbZy2eeDEQ/jxRspOT/fs2G9ezfjUjAJcRUrS",
+      "name": "Nguyễn Văn Hạnh",
+      "phone": "0913628489",
+      "email": "nguyenvanhanh@nsg.edu.vn",
+      "role": "EXAMINER",
+      "isActive": true,
+      "avatarUrl": null,
+      "createdAt": "2026-06-30T02:47:29.190Z",
+      "updatedAt": "2026-07-02T06:24:02.674Z",
+      "resetOtp": null,
+      "resetOtpExpiry": null,
+      "isOnline": false,
+      "lastPingAt": "2026-07-02T06:20:17.716Z"
+    },
+    "course": {
+      "id": 1,
+      "name": "Khóa 186",
+      "description": "Ô tô hạng B số sàn khóa 186",
+      "startDate": "2026-06-30T00:00:00.000Z",
+      "endDate": "2026-07-12T00:00:00.000Z",
+      "isCompleted": false,
+      "createdAt": "2026-06-30T05:04:42.681Z",
+      "updatedAt": "2026-07-01T01:15:55.082Z"
+    },
+    "testType": {
+      "id": 6,
+      "name": "Mô phỏng",
+      "description": "",
+      "maxScore": 100,
+      "passingScore": 80,
+      "createdAt": "2026-07-02T01:36:56.477Z",
+      "updatedAt": "2026-07-02T01:36:56.477Z"
+    }
+  }
+]
