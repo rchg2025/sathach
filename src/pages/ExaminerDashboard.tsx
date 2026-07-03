@@ -292,11 +292,11 @@ const ExaminerDashboard = () => {
         <div className="modal-backdrop" style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '1rem', overflowY: 'auto'
         }}>
           <div className="modal-content" style={{
             background: 'white', padding: '2rem', borderRadius: '15px',
-            width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto',
+            width: '100%', maxWidth: '800px', maxHeight: '100vh', overflowY: 'auto',
             boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
           }}>
             <div className="flex justify-between items-center mb-4">
@@ -332,11 +332,11 @@ const ExaminerDashboard = () => {
                           const errCount = errors[c.id] || 0;
                           return (
                             <tr key={c.id}>
-                              <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
+                              <td style={{ verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
                                 <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                                 <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                               </td>
-                              <td style={{ width: '20%', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
+                              <td style={{ width: '130px', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
                                 <div className="d-flex align-items-center justify-content-center" style={{ gap: '8px' }}>
                                   <button 
                                     className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
@@ -380,11 +380,11 @@ const ExaminerDashboard = () => {
                       const errCount = errors[c.id] || 0;
                       return (
                         <tr key={c.id}>
-                          <td style={{ width: '80%', verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
+                          <td style={{ verticalAlign: 'middle', padding: '12px', wordWrap: 'break-word', whiteSpace: 'normal' }}>
                             <div style={{ fontWeight: '600', fontSize: '0.95rem', lineHeight: '1.3' }}>{c.name}</div>
                             <div className="text-danger small mt-1">Trừ {c.pointsToDeduct} điểm / lỗi</div>
                           </td>
-                          <td style={{ width: '20%', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
+                          <td style={{ width: '130px', verticalAlign: 'middle', padding: '12px', textAlign: 'center' }}>
                             <div className="d-flex align-items-center justify-content-center" style={{ gap: '8px' }}>
                               <button 
                                 className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
