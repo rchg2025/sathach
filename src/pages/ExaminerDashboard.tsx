@@ -112,12 +112,22 @@ const ExaminerDashboard = () => {
     }
   };
 
-  const updateErrorCount = (criterionId: number, delta: number) => {
+  const updateErrorCount = (criterion: any, delta: number) => {
+    if (delta > 0) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const text = `Lỗi: ${criterion.name}, trừ ${criterion.pointsToDeduct} điểm`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'vi-VN';
+        window.speechSynthesis.speak(utterance);
+      }
+    }
+
     setErrors(prev => {
-      const current = prev[criterionId] || 0;
+      const current = prev[criterion.id] || 0;
       const next = current + delta;
       if (next < 0) return prev;
-      return { ...prev, [criterionId]: next };
+      return { ...prev, [criterion.id]: next };
     });
   };
 
@@ -320,7 +330,7 @@ const ExaminerDashboard = () => {
                                   <button 
                                     className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
                                     style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
-                                    onClick={() => updateErrorCount(c.id, -1)}
+                                    onClick={() => updateErrorCount(c, -1)}
                                     disabled={errCount === 0}
                                   >
                                     <Minus size={20} />
@@ -331,7 +341,7 @@ const ExaminerDashboard = () => {
                                   <button 
                                     className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
                                     style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
-                                    onClick={() => updateErrorCount(c.id, 1)}
+                                    onClick={() => updateErrorCount(c, 1)}
                                   >
                                     <Plus size={20} />
                                   </button>
@@ -368,7 +378,7 @@ const ExaminerDashboard = () => {
                               <button 
                                 className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
                                 style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
-                                onClick={() => updateErrorCount(c.id, -1)}
+                                onClick={() => updateErrorCount(c, -1)}
                                 disabled={errCount === 0}
                               >
                                 <Minus size={20} />
@@ -379,7 +389,7 @@ const ExaminerDashboard = () => {
                               <button 
                                 className="btn btn-light p-0 d-flex align-items-center justify-content-center" 
                                 style={{ width: '38px', height: '38px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '8px', flexShrink: 0 }}
-                                onClick={() => updateErrorCount(c.id, 1)}
+                                onClick={() => updateErrorCount(c, 1)}
                               >
                                 <Plus size={20} />
                               </button>
