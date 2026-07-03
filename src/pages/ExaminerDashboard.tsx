@@ -16,8 +16,6 @@ const ExaminerDashboard = () => {
   const [errors, setErrors] = useState<{ [criterionId: number]: number }>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [baseScore, setBaseScore] = useState<number>(100);
-  const [isStartModalOpen, setIsStartModalOpen] = useState(false);
-  const [examToStart, setExamToStart] = useState<any>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -45,14 +43,12 @@ const ExaminerDashboard = () => {
     }
   };
 
-  const openStartModal = (student: any) => {
-    setSelectedStudent(student);
+  const handleStartExamClick = (student: any) => {
+    let examToStart = student.currentExam;
     if (!student.isCombinedExam && student.allAvailableExams && student.allAvailableExams.length > 1) {
-      setExamToStart(student.allAvailableExams[0]);
-    } else {
-      setExamToStart(student.currentExam);
+      examToStart = student.allAvailableExams[0];
     }
-    setIsStartModalOpen(true);
+    startExam(student, examToStart);
   };
 
   const startExam = async (student: any, selectedExam: any) => {
@@ -71,8 +67,6 @@ const ExaminerDashboard = () => {
 
       await axios.post(`${API_BASE_URL}/api/examiner/start-exam`, payload);
       toast.success('Đã bắt đầu chấm bài thi');
-      
-      setIsStartModalOpen(false);
       
       const updatedStudent = { 
         ...student,
@@ -124,15 +118,17 @@ const ExaminerDashboard = () => {
         const viVoices = voices.filter(v => v.lang.includes('vi'));
         
         if (viVoices.length > 0) {
-          const southernFemaleVoice = viVoices.find(v => 
-            v.name.toLowerCase().includes('nam') || 
+          const preferredVoice = viVoices.find(v => 
+            v.name.toLowerCase().includes('hoaimy') || 
             v.name.toLowerCase().includes('ho chi minh') ||
-            v.name.toLowerCase().includes('female')
+            v.name.toLowerCase().includes('female') ||
+            v.name.toLowerCase().includes('nữ')
           );
-          utterance.voice = southernFemaleVoice || viVoices[0];
+          utterance.voice = preferredVoice || viVoices[0];
         }
         
-        utterance.pitch = 1.3; 
+        utterance.pitch = 1.2;
+        utterance.rate = 0.95;
         
         window.speechSynthesis.speak(utterance);
       }
@@ -270,8 +266,8 @@ const ExaminerDashboard = () => {
                     <td className="sticky-col-right" style={{ textAlign: 'center' }}>
                       {(!s.currentProgress || s.currentProgress.status === 'PENDING') ? (
                         <button 
-                          className="btn btn-warning btn-sm rounded-pill px-3"
-                          onClick={() => openStartModal(s)}
+                          className="btn btn-primary d-flex align-items-center rounded-pill px-3 shadow-sm"
+                          onClick={() => handleStartExamClick(s)}
                         >
                           Bắt đầu chấm
                         </button>
@@ -434,57 +430,6 @@ const ExaminerDashboard = () => {
         </div>
       )}
 
-      {isStartModalOpen && selectedStudent && (
-        <div className="modal-backdrop" style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1050,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div className="modal-content" style={{
-            background: 'white', padding: '2rem', borderRadius: '15px',
-            width: '100%', maxWidth: '500px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.2)'
-          }}>
-            <h4 style={{ margin: '0 0 20px 0', color: 'var(--primary)' }}>
-              Bắt đầu chấm điểm
-            </h4>
-            
-            <div className="mb-3">
-              <label className="form-label" style={{ fontWeight: 'bold' }}>Học viên</label>
-              <input type="text" className="form-control bg-light" value={selectedStudent.name} readOnly />
-            </div>
-
-            <div className="mb-4">
-              <label className="form-label" style={{ fontWeight: 'bold' }}>Bài thi</label>
-              {(!selectedStudent.isCombinedExam && selectedStudent.allAvailableExams && selectedStudent.allAvailableExams.length > 1) ? (
-                <select 
-                  className="form-select"
-                  value={examToStart?.id || ''}
-                  onChange={(e) => {
-                    const ex = selectedStudent.allAvailableExams.find((x: any) => x.id === Number(e.target.value));
-                    if (ex) setExamToStart(ex);
-                  }}
-                >
-                  {selectedStudent.allAvailableExams.map((ex: any) => (
-                    <option key={ex.id} value={ex.id}>{ex.name}</option>
-                  ))}
-                </select>
-              ) : (
-                <input type="text" className="form-control bg-light" value={selectedStudent.isCombinedExam ? "Thi đường trường (Tất cả bài)" : examToStart?.name} readOnly />
-              )}
-            </div>
-
-            <div className="d-flex justify-content-end gap-2">
-              <button className="btn btn-light" onClick={() => setIsStartModalOpen(false)}>Hủy</button>
-              <button 
-                className="btn btn-primary"
-                onClick={() => startExam(selectedStudent, examToStart)}
-              >
-                Bắt đầu
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </AdminLayout>
   );
