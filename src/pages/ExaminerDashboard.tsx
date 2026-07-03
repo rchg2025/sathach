@@ -430,7 +430,6 @@ const ExaminerDashboard = () => {
         </div>
       )}
 
-      )}
     </AdminLayout>
   );
 };
