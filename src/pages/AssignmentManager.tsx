@@ -167,15 +167,10 @@ const AssignmentManager = () => {
   const handleEdit = (assignment: any) => {
     setEditingId(assignment.id);
     setRoleType(assignment.examiner?.role || 'STATION_MANAGER');
+    setSelectedTestTypes([String(assignment.testTypeId)]);
     
-    // We need to use setTimeout to allow roleType effect to run and reset fields
-    // But since we want to populate them, we bypass the effect's reset behavior
-    // by setting them immediately. The effects will run but won't undo these if we structure it carefully,
-    // actually the effects will wipe them if roleType changes!
-    // To fix that, we can wrap the resets in the effects to check if editingId is set, or just use a small timeout.
     setTimeout(() => {
       setSelectedUser(String(assignment.examinerId));
-      setSelectedTestTypes([String(assignment.testTypeId)]);
       setSelectedCourse(assignment.courseId ? String(assignment.courseId) : '');
       setSelectedVehicles(assignment.vehicles?.map((v: any) => String(v.id)) || []);
       if (assignment.examId) {
