@@ -547,11 +547,12 @@ const StationTesting = () => {
                   options={
                     (selectedAssignment?.vehicles?.length > 0 ? selectedAssignment.vehicles : vehicles)
                       .filter((v: any) => {
-                         // Filter out vehicles that are currently IN_PROGRESS
-                         const inProgressVehicles = students.flatMap(s => s.testResults || [])
-                            .filter((tr: any) => tr.status === 'IN_PROGRESS' && tr.vehicleId)
-                            .map((tr: any) => tr.vehicleId);
-                         return !inProgressVehicles.includes(v.id);
+                         const inProgressCount = students.flatMap(s => s.testResults || [])
+                            .filter((tr: any) => tr.status === 'IN_PROGRESS' && tr.vehicleId === v.id).length;
+                         
+                         const isDuongTruong = selectedTestType?.name?.toLowerCase().includes('đường trường');
+                         const maxCount = isDuongTruong ? 4 : 1;
+                         return inProgressCount < maxCount;
                       })
                       .map((v: any) => ({ value: v.id, label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))
                   }

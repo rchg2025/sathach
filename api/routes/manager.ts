@@ -1123,7 +1123,25 @@ router.post('/station/start-test', async (req, res) => {
     });
     
     const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
-    const maxScore = testType?.maxScore || 100;
+    if (!testType) return res.status(404).json({ error: 'Không tìm thấy trạm thi' });
+
+    // Check vehicle occupancy
+    if (vehicleId) {
+      const inProgressCount = await prisma.testResult.count({
+        where: {
+          vehicleId: Number(vehicleId),
+          status: 'IN_PROGRESS'
+        }
+      });
+      const isDuongTruong = testType.name.toLowerCase().includes('đường trường');
+      const maxOccupancy = isDuongTruong ? 4 : 1;
+      
+      if (inProgressCount >= maxOccupancy) {
+        return res.status(400).json({ error: `Xe này đã đủ số lượng học viên đang thi (tối đa ${maxOccupancy} người). Vui lòng chọn xe khác.` });
+      }
+    }
+
+    const maxScore = testType.maxScore || 100;
 
     if (testResult) {
       testResult = await prisma.testResult.update({
