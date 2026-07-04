@@ -4,9 +4,10 @@ import React from 'react';
 interface PrintTemplateProps {
   students: any[];
   testTypes?: any[];
+  printDate?: string;
 }
 
-const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [] }) => {
+const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [], printDate }) => {
   return (
     <div className="print-template-container">
       <style>
@@ -137,7 +138,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [] 
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
+                    Ngày thi: <strong>{printDate ? formatDateDisplay(printDate) : formatDateDisplay(new Date())}</strong>
                   </td>
                   <td></td>
                 </tr>

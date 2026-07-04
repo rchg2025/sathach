@@ -4,9 +4,10 @@ import React from 'react';
 interface PrintErrorTemplateProps {
   students: any[];
   testTypes?: any[];
+  printDate?: string;
 }
 
-const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testTypes = [] }) => {
+const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testTypes = [], printDate }) => {
   return (
     <div className="print-error-template-container">
       <style>
@@ -164,7 +165,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
+                    Ngày thi: <strong>{printDate ? formatDateDisplay(printDate) : formatDateDisplay(new Date())}</strong>
                   </td>
                   <td></td>
                 </tr>

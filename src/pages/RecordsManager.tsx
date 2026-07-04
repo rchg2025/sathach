@@ -202,7 +202,7 @@ const RecordsManager = () => {
         </div>
 
         <div className="print-only">
-          <PrintRecordTemplate records={printRecords} />
+          <PrintRecordTemplate records={printRecords} printDate={filterDate !== 'ALL' ? filterDate : undefined} />
         </div>
 
         <div className="card no-print" style={{ padding: '0' }}>

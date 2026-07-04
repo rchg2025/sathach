@@ -3,9 +3,10 @@ import React from 'react';
 
 interface PrintRecordTemplateProps {
   records: any[];
+  printDate?: string;
 }
 
-const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records }) => {
+const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records, printDate }) => {
   return (
     <div className="print-record-template-container">
       <style>
@@ -169,7 +170,7 @@ const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records }) =>
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
+                    Ngày thi: <strong>{printDate ? formatDateDisplay(printDate) : formatDateDisplay(new Date())}</strong>
                   </td>
                   <td style={{ paddingBottom: '5px' }}>
                     Trạm chấm: <strong>{testResult.testType?.name || '................'}</strong>

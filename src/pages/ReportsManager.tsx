@@ -296,9 +296,9 @@ const ReportsManager = () => {
 
         <div className="print-only">
           {printType === 'RESULT' ? (
-            <PrintTemplate students={printStudents} testTypes={displayedTestTypes} />
+            <PrintTemplate students={printStudents} testTypes={displayedTestTypes} printDate={filterDate !== 'ALL' ? filterDate : undefined} />
           ) : (
-            <PrintErrorTemplate students={printStudents} testTypes={displayedTestTypes} />
+            <PrintErrorTemplate students={printStudents} testTypes={displayedTestTypes} printDate={filterDate !== 'ALL' ? filterDate : undefined} />
           )}
         </div>
         
