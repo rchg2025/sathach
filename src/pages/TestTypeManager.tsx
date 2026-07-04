@@ -11,7 +11,7 @@ const TestTypeManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [testTypes, setTestTypes] = useState([]);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null, isDuongTruong?: boolean}>({isOpen: false, id: null});
   
   // Form state
   const [name, setName] = useState('');
@@ -41,6 +41,17 @@ const TestTypeManager = () => {
 
   const handleAddTestType = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (editingId) {
+      const originalTestType = testTypes.find((t: any) => t.id === editingId);
+      const isOriginalDuongTruong = originalTestType && (originalTestType as any).name.toLowerCase().includes('đường trường');
+      
+      if (isOriginalDuongTruong && !name.toLowerCase().includes('đường trường')) {
+        toast.error('Đây là trạm thi bắt buộc sử dụng tên phải có chữ Đường trường vui lòng đặt tên sao cho phải có chữ Đường trường do có liên kết các thông tin và cấu trúc khác.', { duration: 5000 });
+        return;
+      }
+    }
+
     try {
       const payload = { name, description, maxScore, passingScore };
       if (editingId) {
@@ -76,7 +87,9 @@ const TestTypeManager = () => {
   };
 
   const handleDelete = (id: number) => {
-    setDeleteModal({ isOpen: true, id });
+    const originalTestType = testTypes.find((t: any) => t.id === id);
+    const isDuongTruong = originalTestType && (originalTestType as any).name.toLowerCase().includes('đường trường');
+    setDeleteModal({ isOpen: true, id, isDuongTruong });
   };
 
   const confirmDelete = async () => {
@@ -226,7 +239,7 @@ const TestTypeManager = () => {
       <ConfirmModal
         isOpen={deleteModal.isOpen}
         title="Xác nhận xóa"
-        message="Bạn có chắc chắn muốn xóa loại sát hạch này không?"
+        message={deleteModal.isDuongTruong ? "Đây là trạm thi bắt buộc do có cấu hình riêng vui lòng xác nhận có muốn xoá hay không." : "Bạn có chắc chắn muốn xóa loại sát hạch này không?"}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteModal({ isOpen: false, id: null })}
       />
