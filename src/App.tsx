@@ -18,6 +18,7 @@ const SettingsManager = lazy(() => import('./pages/SettingsManager'));
 const StationTesting = lazy(() => import('./pages/StationTesting'));
 const SystemLogs = lazy(() => import('./pages/SystemLogs'));
 const ReportsManager = lazy(() => import('./pages/ReportsManager'));
+const RecordsManager = lazy(() => import('./pages/RecordsManager'));
 const ScoreImport = lazy(() => import('./pages/ScoreImport'));
 const RetakeManager = lazy(() => import('./pages/RetakeManager'));
 
@@ -105,6 +106,7 @@ function App() {
           <Route path="/manager/testing" element={<StationTesting />} />
           <Route path="/manager/system-logs" element={<SystemLogs />} />
           <Route path="/manager/reports" element={<ReportsManager />} />
+          <Route path="/manager/records" element={<RecordsManager />} />
           <Route path="/manager/import-scores" element={<ScoreImport />} />
           <Route path="/examiner" element={<ExaminerDashboard />} />
           <Route path="/profile" element={<Profile />} />

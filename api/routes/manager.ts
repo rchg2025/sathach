@@ -1884,4 +1884,81 @@ router.get('/cron/check-vehicles', async (req, res) => {
   }
 });
 
+router.get('/examiner-records', async (req, res) => {
+  const { date, courseId } = req.query;
+  
+  try {
+    let targetDateMidnight: Date | null = null;
+    let nextDateMidnight: Date | null = null;
+
+    if (date && typeof date === 'string' && date !== 'ALL') {
+      targetDateMidnight = new Date(`${date}T00:00:00+07:00`);
+      nextDateMidnight = new Date(`${date}T00:00:00+07:00`);
+      nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
+    } else if (date !== 'ALL') {
+      const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+      const vnTime = new Date(vnTimeString);
+      const vnYear = vnTime.getFullYear();
+      const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+      const vnDate = String(vnTime.getDate()).padStart(2, '0');
+      targetDateMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+      nextDateMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+      nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
+    }
+
+    let progressWhere: any = {};
+    if (targetDateMidnight && nextDateMidnight) {
+      progressWhere.createdAt = {
+        gte: targetDateMidnight,
+        lt: nextDateMidnight
+      };
+    }
+    if (courseId && courseId !== 'ALL') {
+      progressWhere.testResult = {
+        student: {
+          courseId: Number(courseId)
+        }
+      };
+    }
+
+    const progresses = await prisma.examProgress.findMany({
+      where: progressWhere,
+      include: {
+        examiner: true,
+        exam: true,
+        testResult: {
+          include: {
+            student: {
+              include: { course: true }
+            },
+            testType: true,
+            vehicle: true,
+            scores: {
+              include: {
+                criterion: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const assignments = await prisma.testAssignment.findMany({
+      where: {
+        courseId: courseId && courseId !== 'ALL' ? Number(courseId) : undefined
+      },
+      include: {
+        testType: true,
+        exam: true
+      }
+    });
+
+    res.json({ progresses, assignments });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
