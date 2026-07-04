@@ -3,6 +3,9 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
 
+import toast from 'react-hot-toast';
+import ConfirmModal from '../components/ConfirmModal';
+
 const RetakeManager = () => {
   const [user, setUser] = useState<any>(null);
   const [students, setStudents] = useState<any[]>([]);
@@ -13,6 +16,7 @@ const RetakeManager = () => {
   const [targetCourseId, setTargetCourseId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'scheduled'>('pending');
+  const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -39,11 +43,9 @@ const RetakeManager = () => {
 
       const allStudents = resEligibility.data;
       
-      // Filter students who have failed or absent
       const eligibleStudents = allStudents.filter((s: any) => {
         if (!s.testResults || s.testResults.length === 0) return false;
         
-        // Has failed or absent
         const hasFailedOrAbsent = s.testResults.some((tr: any) => 
           tr.status === 'FAILED' || tr.status === 'ABSENT' || (tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80))
         );
@@ -56,7 +58,7 @@ const RetakeManager = () => {
       setCourses(resCourses.data);
     } catch (error) {
       console.error('Error fetching data', error);
-      alert('Không thể tải dữ liệu');
+      toast.error('Không thể tải dữ liệu');
     } finally {
       setLoading(false);
     }
@@ -72,11 +74,11 @@ const RetakeManager = () => {
 
   const handleCreateRetake = async () => {
     if (selectedStudentIds.length === 0) {
-      alert('Vui lòng chọn ít nhất 1 học viên');
+      toast.error('Vui lòng chọn ít nhất 1 học viên');
       return;
     }
     if (!targetCourseId) {
-      alert('Vui lòng chọn khóa học để ghép thi');
+      toast.error('Vui lòng chọn khóa học để ghép thi');
       return;
     }
 
@@ -87,26 +89,33 @@ const RetakeManager = () => {
       }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      alert('Đã xếp lịch thi lại thành công');
+      toast.success('Đã xếp lịch thi lại thành công');
       setSelectedStudentIds([]);
       setTargetCourseId('');
       fetchData();
     } catch (error) {
       console.error('Error scheduling retake', error);
-      alert('Có lỗi xảy ra');
+      toast.error('Có lỗi xảy ra');
     }
   };
 
-  const handleDeleteRetake = async (id: number) => {
-    if (!window.confirm('Bạn có chắc muốn hủy lịch thi ghép này?')) return;
+  const handleDeleteRetake = (id: number) => {
+    setDeleteModal({ isOpen: true, id });
+  };
+
+  const confirmDeleteRetake = async () => {
+    if (deleteModal.id === null) return;
     try {
-      await axios.delete(`${API_BASE_URL}/api/manager/retakes/${id}`, {
+      await axios.delete(`${API_BASE_URL}/api/manager/retakes/${deleteModal.id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       fetchData();
+      toast.success('Hủy lịch thi ghép thành công');
     } catch (error) {
       console.error('Error deleting retake session', error);
-      alert('Có lỗi xảy ra');
+      toast.error('Có lỗi xảy ra');
+    } finally {
+      setDeleteModal({ isOpen: false, id: null });
     }
   };
 
@@ -252,6 +261,14 @@ const RetakeManager = () => {
         </div>
       )}
       </div>
+
+      <ConfirmModal
+        isOpen={deleteModal.isOpen}
+        title="Xác nhận hủy ghép"
+        message="Bạn có chắc muốn hủy lịch thi ghép này?"
+        onConfirm={confirmDeleteRetake}
+        onCancel={() => setDeleteModal({ isOpen: false, id: null })}
+      />
     </AdminLayout>
   );
 };

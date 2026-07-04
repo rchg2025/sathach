@@ -1,7 +1,5 @@
 import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { API_BASE_URL } from './config';
 import { Search, UserCircle } from 'lucide-react';
 import { Toaster } from 'react-hot-toast';
 const Login = lazy(() => import('./pages/Login'));
@@ -26,14 +24,16 @@ import './index.css';
 
 
 
+import { fetchSettingsCached } from './utils/apiCache';
+
 const PublicHeader = () => {
   const location = useLocation();
   const [logoUrl, setLogoUrl] = useState('');
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/manager/settings`)
-      .then(res => {
-        if (res.data.logo_url) setLogoUrl(res.data.logo_url);
+    fetchSettingsCached()
+      .then(settings => {
+        if (settings.logo_url) setLogoUrl(settings.logo_url);
       })
       .catch(console.error);
   }, []);
@@ -63,9 +63,8 @@ const PublicHeader = () => {
 
 const GlobalSEOUpdater = () => {
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/api/manager/settings`)
-      .then(res => {
-        const settings = res.data;
+    fetchSettingsCached()
+      .then(settings => {
         if (settings.seo_title) {
           document.title = settings.seo_title;
           document.querySelector('meta[property="og:title"]')?.setAttribute('content', settings.seo_title);

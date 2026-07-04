@@ -702,6 +702,7 @@ router.get('/settings', async (req, res) => {
       acc[setting.key] = setting.value;
       return acc;
     }, {});
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=120');
     res.json(settingsMap);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
 });

@@ -8,6 +8,8 @@ import { toTitleCase } from '../utils/stringUtils';
 import { Pagination } from '../components/Pagination';
 import { API_BASE_URL } from '../config';
 
+import ConfirmModal from '../components/ConfirmModal';
+
 const StationTesting = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
@@ -21,6 +23,8 @@ const StationTesting = () => {
   const [selectedTestType, setSelectedTestType] = useState<any>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [availableAssignments, setAvailableAssignments] = useState<any[]>([]);
+  
+  const [confirmAction, setConfirmAction] = useState<{ isOpen: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
@@ -426,9 +430,15 @@ const StationTesting = () => {
                                 className="btn" 
                                 style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
                                 onClick={() => {
-                                  if(window.confirm(`Xác nhận kết thúc phần thi của ${s.name}?`)) {
-                                    handleEndTest(s);
-                                  }
+                                  setConfirmAction({
+                                    isOpen: true,
+                                    title: 'Kết thúc phần thi',
+                                    message: `Xác nhận kết thúc phần thi của ${s.name}?`,
+                                    onConfirm: () => {
+                                      handleEndTest(s);
+                                      setConfirmAction(null);
+                                    }
+                                  });
                                 }}
                               >
                                 <CheckCircle size={16} /> Kết thúc {myAssignments.length > 1 ? `(${inProgressTestType?.name})` : ''}
@@ -455,9 +465,15 @@ const StationTesting = () => {
                                   className="btn btn-secondary" 
                                   style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                                   onClick={() => {
-                                    if(window.confirm(`Xác nhận đánh dấu vắng thi cho ${s.name}?`)) {
-                                      handleMarkAbsent(s);
-                                    }
+                                    setConfirmAction({
+                                      isOpen: true,
+                                      title: 'Xác nhận vắng thi',
+                                      message: `Xác nhận đánh dấu vắng thi cho ${s.name}?`,
+                                      onConfirm: () => {
+                                        handleMarkAbsent(s);
+                                        setConfirmAction(null);
+                                      }
+                                    });
                                   }}
                                 >
                                   <UserX size={16} /> Vắng
@@ -578,6 +594,14 @@ const StationTesting = () => {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        isOpen={confirmAction?.isOpen || false}
+        title={confirmAction?.title || ''}
+        message={confirmAction?.message || ''}
+        onConfirm={confirmAction?.onConfirm || (() => {})}
+        onCancel={() => setConfirmAction(null)}
+      />
     </AdminLayout>
   );
 };
