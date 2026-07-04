@@ -5,6 +5,7 @@ import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
+import { formatDateDisplay } from '../utils/dateUtils';
 
 const ScoreImport = () => {
   const [user, setUser] = useState<any>(null);
@@ -18,32 +19,60 @@ const ScoreImport = () => {
     }
   }, []);
 
-  const downloadTemplate = () => {
-    const templateData = [{
-      'CCCD': '031202003583',
-      'Khóa đào tạo': 'Khóa 186',
-      'Trạm thi': 'Đường trường',
-      'Điểm còn lại': 80,
-      'Các lỗi vi phạm': 'Không thắt dây an toàn (x1), Chết máy (x2)',
-      'Trạng thái': 'ĐẬU'
-    }];
-    
-    const worksheet = XLSX.utils.json_to_sheet(templateData);
-    
-    // Auto-size columns
-    const colWidths = [
-      { wch: 15 }, // CCCD
-      { wch: 15 }, // Khóa đào tạo
-      { wch: 20 }, // Trạm thi
-      { wch: 15 }, // Điểm còn lại
-      { wch: 50 }, // Các lỗi vi phạm
-      { wch: 15 }  // Trạng thái
-    ];
-    worksheet['!cols'] = colWidths;
+  const downloadTemplate = async () => {
+    const toastId = toast.loading('Đang tạo file mẫu...');
+    try {
+      const [resCourses, resTestTypes] = await Promise.all([
+        axios.get(`${API_BASE_URL}/api/manager/courses`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } }),
+        axios.get(`${API_BASE_URL}/api/manager/test-types`, { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      ]);
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
-    XLSX.writeFile(workbook, 'Mau-import-diem.xlsx');
+      const coursesData = resCourses.data.map((c: any) => ({
+        'Tên Khóa': c.name,
+        'Mô tả': c.description || '',
+        'Ngày bắt đầu': c.startDate ? formatDateDisplay(c.startDate) : '',
+        'Ngày kết thúc': c.endDate ? formatDateDisplay(c.endDate) : ''
+      }));
+
+      const testTypesData = resTestTypes.data.map((t: any) => ({
+        'Tên Trạm (Tiêu chí)': t.name,
+        'Mô tả': t.description || '',
+        'Điểm tối đa': t.maxScore,
+        'Điểm chuẩn đậu': t.passingScore
+      }));
+
+      const templateData = [{
+        'CCCD': '031202003583',
+        'Khóa đào tạo': resCourses.data.length > 0 ? resCourses.data[0].name : 'Khóa 186',
+        'Trạm thi': resTestTypes.data.length > 0 ? resTestTypes.data[0].name : 'Đường trường',
+        'Điểm còn lại': 80,
+        'Các lỗi vi phạm': 'Không thắt dây an toàn (x1), Chết máy (x2)',
+        'Trạng thái': 'ĐẬU'
+      }];
+      
+      const workbook = XLSX.utils.book_new();
+
+      // Sheet 1: Template
+      const worksheet = XLSX.utils.json_to_sheet(templateData);
+      worksheet['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 15 }, { wch: 50 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+
+      // Sheet 2: Danh sách Trạm thi
+      const wsTestTypes = XLSX.utils.json_to_sheet(testTypesData.length > 0 ? testTypesData : [{ 'Thông báo': 'Chưa có dữ liệu' }]);
+      wsTestTypes['!cols'] = [{ wch: 25 }, { wch: 40 }, { wch: 15 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(workbook, wsTestTypes, 'Danh sách Trạm thi');
+
+      // Sheet 3: Danh sách Khóa học
+      const wsCourses = XLSX.utils.json_to_sheet(coursesData.length > 0 ? coursesData : [{ 'Thông báo': 'Chưa có dữ liệu' }]);
+      wsCourses['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 15 }];
+      XLSX.utils.book_append_sheet(workbook, wsCourses, 'Danh sách Khóa học');
+
+      XLSX.writeFile(workbook, 'Mau-import-diem.xlsx');
+      toast.success('Đã tải xuống file mẫu', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi tạo file mẫu', { id: toastId });
+    }
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
