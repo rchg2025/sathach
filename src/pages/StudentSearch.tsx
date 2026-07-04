@@ -92,46 +92,19 @@ const StudentSearch = () => {
     return () => stopPolling();
   }, []);
 
-  const uniqueDates = useMemo(() => {
+  const displayResults = useMemo(() => {
     if (!student?.testResults) return [];
-    const dts = [...new Set(student.testResults.map((r: any) => {
-      const d = new Date(r.createdAt);
-      return new Date(d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
-    }))];
-    return (dts as string[]).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+    return student.testResults;
   }, [student]);
 
-  const [selectedDate, setSelectedDate] = useState<string>('');
-
-  useEffect(() => {
-    if (uniqueDates.length > 0 && (!selectedDate || !uniqueDates.includes(selectedDate))) {
-      setSelectedDate(uniqueDates[0]);
-    }
-  }, [uniqueDates, selectedDate]);
-
-  const displayResults = useMemo(() => {
-    if (!student?.testResults || !selectedDate) return [];
-    return student.testResults.filter((r: any) => {
-      const d = new Date(r.createdAt);
-      const dateStr = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
-      return dateStr === selectedDate;
-    });
-  }, [student, selectedDate]);
-
   const overallResult = useMemo(() => {
-    if (!student || !selectedDate) return null;
+    if (!student) return null;
     
     const courseId = student.courseId;
     const courseName = student.course?.name;
     const activeAssignments = (student.assignments || []).filter((a: any) => {
-      let dateMatch = true;
-      if (a.assignmentDate) {
-        const ad = new Date(a.assignmentDate);
-        const adStr = new Date(ad.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" })).toISOString().split('T')[0];
-        dateMatch = adStr === selectedDate;
-      }
       const courseMatch = a.courseId === courseId || (courseName && a.course?.name === courseName);
-      return dateMatch && courseMatch;
+      return courseMatch;
     });
 
     const activeTestTypes = new Set(activeAssignments.map((a: any) => a.testType?.id));
@@ -158,7 +131,7 @@ const StudentSearch = () => {
     if (isFail) return 'RỚT';
     if (activeTestTypes.size > 0 && completedCount >= activeTestTypes.size) return 'ĐẬU';
     return 'ĐANG THI';
-  }, [student, selectedDate, displayResults]);
+  }, [student, displayResults]);
 
   return (
     <div style={{
@@ -204,26 +177,10 @@ const StudentSearch = () => {
               </div>
             </div>
 
-            {uniqueDates.length > 1 && (
-              <div style={{ marginBottom: '1.5rem', background: '#fff', padding: '1rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}>
-                <label style={{ fontWeight: 'bold', marginRight: '1rem' }}>Chọn ngày thi:</label>
-                <select 
-                  className="form-control" 
-                  style={{ width: 'auto', display: 'inline-block' }}
-                  value={selectedDate} 
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                >
-                  {uniqueDates.map(d => (
-                    <option key={d} value={d}>{d.split('-').reverse().join('/')}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            {student && selectedDate && (
+            {student && (
               <div style={{ marginBottom: '1.5rem', background: '#fff', padding: '1.5rem', borderRadius: '8px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <h4 style={{ margin: 0, color: 'var(--primary)' }}>Kết quả tổng hợp ({selectedDate.split('-').reverse().join('/')})</h4>
+                  <h4 style={{ margin: 0, color: 'var(--primary)' }}>Kết quả tổng hợp</h4>
                   <div className="text-muted text-sm mt-1">
                     Đã hoàn thành: {displayResults.filter((r: any) => ['TRANSFERRED', 'FINISHED', 'FAILED', 'ABSENT'].includes(r.status)).length} trạm
                   </div>
@@ -247,7 +204,12 @@ const StudentSearch = () => {
                     </span>
                   )}
                   
-                  <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>{result.testType?.name}</h4>
+                  <h4 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>
+                    {result.testType?.name}
+                    <span className="text-muted" style={{ fontSize: '0.85rem', fontWeight: 'normal', marginLeft: '0.5rem' }}>
+                      ({new Date(result.createdAt).toLocaleString('vi-VN')})
+                    </span>
+                  </h4>
                   
                   <div className="flex justify-between items-center mb-4">
                     <div>
