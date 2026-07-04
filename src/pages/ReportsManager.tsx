@@ -40,16 +40,17 @@ const ReportsManager = () => {
         window.location.href = '/manager';
         return;
       }
-      fetchData(parsedUser, filterDate);
+      fetchData(parsedUser, filterDate, filterCourse);
     } else {
       window.location.href = '/login';
     }
-  }, [filterDate]);
+  }, [filterDate, filterCourse]);
 
-  const fetchData = async (currentUser: any, date: string) => {
+  const fetchData = async (currentUser: any, date: string, courseId: string) => {
     try {
+      const queryDate = date ? date : 'ALL';
       const [studentsRes, coursesRes, testTypesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${date}`),
+        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${queryDate}&courseId=${courseId}`),
         axios.get(`${API_BASE_URL}/api/manager/courses`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`)
       ]);
@@ -222,9 +223,8 @@ const ReportsManager = () => {
           status: tr.status
         });
       }
-      toast.success('Đã cập nhật điểm thi thành công!');
       setEditingStudent(null);
-      fetchData(user, filterDate);
+      fetchData(user, filterDate, filterCourse);
     } catch (e: any) {
       toast.error(e.response?.data?.error || 'Lỗi cập nhật điểm thi');
     }

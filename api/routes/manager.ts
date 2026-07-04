@@ -989,18 +989,18 @@ router.get('/station/students', async (req, res) => {
 });
 
 router.get('/station/students-v2', async (req, res) => {
-  const { userId, role, date } = req.query;
+  const { userId, role, date, courseId } = req.query;
   if (!userId || !role) return res.status(400).json({ error: 'Missing parameters' });
   
   try {
-    let targetDateMidnight: Date;
-    let nextDateMidnight: Date;
+    let targetDateMidnight: Date | null = null;
+    let nextDateMidnight: Date | null = null;
 
-    if (date && typeof date === 'string') {
+    if (date && typeof date === 'string' && date !== 'ALL') {
       targetDateMidnight = new Date(`${date}T00:00:00+07:00`);
       nextDateMidnight = new Date(`${date}T00:00:00+07:00`);
       nextDateMidnight.setDate(nextDateMidnight.getDate() + 1);
-    } else {
+    } else if (date !== 'ALL') {
       const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
       const vnTime = new Date(vnTimeString);
       const vnYear = vnTime.getFullYear();
@@ -1015,20 +1015,27 @@ router.get('/station/students-v2', async (req, res) => {
     let assignments: any[] = [];
 
     if (role === 'ADMIN' || role === 'MANAGER') {
-      // Admin/Manager needs assignments to know which test types are active today
+      // Admin/Manager needs assignments to know which test types are active
+      let assignmentWhere: any = { examiner: { role: 'STATION_MANAGER' } };
+      
+      if (targetDateMidnight && nextDateMidnight) {
+        assignmentWhere.OR = [
+          { assignmentDate: null },
+          { 
+            assignmentDate: { 
+              gte: targetDateMidnight,
+              lt: nextDateMidnight
+            } 
+          }
+        ];
+      }
+      
+      if (courseId && courseId !== 'ALL') {
+        assignmentWhere.courseId = Number(courseId);
+      }
+
       assignments = await prisma.testAssignment.findMany({
-        where: { 
-          examiner: { role: 'STATION_MANAGER' },
-          OR: [
-            { assignmentDate: null },
-            { 
-              assignmentDate: { 
-                gte: targetDateMidnight,
-                lt: nextDateMidnight
-              } 
-            }
-          ]
-        },
+        where: assignmentWhere,
         include: { testType: true, course: true, vehicles: true }
       });
       const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
@@ -1046,19 +1053,24 @@ router.get('/station/students-v2', async (req, res) => {
         studentWhere = { id: -1 }; // no students
       }
     } else if (role === 'STATION_MANAGER') {
+      let assignmentWhere: any = { examinerId: Number(userId) };
+      if (targetDateMidnight && nextDateMidnight) {
+        assignmentWhere.OR = [
+          { assignmentDate: null },
+          { 
+            assignmentDate: { 
+              gte: targetDateMidnight,
+              lt: nextDateMidnight
+            } 
+          }
+        ];
+      }
+      if (courseId && courseId !== 'ALL') {
+        assignmentWhere.courseId = Number(courseId);
+      }
+      
       assignments = await prisma.testAssignment.findMany({
-        where: { 
-          examinerId: Number(userId),
-          OR: [
-            { assignmentDate: null },
-            { 
-              assignmentDate: { 
-                gte: targetDateMidnight,
-                lt: nextDateMidnight
-              } 
-            }
-          ]
-        },
+        where: assignmentWhere,
         include: { testType: true, course: true, vehicles: true }
       });
       const courseIds = [...new Set(assignments.map(a => a.courseId).filter(Boolean))] as number[];
