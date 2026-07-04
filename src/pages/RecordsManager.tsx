@@ -8,6 +8,7 @@ import AdminLayout from '../components/AdminLayout';
 import PrintRecordTemplate from '../components/PrintRecordTemplate';
 import { API_BASE_URL } from '../config';
 import { useDebounce } from '../hooks/useDebounce';
+import { getLocalDateString } from '../utils/dateUtils';
 
 const RecordsManager = () => {
   const [records, setRecords] = useState<any[]>([]);
@@ -17,7 +18,7 @@ const RecordsManager = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCourse, setFilterCourse] = useState('ALL');
-  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(() => getLocalDateString());
   
   const [printRecords, setPrintRecords] = useState<any[]>([]);
   

@@ -9,6 +9,7 @@ import PrintTemplate from '../components/PrintTemplate';
 import PrintErrorTemplate from '../components/PrintErrorTemplate';
 import { API_BASE_URL } from '../config';
 import { useDebounce } from '../hooks/useDebounce';
+import { getLocalDateString } from '../utils/dateUtils';
 
 const ReportsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -21,7 +22,7 @@ const ReportsManager = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(() => getLocalDateString());
   
   const [printStudents, setPrintStudents] = useState<any[]>([]);
   const [printType, setPrintType] = useState<'RESULT' | 'ERROR'>('RESULT');
