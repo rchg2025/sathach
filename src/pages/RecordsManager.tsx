@@ -22,7 +22,7 @@ const RecordsManager = () => {
   const [printRecords, setPrintRecords] = useState<any[]>([]);
   
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -147,6 +147,7 @@ const RecordsManager = () => {
         'CCCD': r.student.cccd,
         'Khóa đào tạo': r.student.courseName || (r.student.course && r.student.course.name) || '-',
         'Trạm chấm': r.testResult.testType?.name,
+        'Biển số': r.testResult.vehicle?.name || '-',
         'Bài chấm': r.activeExams.map((e: any) => e.name).join(', '),
         'Tổng điểm trừ': `-${totalDeduction}`,
         'Điểm còn lại': r.testResult.totalScore,
@@ -160,7 +161,7 @@ const RecordsManager = () => {
     
     const wscols = [
       { wch: 5 }, { wch: 25 }, { wch: 25 }, { wch: 15 }, 
-      { wch: 20 }, { wch: 20 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
+      { wch: 20 }, { wch: 20 }, { wch: 15 }, { wch: 30 }, { wch: 15 }, { wch: 15 }, { wch: 15 }
     ];
     worksheet['!cols'] = wscols;
 
@@ -235,10 +236,11 @@ const RecordsManager = () => {
                   <th>Giám khảo</th>
                   <th>Trạm chấm</th>
                   <th>Học viên</th>
+                  <th style={{ textAlign: 'center' }}>Biển số</th>
                   <th>Bài chấm</th>
                   <th style={{ textAlign: 'center' }}>Tổng điểm trừ</th>
                   <th style={{ textAlign: 'center' }}>Điểm còn lại</th>
-                  <th className="no-print sticky-col-right" style={{ textAlign: 'center' }}>Thao tác</th>
+                  <th className="no-print sticky-col-right" style={{ textAlign: 'center', position: 'sticky', right: 0, backgroundColor: 'var(--surface, white)', zIndex: 10 }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -264,6 +266,7 @@ const RecordsManager = () => {
                         <div><strong>{r.student.name}</strong></div>
                         <div className="text-muted" style={{ fontSize: '0.85em' }}>CCCD: {r.student.cccd}</div>
                       </td>
+                      <td style={{ textAlign: 'center', fontWeight: 'bold' }}>{r.testResult.vehicle?.name || '-'}</td>
                       <td>
                         <div style={{ fontSize: '0.9em', maxWidth: '250px', whiteSpace: 'normal' }}>
                           {r.activeExams.map((e: any) => e.name).join(', ')}
@@ -275,7 +278,7 @@ const RecordsManager = () => {
                       <td style={{ textAlign: 'center', fontWeight: 'bold', color: r.testResult.totalScore < (r.testResult.testType?.passingScore ?? 80) ? 'var(--danger)' : 'var(--success)' }}>
                         {r.testResult.totalScore}
                       </td>
-                      <td className="no-print sticky-col-right" style={{ textAlign: 'center' }}>
+                      <td className="no-print sticky-col-right" style={{ textAlign: 'center', position: 'sticky', right: 0, backgroundColor: 'var(--surface, white)', zIndex: 1 }}>
                         <div style={{ display: 'flex', gap: '4px', justifyContent: 'center' }}>
                           <button 
                             className="btn btn-sm btn-primary" 
