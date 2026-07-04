@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -9,6 +10,8 @@ import Select from 'react-select';
 import ConfirmModal from '../components/ConfirmModal';
 import { Pagination } from '../components/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
+import { getLocalDateString } from '../utils/dateUtils';
+
 const AssignmentManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   
@@ -83,7 +86,7 @@ const AssignmentManager = () => {
       const dateStr = assignmentDate;
       const smAssignments = assignments.filter(a => {
         if (!a.assignmentDate) return false;
-        const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
+        const aDate = getLocalDateString(a.assignmentDate);
         return aDate === dateStr &&
                a.examiner?.role === 'STATION_MANAGER' && 
                selectedTestTypes.includes(String(a.testType?.id)) &&
@@ -101,7 +104,7 @@ const AssignmentManager = () => {
       const assignedVehicleIds = new Set<string>();
       assignments.forEach(a => {
         if (!a.assignmentDate) return;
-        const aDate = new Date(a.assignmentDate).toISOString().split('T')[0];
+        const aDate = getLocalDateString(a.assignmentDate);
         if (aDate === dateStr && a.examiner?.role === 'STATION_MANAGER') {
           if (editingId && a.id === editingId) return;
           a.vehicles?.forEach((v: any) => assignedVehicleIds.add(String(v.id)));
@@ -177,7 +180,7 @@ const AssignmentManager = () => {
         setSelectedExams([String(assignment.examId)]);
       }
       if (assignment.assignmentDate) {
-        setAssignmentDate(new Date(assignment.assignmentDate).toISOString().split('T')[0]);
+        setAssignmentDate(getLocalDateString(assignment.assignmentDate));
       }
       setShowScore(assignment.showScore ?? true);
     }, 50);
@@ -215,7 +218,7 @@ const AssignmentManager = () => {
       'Trạm thi': a.testType?.name || '',
       'Bài thi': a.exam?.name || '',
       'Số xe': a.vehicles?.map((v: any) => v.name).join(', ') || '',
-      'Thời gian thực hiện': a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : ''
+      'Thời gian thực hiện': a.assignmentDate ? formatDateDisplay(a.assignmentDate) : ''
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(data);
@@ -530,7 +533,7 @@ const AssignmentManager = () => {
                       </div>
                     ) : '-'}
                   </td>
-                  <td>{a.assignmentDate ? new Date(a.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
+                  <td>{a.assignmentDate ? formatDateDisplay(a.assignmentDate) : '-'}</td>
                   <td className="sticky-col-right" style={{ textAlign: 'center' }}>
                     <button className="action-btn btn-edit" onClick={() => handleEdit(a)} title="Sửa phân công" style={{ marginRight: '8px' }}>
                       <Edit size={16} />

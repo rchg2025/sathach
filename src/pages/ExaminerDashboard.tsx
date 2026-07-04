@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { Play, CheckCircle, Plus, Minus } from 'lucide-react';
@@ -255,7 +256,7 @@ const ExaminerDashboard = () => {
                     <td>{s.cccd}</td>
                     <td><span className="badge badge-info">{s.vehicle?.name || '-'}</span></td>
                     <td>{s.course?.name || s.courseName || '-'}</td>
-                    <td>{s.assignmentDate ? new Date(s.assignmentDate).toLocaleDateString('vi-VN') : '-'}</td>
+                    <td>{s.assignmentDate ? formatDateDisplay(s.assignmentDate) : '-'}</td>
                     <td>
                       <div className="badge badge-primary" style={{ display: 'inline-flex', padding: '0.4rem 0.6rem', fontSize: '0.9rem' }}>
                         {s.currentExam?.name || '-'}

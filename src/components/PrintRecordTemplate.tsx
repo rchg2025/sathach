@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React from 'react';
 
 interface PrintRecordTemplateProps {
@@ -92,7 +93,7 @@ const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records }) =>
 
         const formatDate = (date: Date | null) => {
           if (!date) return '...';
-          return date.toLocaleTimeString('vi-VN', { hour12: false }) + ' ' + date.toLocaleDateString('vi-VN');
+          return date.toLocaleTimeString('vi-VN', { hour12: false }) + ' ' + formatDateDisplay(date);
         };
 
         const calcTotalTime = (start: Date | null, end: Date | null) => {
@@ -168,7 +169,7 @@ const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records }) =>
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
                   </td>
                   <td style={{ paddingBottom: '5px' }}>
                     Trạm chấm: <strong>{testResult.testType?.name || '................'}</strong>

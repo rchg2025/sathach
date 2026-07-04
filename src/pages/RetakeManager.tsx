@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
@@ -242,7 +243,7 @@ const RetakeManager = () => {
                     <td>
                       <span className="badge badge-primary">{session.targetCourse?.name}</span>
                     </td>
-                    <td>{new Date(session.createdAt).toLocaleDateString('vi-VN')}</td>
+                    <td>{formatDateDisplay(session.createdAt)}</td>
                     <td>
                       <button className="btn btn-danger btn-sm" onClick={() => handleDeleteRetake(session.id)}>
                         Hủy ghép

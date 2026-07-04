@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -131,7 +132,7 @@ const VehicleTypeManager = () => {
     const diffTime = d.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    const dateFormatted = d.toLocaleDateString('vi-VN');
+    const dateFormatted = formatDateDisplay(d);
     
     if (diffDays < 0) {
       return (
@@ -280,9 +281,9 @@ const VehicleTypeManager = () => {
       'Hãng xe': v.brand || '',
       'Chủ xe': v.owner || '',
       'Năm SX': v.manufacturingYear || '',
-      'Hạn GĐK': v.inspectionExpiry ? new Date(v.inspectionExpiry).toLocaleDateString('vi-VN') : '',
-      'Hạn HĐ (Từ)': v.contractStart ? new Date(v.contractStart).toLocaleDateString('vi-VN') : '',
-      'Hạn HĐ (Đến)': v.contractEnd ? new Date(v.contractEnd).toLocaleDateString('vi-VN') : '',
+      'Hạn GĐK': v.inspectionExpiry ? formatDateDisplay(v.inspectionExpiry) : '',
+      'Hạn HĐ (Từ)': v.contractStart ? formatDateDisplay(v.contractStart) : '',
+      'Hạn HĐ (Đến)': v.contractEnd ? formatDateDisplay(v.contractEnd) : '',
       'Trạng thái': v.isActive ? 'Hoạt động' : 'Tạm ngưng',
       'Ghi chú': v.description || ''
     }));

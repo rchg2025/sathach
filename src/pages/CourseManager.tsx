@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -128,10 +129,10 @@ const CourseManager = () => {
       'Tên khóa học': c.name,
       'Mô tả': c.description || '',
       'Số lượng học viên': c._count?.students || 0,
-      'Ngày bắt đầu': new Date(c.startDate).toLocaleDateString('vi-VN'),
-      'Ngày kết thúc': new Date(c.endDate).toLocaleDateString('vi-VN'),
+      'Ngày bắt đầu': formatDateDisplay(c.startDate),
+      'Ngày kết thúc': formatDateDisplay(c.endDate),
       'Trạng thái': c.isCompleted ? 'Hoàn thành' : 'Chưa hoàn thành',
-      'Ngày tạo': new Date(c.createdAt).toLocaleDateString('vi-VN')
+      'Ngày tạo': formatDateDisplay(c.createdAt)
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -207,8 +208,8 @@ const CourseManager = () => {
                   <td><strong>{course.name}</strong></td>
                   <td>{course.description || '-'}</td>
                   <td>{course._count?.students || 0}</td>
-                  <td>{new Date(course.startDate).toLocaleDateString()}</td>
-                  <td>{new Date(course.endDate).toLocaleDateString()}</td>
+                  <td>{formatDateDisplay(course.startDate)}</td>
+                  <td>{formatDateDisplay(course.endDate)}</td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <label className="toggle-switch">
@@ -303,8 +304,8 @@ const CourseManager = () => {
                   <td><strong>{course.name}</strong></td>
                   <td>{course.description || '-'}</td>
                   <td>{course._count?.students || 0}</td>
-                  <td>{new Date(course.startDate).toLocaleDateString()}</td>
-                  <td>{new Date(course.endDate).toLocaleDateString()}</td>
+                  <td>{formatDateDisplay(course.startDate)}</td>
+                  <td>{formatDateDisplay(course.endDate)}</td>
                   <td>
                     <button className="action-btn btn-view" title="Xem danh sách học viên" onClick={() => navigate('/manager/students?course=' + encodeURIComponent(course.name))}><Users size={16} /></button>
                   </td>

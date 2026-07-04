@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
@@ -178,7 +179,7 @@ const UserManager = () => {
       "Trạng thái": u.isActive ? "Đang hoạt động" : "Bị khóa",
       "Số điện thoại": u.phone || "",
       "Email": u.email || "",
-      "Ngày tạo": new Date(u.createdAt).toLocaleDateString('vi-VN')
+      "Ngày tạo": formatDateDisplay(u.createdAt)
     }));
     const ws = XLSX.utils.json_to_sheet(exportData);
     const wb = XLSX.utils.book_new();

@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -119,7 +120,7 @@ const TestTypeManager = () => {
       'Mô tả': t.description || '',
       'Điểm tối đa': t.maxScore || 100,
       'Điểm đạt': t.passingScore || 80,
-      'Ngày tạo': new Date(t.createdAt).toLocaleDateString('vi-VN')
+      'Ngày tạo': formatDateDisplay(t.createdAt)
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);

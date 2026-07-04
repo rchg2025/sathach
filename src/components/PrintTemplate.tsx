@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React from 'react';
 
 interface PrintTemplateProps {
@@ -136,7 +137,7 @@ const PrintTemplate: React.FC<PrintTemplateProps> = ({ students, testTypes = [] 
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
                   </td>
                   <td></td>
                 </tr>

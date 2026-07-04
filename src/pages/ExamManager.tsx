@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -124,7 +125,7 @@ const ExamManager = () => {
       'Thuộc Trạm thi': e.testType?.name || '',
       'Mô tả': e.description || '',
       'Số lượng tiêu chí': e.criteria?.length || 0,
-      'Ngày tạo': new Date(e.createdAt).toLocaleDateString('vi-VN')
+      'Ngày tạo': formatDateDisplay(e.createdAt)
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);

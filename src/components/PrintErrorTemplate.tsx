@@ -1,3 +1,4 @@
+import { formatDateDisplay } from '../utils/dateUtils';
 import React from 'react';
 
 interface PrintErrorTemplateProps {
@@ -163,7 +164,7 @@ const PrintErrorTemplate: React.FC<PrintErrorTemplateProps> = ({ students, testT
                 </tr>
                 <tr>
                   <td style={{ paddingBottom: '5px' }}>
-                    Ngày thi: <strong>{new Date().toLocaleDateString('vi-VN')}</strong>
+                    Ngày thi: <strong>{formatDateDisplay(new Date())}</strong>
                   </td>
                   <td></td>
                 </tr>
