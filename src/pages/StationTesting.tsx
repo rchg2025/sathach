@@ -592,17 +592,7 @@ const StationTesting = () => {
                               <button 
                                 className="btn" 
                                 style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#10b981', color: 'white' }}
-                                onClick={() => {
-                                  setConfirmAction({
-                                    isOpen: true,
-                                    title: 'Kết thúc phần thi',
-                                    message: `Xác nhận kết thúc phần thi của ${s.name}?`,
-                                    onConfirm: () => {
-                                      handleEndTest(s);
-                                      setConfirmAction(null);
-                                    }
-                                  });
-                                }}
+                                onClick={() => handleEndTest(s)}
                               >
                                 <CheckCircle size={16} /> Kết thúc {myAssignments.length > 1 ? `(${inProgressTestType?.name})` : ''}
                               </button>
