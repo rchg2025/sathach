@@ -59,37 +59,56 @@ const StationTesting = () => {
         }
       } as any);
       
-      html5QrCode.start(
-        { 
-          facingMode: "environment",
-          width: { ideal: 1920, min: 1280 },
-          height: { ideal: 1080, min: 720 },
-          advanced: [{ focusMode: "continuous" }]
-        } as any,
-        {
-          fps: 15,
-          disableFlip: false,
-        },
-        (decodedText) => {
-          let value = decodedText.trim();
-          if (value.includes('|')) {
-            const parts = value.split('|');
-            if (parts[0] && parts[0].length >= 12) {
-              value = parts[0].substring(0, 12);
-            }
+      const onScanSuccess = (decodedText: string) => {
+        let value = decodedText.trim();
+        if (value.includes('|')) {
+          const parts = value.split('|');
+          if (parts[0] && parts[0].length >= 12) {
+            value = parts[0].substring(0, 12);
           }
-          setSearchQuery(value);
-          setIsScannerOpen(false);
-          toast.success('Đã quét thành công CCCD!');
-        },
-        () => {
-          // ignore scan errors
         }
-      ).catch(err => {
-        console.error(err);
-        toast.error('Không thể truy cập camera. Vui lòng cấp quyền.');
+        setSearchQuery(value);
         setIsScannerOpen(false);
-      });
+        toast.success('Đã quét thành công CCCD!');
+      };
+
+      const startScanner = async () => {
+        try {
+          // Attempt 1: High resolution & environment camera (ideal for phones)
+          await html5QrCode!.start(
+            { 
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 }
+            } as any,
+            { fps: 15, disableFlip: false },
+            onScanSuccess,
+            () => {}
+          );
+        } catch (err: any) {
+          console.warn("High res scan failed, trying fallback...", err);
+          try {
+            // Attempt 2: Safest fallback (let browser decide camera and resolution)
+            await html5QrCode!.start(
+              { facingMode: { ideal: "environment" } } as any,
+              { fps: 10, disableFlip: false },
+              onScanSuccess,
+              () => {}
+            );
+          } catch (fallbackErr: any) {
+            console.error("Fallback scanner failed:", fallbackErr);
+            const errMsg = fallbackErr?.name || fallbackErr?.message || '';
+            if (errMsg.includes('NotAllowedError') || errMsg.includes('permission')) {
+              alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Cho phép" (Allow) quyền Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
+            } else {
+              toast.error('Không thể bật camera. Lỗi: ' + errMsg);
+            }
+            setIsScannerOpen(false);
+          }
+        }
+      };
+
+      startScanner();
     }
 
     return () => {
