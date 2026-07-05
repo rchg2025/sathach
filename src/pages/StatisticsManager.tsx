@@ -17,6 +17,7 @@ const StatisticsManager = () => {
   
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterDate, setFilterDate] = useState(() => getLocalDateString());
+  const [filterTestType, setFilterTestType] = useState('ALL');
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -147,6 +148,7 @@ const StatisticsManager = () => {
     const errorCounts: Record<string, number> = {};
     courseFilteredStudents.forEach(s => {
       s.testResults?.forEach((tr: any) => {
+        if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
         tr.scores?.forEach((score: any) => {
           if (score.criterion) {
             const criterionName = score.criterion.name;
@@ -160,7 +162,7 @@ const StatisticsManager = () => {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-  }, [courseFilteredStudents]);
+  }, [courseFilteredStudents, filterTestType]);
 
   // Tỉ lệ vi phạm theo bài thi
   const testTypeViolationStats = useMemo(() => {
@@ -204,6 +206,15 @@ const StatisticsManager = () => {
             <div style={{ minWidth: '100%' }}>
               <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Ngày sát hạch</label>
               <input type="date" className="form-control" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
+            </div>
+            <div style={{ minWidth: '100%' }}>
+              <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Bài thi (Trạm thi)</label>
+              <select className="form-control" value={filterTestType} onChange={(e) => setFilterTestType(e.target.value)}>
+                <option value="ALL">Tất cả các bài thi</option>
+                {displayedTestTypes.map((tt: any) => (
+                  <option key={tt.id} value={tt.id.toString()}>{tt.name}</option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
