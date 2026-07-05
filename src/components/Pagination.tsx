@@ -9,15 +9,15 @@ interface PaginationProps {
 export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages, onPageChange }) => {
   const getPageNumbers = () => {
     const pages = [];
-    if (totalPages <= 7) {
+    if (totalPages <= 5) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      if (currentPage <= 4) {
-        pages.push(1, 2, 3, 4, 5, '...', totalPages);
-      } else if (currentPage >= totalPages - 3) {
-        pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+      if (currentPage <= 3) {
+        pages.push(1, 2, 3, 4, '...', totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1, '...', totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
       } else {
         pages.push(1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages);
       }
@@ -26,9 +26,10 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages,
   };
 
   return (
-    <div className="pagination flex" style={{ gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+    <div className="pagination flex" style={{ gap: '0.25rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem', paddingBottom: '1rem' }}>
       <button 
         className="btn btn-outline" 
+        style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
         disabled={currentPage === 1} 
         onClick={() => onPageChange(currentPage - 1)}
       >
@@ -38,7 +39,10 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages,
         <button 
           key={index} 
           className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
-          style={page === '...' ? { pointerEvents: 'none', border: 'none', background: 'transparent', padding: '0.5rem' } : {}}
+          style={page === '...' 
+            ? { pointerEvents: 'none', border: 'none', background: 'transparent', padding: '0.25rem 0.5rem', fontSize: '0.85rem' } 
+            : { padding: '0.25rem 0.65rem', fontSize: '0.85rem', minWidth: '32px' }
+          }
           onClick={() => typeof page === 'number' && onPageChange(page)}
           disabled={page === '...'}
         >
@@ -47,6 +51,7 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages,
       ))}
       <button 
         className="btn btn-outline" 
+        style={{ padding: '0.25rem 0.5rem', fontSize: '0.85rem' }}
         disabled={currentPage === totalPages} 
         onClick={() => onPageChange(currentPage + 1)}
       >
