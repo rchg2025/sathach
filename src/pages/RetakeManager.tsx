@@ -155,31 +155,34 @@ const RetakeManager = () => {
         <div className="card">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap' }}>
-              <select className="form-control" style={{ flex: 1, minWidth: 0, width: 'auto', fontSize: '0.85rem', padding: '0.5rem' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
-                <option value="">-- Chọn Khóa học ghép thi --</option>
-                {courses.filter(c => !c.isCompleted).map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-              <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap', flexShrink: 0, fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
-                Xếp lịch
-              </button>
-            </div>
-          </div>
-
-          <div className="row mb-3">
-            <div className="col-md-4">
-              <select className="form-control" value={filterCourseId} onChange={e => setFilterCourseId(e.target.value)}>
-                <option value="">-- Lọc theo Khóa gốc --</option>
-                {[...new Set(students.map(s => s.courseId))].map(courseId => {
-                  const course = courses.find(c => c.id === courseId);
-                  const name = course ? course.name : (students.find(s => s.courseId === courseId)?.courseName || 'Không xác định');
-                  return (
-                    <option key={courseId} value={String(courseId)}>{name}</option>
-                  );
-                })}
-              </select>
+            
+            <div className="row g-2">
+              <div className="col-12 col-md-4">
+                <select className="form-control" value={filterCourseId} onChange={e => setFilterCourseId(e.target.value)}>
+                  <option value="">-- Lọc theo Khóa gốc --</option>
+                  {[...new Set(students.map(s => s.courseId))].map(courseId => {
+                    const course = courses.find(c => c.id === courseId);
+                    const name = course ? course.name : (students.find(s => s.courseId === courseId)?.courseName || 'Không xác định');
+                    return (
+                      <option key={courseId} value={String(courseId)}>{name}</option>
+                    );
+                  })}
+                </select>
+              </div>
+              
+              <div className="col-12 col-md-8">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap' }}>
+                  <select className="form-control" style={{ flex: 1, minWidth: 0, width: 'auto' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
+                    <option value="">-- Chọn Khóa học ghép thi --</option>
+                    {courses.filter(c => !c.isCompleted).map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    Xếp lịch
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
 
