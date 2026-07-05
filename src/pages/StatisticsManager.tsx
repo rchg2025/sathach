@@ -618,7 +618,9 @@ const StatisticsManager = () => {
                           <div>
                             <h4 style={{ margin: '0 0 0.25rem 0', fontWeight: 600 }}>{tr.testType?.name || 'Trạm thi'}</h4>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                              Trạng thái: <strong style={{ color: tr.status === 'FINISHED' || tr.status === 'TRANSFERRED' ? 'var(--success)' : 'inherit' }}>{tr.status}</strong>
+                              Trạng thái: <strong style={{ color: tr.status === 'FINISHED' || tr.status === 'TRANSFERRED' ? 'var(--success)' : 'inherit' }}>
+                                {{ 'NOT_STARTED': 'Chưa thi', 'IN_PROGRESS': 'Đang thi', 'FINISHED': 'Đã kết thúc', 'TRANSFERRED': 'Đã chuyển điểm', 'ABSENT': 'Vắng', 'CANCELLED': 'Đã hủy' }[tr.status as string] || tr.status}
+                              </strong>
                               {tr.vehicle && <span style={{ marginLeft: '1rem' }}>Xe: {tr.vehicle.name}</span>}
                             </div>
                           </div>
