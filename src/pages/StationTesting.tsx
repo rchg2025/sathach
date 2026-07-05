@@ -313,12 +313,12 @@ const StationTesting = () => {
 
   const getStudentStatusText = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
-    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
+    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status)).length;
     if (displayedTestTypes.length > 0 && completedCount >= displayedTestTypes.length) return 'Hoàn thành bài thi';
     
     const inProgress = student.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
     if (inProgress) return 'Đang thi';
-    const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
+    const finished = student.testResults.find((tr: any) => ['FINISHED', 'FAILED', 'PASSED'].includes(tr.status));
     if (finished) return 'Đã kết thúc';
     
     const transferredCount = student.testResults.filter((tr: any) => tr.status === 'TRANSFERRED' || tr.status === 'ABSENT').length;
@@ -329,7 +329,7 @@ const StationTesting = () => {
   const getStudentStatus = (student: any) => {
     if (!student.testResults || student.testResults.length === 0) return 'Chưa thi';
     
-    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED'].includes(tr.status)).length;
+    const completedCount = student.testResults.filter((tr: any) => ['TRANSFERRED', 'ABSENT', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status)).length;
     if (displayedTestTypes.length > 0 && completedCount >= displayedTestTypes.length) {
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
@@ -354,7 +354,7 @@ const StationTesting = () => {
       );
     }
     
-    const finished = student.testResults.find((tr: any) => tr.status === 'FINISHED');
+    const finished = student.testResults.find((tr: any) => ['FINISHED', 'FAILED', 'PASSED'].includes(tr.status));
     if (finished) {
       const v = vehicles.find(v => v.id === finished.vehicleId);
       let line1 = `Đã kết thúc ${v ? `(${v.name})` : ''}`;
@@ -535,8 +535,8 @@ const StationTesting = () => {
                             if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                           }
                           if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
-                          if (['PENDING', 'CONFIRMED', 'Chưa thi'].includes(tr.status)) return '-';
-                          return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                          if (['PENDING', 'CONFIRMED', 'Chưa thi', 'IN_PROGRESS'].includes(tr.status)) return '-';
+                          return <span style={{ color: (tr.status === 'FAILED' || tr.totalScore < (tt.passingScore || 80)) ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                         })()}
                       </td>
                     ))}
@@ -546,8 +546,8 @@ const StationTesting = () => {
                           const myAssignments = assignments.filter((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName) || s.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId));
                           if (myAssignments.length === 0) return null;
 
-                          const myInProgressTr = s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS' && myAssignments.find(a => a.testType?.id === tr.testTypeId));
-                          const isTestingElsewhere = s.testResults?.some((tr: any) => tr.status === 'IN_PROGRESS' && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
+                          const myInProgressTr = s.testResults?.find((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && myAssignments.find(a => a.testType?.id === tr.testTypeId));
+                          const isTestingElsewhere = s.testResults?.some((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
 
                           if (isTestingElsewhere && !myInProgressTr) {
                             return <span className="text-muted small">Đang thi ở trạm khác</span>;

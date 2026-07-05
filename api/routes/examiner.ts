@@ -281,7 +281,7 @@ router.post('/submit-exam', async (req, res) => {
     const newScore = result.totalScore - totalDeducted;
     const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
     
-    const status = newScore < (testType?.passingScore || 80) ? 'FAILED' : result.status;
+    const status = newScore < (testType?.passingScore || 80) ? 'FAILED' : 'PASSED';
 
     const updatedResult = await prisma.testResult.update({
       where: { id: result.id },
