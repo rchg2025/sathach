@@ -589,22 +589,22 @@ const StationTesting = () => {
 
                           if (isManagerOrAdmin && unconfirmedAssignments.length > 0) {
                             return (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
+                              <div style={{ display: 'flex', flexDirection: 'row', gap: '5px', justifyContent: 'center' }}>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  style={{ padding: '0.4rem 0.6rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                   title="Xác nhận thi"
                                   onClick={() => handleConfirmTest(s)}
                                 >
-                                  <CheckCircle size={16} />
+                                  <CheckCircle size={18} />
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
-                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  style={{ padding: '0.4rem 0.6rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                   title="Vắng"
                                   onClick={() => handleMarkAbsent(s)}
                                 >
-                                  <UserX size={16} />
+                                  <UserX size={18} />
                                 </button>
                               </div>
                             );
@@ -612,18 +612,18 @@ const StationTesting = () => {
 
                           if (user?.role === 'STATION_MANAGER' && readyToStartAssignments.length > 0) {
                             return (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
+                              <div style={{ display: 'flex', flexDirection: 'row', gap: '5px', justifyContent: 'center' }}>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  style={{ padding: '0.4rem 0.6rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                   title="Bắt đầu thi"
                                   onClick={() => openStartTestModal(s)}
                                 >
-                                  <Play size={16} />
+                                  <Play size={18} />
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
-                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  style={{ padding: '0.4rem 0.6rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
                                   title="Vắng"
                                   onClick={() => {
                                     setConfirmAction({
@@ -637,7 +637,7 @@ const StationTesting = () => {
                                     });
                                   }}
                                 >
-                                  <UserX size={16} />
+                                  <UserX size={18} />
                                 </button>
                               </div>
                             );
