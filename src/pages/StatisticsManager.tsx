@@ -18,6 +18,7 @@ const StatisticsManager = () => {
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterDate, setFilterDate] = useState(() => getLocalDateString());
   const [filterTestType, setFilterTestType] = useState('ALL');
+  const [filterExam, setFilterExam] = useState('ALL');
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -56,6 +57,24 @@ const StatisticsManager = () => {
     const assignedIds = new Set(assignments.map((a: any) => a.testTypeId));
     return testTypes.filter(tt => assignedIds.has(tt.id));
   }, [testTypes, assignments]);
+
+  const displayedExams = useMemo(() => {
+    const examMap = new Map<number, { id: number; name: string }>();
+    students.forEach(s => {
+      s.testResults?.forEach((tr: any) => {
+        if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
+        tr.scores?.forEach((score: any) => {
+          if (score.criterion?.exam) {
+            examMap.set(score.criterion.exam.id, {
+              id: score.criterion.exam.id,
+              name: score.criterion.exam.name,
+            });
+          }
+        });
+      });
+    });
+    return Array.from(examMap.values());
+  }, [students, filterTestType]);
 
   const processedStudents = useMemo(() => {
     return students.map(student => {
@@ -151,6 +170,7 @@ const StatisticsManager = () => {
         if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
         tr.scores?.forEach((score: any) => {
           if (score.criterion) {
+            if (filterExam !== 'ALL' && String(score.criterion.examId) !== filterExam) return;
             const criterionName = score.criterion.name;
             errorCounts[criterionName] = (errorCounts[criterionName] || 0) + score.timesDeducted;
           }
@@ -162,7 +182,7 @@ const StatisticsManager = () => {
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
-  }, [courseFilteredStudents, filterTestType]);
+  }, [courseFilteredStudents, filterTestType, filterExam]);
 
   // Tỉ lệ vi phạm theo bài thi
   const testTypeViolationStats = useMemo(() => {
@@ -208,11 +228,20 @@ const StatisticsManager = () => {
               <input type="date" className="form-control" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} />
             </div>
             <div style={{ minWidth: '100%' }}>
-              <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Bài thi (Trạm thi)</label>
-              <select className="form-control" value={filterTestType} onChange={(e) => setFilterTestType(e.target.value)}>
-                <option value="ALL">Tất cả các bài thi</option>
+              <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Trạm thi</label>
+              <select className="form-control" value={filterTestType} onChange={(e) => { setFilterTestType(e.target.value); setFilterExam('ALL'); }}>
+                <option value="ALL">Tất cả Trạm thi</option>
                 {displayedTestTypes.map((tt: any) => (
                   <option key={tt.id} value={tt.id.toString()}>{tt.name}</option>
+                ))}
+              </select>
+            </div>
+            <div style={{ minWidth: '100%' }}>
+              <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Bài thi</label>
+              <select className="form-control" value={filterExam} onChange={(e) => setFilterExam(e.target.value)}>
+                <option value="ALL">Tất cả Bài thi</option>
+                {displayedExams.map((exam: any) => (
+                  <option key={exam.id} value={exam.id.toString()}>{exam.name}</option>
                 ))}
               </select>
             </div>
