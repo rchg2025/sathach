@@ -73,23 +73,12 @@ const StationTesting = () => {
         };
 
         try {
-          // Xin quyền và lấy danh sách camera trước
-          const devices = await Html5Qrcode.getCameras();
-          if (!isMounted) return;
-          
-          if (devices && devices.length > 0) {
-            // Ưu tiên tìm camera sau (môi trường)
-            const backCamera = devices.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('sau') || c.label.toLowerCase().includes('environment')) || devices[devices.length - 1];
-            
-            await html5QrCode.start(
-              backCamera.id,
-              { fps: 15, disableFlip: false },
-              onScanSuccess,
-              () => {} // Bỏ qua lỗi khung hình rỗng
-            );
-          } else {
-            throw new Error("Không tìm thấy thiết bị camera.");
-          }
+          await html5QrCode.start(
+            { facingMode: "environment" } as any,
+            { fps: 15, disableFlip: false },
+            onScanSuccess,
+            () => {} // Bỏ qua lỗi khung hình rỗng
+          );
         } catch (err: any) {
           if (!isMounted) return;
           console.error("Scanner failed:", err);
