@@ -306,7 +306,34 @@ router.post('/submit-exam', async (req, res) => {
     const newScore = result.totalScore - totalDeducted;
     const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
     
-    const status = newScore < (testType?.passingScore || 80) ? 'FAILED' : 'PASSED';
+    // Check if all active exams for today are completed
+    const vnTimeString = new Date().toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" });
+    const vnTime = new Date(vnTimeString);
+    const vnYear = vnTime.getFullYear();
+    const vnMonth = String(vnTime.getMonth() + 1).padStart(2, '0');
+    const vnDate = String(vnTime.getDate()).padStart(2, '0');
+    const todayUtcMidnight = new Date(`${vnYear}-${vnMonth}-${vnDate}T00:00:00+07:00`);
+
+    const activeExams = await prisma.exam.findMany({
+      where: { testTypeId: Number(testTypeId) },
+      include: { 
+        assignments: {
+          where: {
+            OR: [
+              { assignmentDate: null },
+              { assignmentDate: { gte: todayUtcMidnight } }
+            ]
+          }
+        }
+      }
+    });
+    const activeExamIds = activeExams.filter(e => e.assignments.length > 0).map(e => e.id);
+    const allProgress = await prisma.examProgress.findMany({ where: { testResultId: result.id, status: 'COMPLETED' } });
+    const completedExamIds = allProgress.map(p => p.examId);
+    
+    const allCompleted = activeExamIds.every(id => completedExamIds.includes(id));
+    
+    const status = newScore < (testType?.passingScore || 80) ? 'FAILED' : (allCompleted ? 'PASSED' : 'IN_PROGRESS');
 
     const updatedResult = await prisma.testResult.update({
       where: { id: result.id },
