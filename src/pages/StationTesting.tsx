@@ -97,6 +97,8 @@ const StationTesting = () => {
           const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
           if (isZaloOrFB) {
             alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
+          } else if (errMsg.includes('NotReadableError') || errMsg.includes('Could not start video source')) {
+            alert('⚠️ CAMERA ĐANG BỊ KẸT!\n\nLỗi này xảy ra do camera đang bị ứng dụng khác sử dụng (hoặc chưa kịp tắt sau khi tải lại trang).\n\n👉 CÁCH SỬA: Đóng hoàn toàn trình duyệt này (vuốt tắt ứng dụng) rồi mở lại, hoặc kiểm tra xem có ứng dụng nào khác đang dùng camera không.');
           } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission') || errMsg.includes('Permission')) {
             alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 trên thanh địa chỉ.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
           } else {
