@@ -397,22 +397,6 @@ router.delete('/exams/:id', async (req, res) => {
 });
 
 
-// Students
-router.post('/students', async (req, res) => {
-  const { cccd, name, dob, courseId } = req.body;
-  try {
-    const student = await prisma.student.create({ data: { cccd, name, dob, courseId: Number(courseId) } });
-    res.json(student);
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
-
-router.get('/students', async (req, res) => {
-  try {
-    const students = await prisma.student.findMany({ include: { course: true } });
-    res.json(students);
-  } catch (error) { res.status(500).json({ error: 'Server error' }); }
-});
-
 // Assignments Management
 router.get('/assignments', async (req, res) => {
   try {
