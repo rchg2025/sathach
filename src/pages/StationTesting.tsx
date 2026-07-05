@@ -535,6 +535,7 @@ const StationTesting = () => {
                             if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                           }
                           if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
+                          if (['PENDING', 'CONFIRMED', 'Chưa thi'].includes(tr.status)) return '-';
                           return <span style={{ color: tr.status === 'FAILED' ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                         })()}
                       </td>
