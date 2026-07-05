@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import Select from 'react-select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Users, CheckCircle, XCircle, UserX, TrendingUp } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
@@ -14,12 +15,14 @@ const StatisticsManager = () => {
   const [courses, setCourses] = useState<any[]>([]);
   const [testTypes, setTestTypes] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
   
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterDate, setFilterDate] = useState(() => getLocalDateString());
   const [filterTestType, setFilterTestType] = useState('ALL');
   const [filterExam, setFilterExam] = useState('ALL');
+  const [filterTeacher, setFilterTeacher] = useState<number | null>(null);
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -39,15 +42,17 @@ const StatisticsManager = () => {
   const fetchData = async (currentUser: any, date: string, courseId: string) => {
     try {
       const queryDate = date ? date : 'ALL';
-      const [studentsRes, coursesRes, testTypesRes] = await Promise.all([
+      const [studentsRes, coursesRes, testTypesRes, teachersRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${queryDate}&courseId=${courseId}`),
         axios.get(`${API_BASE_URL}/api/manager/courses`),
-        axios.get(`${API_BASE_URL}/api/manager/test-types`)
+        axios.get(`${API_BASE_URL}/api/manager/test-types`),
+        axios.get(`${API_BASE_URL}/api/manager/users?role=TEACHER`)
       ]);
       setStudents(studentsRes.data.students || []);
       setAssignments(studentsRes.data.assignments || []);
       setCourses(coursesRes.data || []);
       setTestTypes(testTypesRes.data || []);
+      setTeachers(teachersRes.data || []);
     } catch (e) {
       console.error(e);
       toast.error('Lỗi lấy dữ liệu');
@@ -148,7 +153,6 @@ const StatisticsManager = () => {
     });
   }, [processedStudents, filterCourse, courses]);
 
-  // Thống kê tổng quan
   const stats = useMemo(() => {
     const totalCourseStudents = courseFilteredStudents.length;
     const totalPass = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU').length;
@@ -168,7 +172,6 @@ const StatisticsManager = () => {
     { name: 'Chưa thi', value: stats.totalIncomplete }
   ].filter(item => item.value > 0);
 
-  // Thống kê lỗi vi phạm nhiều nhất
   const commonErrors = useMemo(() => {
     const errorCounts: Record<string, number> = {};
     courseFilteredStudents.forEach(s => {
@@ -190,7 +193,6 @@ const StatisticsManager = () => {
       .slice(0, 10);
   }, [courseFilteredStudents, filterTestType, filterExam]);
 
-  // Tỉ lệ vi phạm theo bài thi
   const testTypeViolationStats = useMemo(() => {
     const stats: Record<string, { totalStudents: number, studentsWithErrors: number }> = {};
     
@@ -212,6 +214,37 @@ const StatisticsManager = () => {
       'Tỉ lệ lỗi (%)': data.totalStudents > 0 ? Math.round((data.studentsWithErrors / data.totalStudents) * 100) : 0
     }));
   }, [courseFilteredStudents]);
+
+  const teacherStudents = useMemo(() => {
+    if (!filterTeacher) return [];
+    return courseFilteredStudents.filter(s => s.teacherId === filterTeacher);
+  }, [courseFilteredStudents, filterTeacher]);
+
+  const teacherStats = useMemo(() => {
+    let pass = 0;
+    let fail = 0;
+    let absent = 0;
+    let errorCount = 0;
+    
+    teacherStudents.forEach(s => {
+      if (s.finalStatus === 'ĐẬU') pass++;
+      if (s.finalStatus === 'RỚT') fail++;
+      if (s.finalStatus === 'VẮNG') absent++;
+      
+      s.testResults?.forEach((tr: any) => {
+        if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
+        tr.scores?.forEach((score: any) => {
+          if (score.points < 0 && score.criterion) {
+            if (filterExam === 'ALL' || String(score.criterion.examId) === filterExam) {
+              errorCount++;
+            }
+          }
+        });
+      });
+    });
+
+    return { total: teacherStudents.length, pass, fail, absent, errorCount };
+  }, [teacherStudents, filterTestType, filterExam]);
 
   return (
     <AdminLayout user={user}>
@@ -354,6 +387,84 @@ const StatisticsManager = () => {
             </div>
           ) : (
             <p className="text-muted text-center" style={{ padding: '2rem' }}>Chưa có dữ liệu lỗi vi phạm trong khoảng thời gian này.</p>
+          )}
+        </div>
+
+        {/* Thống kê theo Giáo viên */}
+        <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Thống kê theo Giáo viên dạy thực hành</h3>
+          
+          <div style={{ marginBottom: '1.5rem', maxWidth: '400px' }}>
+            <label style={{display: 'block', marginBottom: '0.5rem', fontWeight: 'bold'}}>Giáo viên</label>
+            <Select
+              isClearable
+              placeholder="🔍 Tìm tên giáo viên..."
+              options={teachers.map((t: any) => ({ value: t.id, label: `${t.name} (${t.username})` }))}
+              value={filterTeacher ? { value: filterTeacher, label: teachers.find(t => t.id === filterTeacher) ? `${teachers.find(t => t.id === filterTeacher).name} (${teachers.find(t => t.id === filterTeacher).username})` : '' } : null}
+              onChange={(selected: any) => setFilterTeacher(selected ? selected.value : null)}
+              styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+            />
+          </div>
+
+          {filterTeacher ? (
+            <div>
+              <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Số học viên</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.total}</div>
+                </div>
+                <div style={{ padding: '1rem', background: '#dcfce7', borderRadius: '8px', border: '1px solid #bbf7d0', color: '#166534' }}>
+                  <div style={{ fontSize: '0.875rem' }}>Đậu</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.pass}</div>
+                </div>
+                <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '8px', border: '1px solid #fecaca', color: '#991b1b' }}>
+                  <div style={{ fontSize: '0.875rem' }}>Rớt</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.fail}</div>
+                </div>
+                <div style={{ padding: '1rem', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e' }}>
+                  <div style={{ fontSize: '0.875rem' }}>Vắng</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.absent}</div>
+                </div>
+                <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb', color: '#374151' }}>
+                  <div style={{ fontSize: '0.875rem' }}>Tổng lỗi VP</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.errorCount}</div>
+                </div>
+              </div>
+
+              <h4 style={{ marginBottom: '1rem' }}>Danh sách Học viên</h4>
+              <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>STT</th>
+                      <th>Khóa</th>
+                      <th>Họ tên</th>
+                      <th>Trạng thái</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teacherStudents.length > 0 ? teacherStudents.map((s: any, idx: number) => (
+                      <tr key={s.id}>
+                        <td>{idx + 1}</td>
+                        <td><span className="badge badge-info">{s.courseName || '-'}</span></td>
+                        <td><strong>{s.name}</strong></td>
+                        <td>
+                          <span className={`badge badge-${s.finalStatus === 'ĐẬU' ? 'success' : s.finalStatus === 'RỚT' ? 'danger' : s.finalStatus === 'VẮNG' ? 'warning' : 'secondary'}`}>
+                            {s.finalStatus}
+                          </span>
+                        </td>
+                      </tr>
+                    )) : (
+                      <tr><td colSpan={4} className="text-center text-muted">Chưa có học viên nào</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted text-center" style={{ padding: '1rem', border: '1px dashed var(--border)', borderRadius: '8px' }}>
+              Vui lòng chọn một giáo viên để xem thống kê
+            </p>
           )}
         </div>
 

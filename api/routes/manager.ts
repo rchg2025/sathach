@@ -771,7 +771,7 @@ router.get('/students', async (req, res) => {
   try {
     const students = await prisma.student.findMany({
       orderBy: { id: 'desc' },
-      include: { course: true }
+      include: { course: true, teacher: { select: { id: true, name: true, username: true } } }
     });
     res.json(students);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
@@ -781,14 +781,15 @@ router.post('/students', async (req, res) => {
   const { 
     registrationCode, name, dob, cccd, address, licenseNumber, 
     licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-    licenseDuration, courseName, courseId 
+    licenseDuration, courseName, courseId, teacherId 
   } = req.body;
   try {
     const student = await prisma.student.create({ 
       data: {
         registrationCode, name, dob, cccd, address, licenseNumber, 
         licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-        licenseDuration, courseName, courseId: courseId ? Number(courseId) : null
+        licenseDuration, courseName, courseId: courseId ? Number(courseId) : null,
+        teacherId: teacherId ? Number(teacherId) : null
       } 
     });
     res.json(student);
@@ -803,7 +804,7 @@ router.put('/students/:id', async (req, res) => {
   const { 
     registrationCode, name, dob, cccd, address, licenseNumber, 
     licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-    licenseDuration, courseName, courseId 
+    licenseDuration, courseName, courseId, teacherId 
   } = req.body;
   try {
     const data: any = {
@@ -812,6 +813,7 @@ router.put('/students/:id', async (req, res) => {
       licenseDuration, courseName
     };
     if (courseId !== undefined) data.courseId = courseId ? Number(courseId) : null;
+    if (teacherId !== undefined) data.teacherId = teacherId ? Number(teacherId) : null;
     const student = await prisma.student.update({ where: { id: Number(id) }, data });
     res.json(student);
   } catch (error: any) { 
@@ -880,6 +882,11 @@ router.post('/students/bulk', async (req, res) => {
       if (!s.cccd || !s.name) continue;
       const existing = await prisma.student.findUnique({ where: { cccd: String(s.cccd) } });
       const courseId = s.courseId ? Number(s.courseId) : null;
+      let teacherId = null;
+      if (s.teacherUsername) {
+        const t = await prisma.user.findUnique({ where: { username: s.teacherUsername } });
+        if (t) teacherId = t.id;
+      }
       if (existing) {
         await prisma.student.update({
           where: { id: existing.id },
@@ -896,6 +903,7 @@ router.post('/students/bulk', async (req, res) => {
             licenseDuration: s.licenseDuration,
             courseName: s.courseName,
             courseId: courseId !== null ? courseId : existing.courseId,
+            teacherId: teacherId !== null ? teacherId : existing.teacherId,
           }
         });
         skipped++;
@@ -915,6 +923,7 @@ router.post('/students/bulk', async (req, res) => {
             licenseDuration: s.licenseDuration,
             courseName: s.courseName,
             courseId,
+            teacherId,
           }
         });
         imported++;

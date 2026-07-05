@@ -117,6 +117,7 @@ const StudentManager = () => {
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [students, setStudents] = useState([]);
   const [dbCourses, setDbCourses] = useState<any[]>([]);
+  const [teachers, setTeachers] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   
   // Form state
@@ -132,6 +133,7 @@ const StudentManager = () => {
   const [passDate, setPassDate] = useState('');
   const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
   const [licenseDuration, setLicenseDuration] = useState('');
+  const [teacherId, setTeacherId] = useState<number | null>(null);
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -166,9 +168,19 @@ const StudentManager = () => {
     }
   };
 
+  const fetchTeachers = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/users`);
+      setTeachers(res.data);
+    } catch (err: any) {
+      console.error('Lỗi khi tải danh sách giáo viên:', err);
+    }
+  };
+
   useEffect(() => {
     fetchStudents();
     fetchDbCourses();
+    fetchTeachers();
   }, []);
 
   useEffect(() => {
@@ -204,7 +216,7 @@ const StudentManager = () => {
       const payload = { 
         registrationCode, name, dob, cccd, address, licenseNumber, 
         licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-        licenseDuration, courseName, courseId: cId
+        licenseDuration, courseName, courseId: cId, teacherId
       };
       
       if (editingId) {
@@ -240,6 +252,7 @@ const StudentManager = () => {
     setPassDate('');
     setLicenseExpiryDate('');
     setLicenseDuration('');
+    setTeacherId(null);
   };
 
   const handleEdit = (student: any) => {
@@ -256,6 +269,7 @@ const StudentManager = () => {
     setLicenseExpiryDate(formatDate(student.licenseExpiryDate) === '-' ? '' : formatDate(student.licenseExpiryDate));
     setPassDate(formatDate(student.passDate) === '-' ? '' : formatDate(student.passDate));
     setLicenseDuration(student.licenseDuration || '');
+    setTeacherId(student.teacherId || null);
     setActiveTab('add');
   };
 
@@ -371,7 +385,8 @@ const StudentManager = () => {
       'Ngày cấp': s.licenseIssueDate || '',
       'Ngày trúng tuyển': s.passDate || '',
       'Ngày hết hạn': s.licenseExpiryDate || '',
-      'Thời gian GPLX': s.licenseDuration || ''
+      'Thời gian GPLX': s.licenseDuration || '',
+      'Giáo viên dạy thực hành': s.teacher?.name || ''
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -393,12 +408,21 @@ const StudentManager = () => {
       'Ngày cấp': '02/04/2021 12:00:00 SA',
       'Ngày trúng tuyển': '27/03/2021 12:00:00 SA',
       'Ngày hết hạn': '01/01/1900 12:00:00 SA',
-      'Thời gian GPLX': '0'
+      'Thời gian GPLX': '0',
+      'Username giáo viên': ''
     }];
     
     const worksheet = XLSX.utils.json_to_sheet(templateData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
+    
+    const teacherData = teachers.map(t => ({
+      'Username (Dùng để import)': t.username,
+      'Tên hiển thị': t.name
+    }));
+    const teacherSheet = XLSX.utils.json_to_sheet(teacherData);
+    XLSX.utils.book_append_sheet(workbook, teacherSheet, 'Danh sách giáo viên');
+
     XLSX.writeFile(workbook, 'mau-nhap-hoc-vien.xlsx');
   };
 
@@ -447,7 +471,8 @@ const StudentManager = () => {
             licenseIssueDate: row['Ngày cấp']?.toString() || '',
             passDate: row['Ngày trúng tuyển']?.toString() || '',
             licenseExpiryDate: row['Ngày hết hạn']?.toString() || '',
-            licenseDuration: row['Thời gian GPLX']?.toString() || ''
+            licenseDuration: row['Thời gian GPLX']?.toString() || '',
+            teacherUsername: row['Username giáo viên']?.toString() || ''
           };
         });
 
@@ -566,6 +591,7 @@ const StudentManager = () => {
                   <th>Ngày sinh</th>
                   <th>CCCD</th>
                   <th>Hạng</th>
+                  <th>Giáo viên</th>
                   <th className="sticky-col-right" style={{ width: '120px' }}>Hành động</th>
                 </tr>
               </thead>
@@ -586,6 +612,7 @@ const StudentManager = () => {
                     <td>{formatDate(student.dob)}</td>
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
+                    <td>{student.teacher?.name ? <span className="badge badge-primary">{student.teacher.name}</span> : '-'}</td>
                     <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
                         <button className="action-btn" title="Xem" style={{ color: '#17a2b8' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
@@ -711,6 +738,18 @@ const StudentManager = () => {
                 <label>Thời gian GPLX</label>
                 <input type="text" className="form-control" value={licenseDuration} onChange={e => setLicenseDuration(e.target.value)} />
               </div>
+              {/* 13. Giáo viên */}
+              <div className="form-group">
+                <label>Giáo viên dạy thực hành</label>
+                <Select
+                  isClearable
+                  placeholder="Chọn Giáo viên..."
+                  options={teachers.map((t: any) => ({ value: t.id, label: `${t.name} (${t.username})` }))}
+                  value={teacherId ? { value: teacherId, label: teachers.find(t => t.id === teacherId) ? `${teachers.find(t => t.id === teacherId).name} (${teachers.find(t => t.id === teacherId).username})` : '' } : null}
+                  onChange={(selected: any) => setTeacherId(selected ? selected.value : null)}
+                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
+                />
+              </div>
             </div>
             <button type="submit" className="btn btn-primary mt-4">Lưu Học viên</button>
           </form>
@@ -747,6 +786,7 @@ const StudentManager = () => {
                 <tr><td><strong>Ngày hết hạn:</strong></td><td>{formatDate(viewStudent.licenseExpiryDate)}</td></tr>
                 <tr><td><strong>Ngày trúng tuyển:</strong></td><td>{formatDate(viewStudent.passDate)}</td></tr>
                 <tr><td><strong>Thời gian GPLX:</strong></td><td>{viewStudent.licenseDuration || '-'}</td></tr>
+                <tr><td><strong>Giáo viên dạy thực hành:</strong></td><td>{viewStudent.teacher?.name || '-'}</td></tr>
               </tbody>
             </table>
 </div>

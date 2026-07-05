@@ -28,6 +28,7 @@ model User {
   isOnline       Boolean          @default(false)
   lastPingAt     DateTime?
   logs           SystemLog[]
+  students       Student[]        @relation("StudentTeacher")
 }
 
 model SystemLog {
@@ -55,6 +56,8 @@ model Student {
   courseName  String? // Tên khóa học (Raw from Excel)
   courseId    Int?
   course      Course?      @relation(fields: [courseId], references: [id])
+  teacherId   Int?
+  teacher     User?        @relation("StudentTeacher", fields: [teacherId], references: [id])
   testResults TestResult[]
 
   createdAt     DateTime        @default(now())
