@@ -51,85 +51,71 @@ const StationTesting = () => {
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
-    if (isScannerOpen) {
-      html5QrCode = new Html5Qrcode("qr-reader", { 
-        verbose: false
-      } as any);
-      
-      const onScanSuccess = (decodedText: string) => {
-        let value = decodedText.trim();
-        if (value.includes('|')) {
-          const parts = value.split('|');
-          if (parts[0] && parts[0].length >= 12) {
-            value = parts[0].substring(0, 12);
-          }
-        }
-        setSearchQuery(value);
-        setIsScannerOpen(false);
-        toast.success('Đã quét thành công CCCD!');
-      };
+    let isMounted = true;
 
-      const startScanner = async () => {
-        try {
-          // Attempt 1: High resolution & environment camera (ideal for phones)
-          await html5QrCode!.start(
-            { 
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1920 },
-              height: { ideal: 1080 }
-            } as any,
-            { fps: 15, disableFlip: false },
-            onScanSuccess,
-            () => {}
-          );
-        } catch (err: any) {
-          console.warn("Attempt 1 failed:", err);
-          try {
-            // Attempt 2: Safest fallback (let browser decide camera and resolution)
-            await html5QrCode!.start(
-              { facingMode: { ideal: "environment" } } as any,
-              { fps: 10, disableFlip: false },
-              onScanSuccess,
-              () => {}
-            );
-          } catch (fallbackErr: any) {
-            console.warn("Attempt 2 failed:", fallbackErr);
-            try {
-              // Attempt 3: Retrieve camera list manually and pick the last one (usually back camera)
-              const devices = await Html5Qrcode.getCameras();
-              if (devices && devices.length > 0) {
-                const backCamera = devices.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('sau')) || devices[devices.length - 1];
-                await html5QrCode!.start(backCamera.id, { fps: 10 }, onScanSuccess, () => {});
-              } else {
-                throw new Error("Không tìm thấy thiết bị camera.");
-              }
-            } catch (finalErr: any) {
-              console.error("All scanner attempts failed:", finalErr);
-              let errMsg = typeof finalErr === 'string' ? finalErr : (finalErr?.name || finalErr?.message || JSON.stringify(finalErr) || '');
-              const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
-              if (isZaloOrFB) {
-                alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
-              } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission') || errMsg.includes('Permission')) {
-                alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
-              } else {
-                toast.error('Không thể bật camera. Lỗi: ' + errMsg);
-              }
-              setIsScannerOpen(false);
+    if (isScannerOpen) {
+      const initScanner = setTimeout(async () => {
+        if (!isMounted) return;
+
+        html5QrCode = new Html5Qrcode("qr-reader", { verbose: false } as any);
+
+        const onScanSuccess = (decodedText: string) => {
+          let value = decodedText.trim();
+          if (value.includes('|')) {
+            const parts = value.split('|');
+            if (parts[0] && parts[0].length >= 12) {
+              value = parts[0].substring(0, 12);
             }
           }
+          setSearchQuery(value);
+          setIsScannerOpen(false);
+          toast.success('Đã quét thành công CCCD!');
+        };
+
+        try {
+          // Xin quyền và lấy danh sách camera trước
+          const devices = await Html5Qrcode.getCameras();
+          if (!isMounted) return;
+          
+          if (devices && devices.length > 0) {
+            // Ưu tiên tìm camera sau (môi trường)
+            const backCamera = devices.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('sau') || c.label.toLowerCase().includes('environment')) || devices[devices.length - 1];
+            
+            await html5QrCode.start(
+              backCamera.id,
+              { fps: 15, disableFlip: false },
+              onScanSuccess,
+              () => {} // Bỏ qua lỗi khung hình rỗng
+            );
+          } else {
+            throw new Error("Không tìm thấy thiết bị camera.");
+          }
+        } catch (err: any) {
+          if (!isMounted) return;
+          console.error("Scanner failed:", err);
+          let errMsg = typeof err === 'string' ? err : (err?.name || err?.message || JSON.stringify(err) || '');
+          const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
+          if (isZaloOrFB) {
+            alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
+          } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission') || errMsg.includes('Permission')) {
+            alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 trên thanh địa chỉ.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
+          } else {
+            toast.error('Không thể bật camera. Lỗi: ' + errMsg);
+          }
+          setIsScannerOpen(false);
+        }
+      }, 200); // Delay 200ms to bypass React 18 StrictMode double mount
+
+      return () => {
+        isMounted = false;
+        clearTimeout(initScanner);
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => {
+            html5QrCode?.clear();
+          }).catch(console.error);
         }
       };
-
-      startScanner();
     }
-
-    return () => {
-      if (html5QrCode && html5QrCode.isScanning) {
-        html5QrCode.stop().then(() => {
-          html5QrCode?.clear();
-        }).catch(console.error);
-      }
-    };
   }, [isScannerOpen]);
 
   const fetchData = async (currentUser: any) => {
