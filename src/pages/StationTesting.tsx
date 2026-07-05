@@ -197,20 +197,20 @@ const StationTesting = () => {
   };
 
   const handleEndTest = async (student: any) => {
-    const inProgressTr = student.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS');
-    if (!inProgressTr) return toast.error('Không tìm thấy bài thi đang diễn ra');
+    const targetTr = student.testResults?.find((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status));
+    if (!targetTr) return toast.error('Không tìm thấy bài thi đang diễn ra hoặc chưa kết thúc');
 
     try {
       await axios.post(`${API_BASE_URL}/api/manager/station/end-test`, {
         studentId: student.id,
-        testTypeId: inProgressTr.testTypeId
+        testTypeId: targetTr.testTypeId
       });
       toast.success('Kết thúc và chuyển điểm thành công.');
       
       setStudents(prev => prev.map(s => {
         if (s.id === student.id) {
           const newTestResults = [...(s.testResults || [])];
-          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === inProgressTr.testTypeId);
+          const trIndex = newTestResults.findIndex(tr => tr.testTypeId === targetTr.testTypeId);
           if (trIndex > -1) {
             newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'TRANSFERRED' };
           }
