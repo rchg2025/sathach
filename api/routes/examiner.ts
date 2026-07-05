@@ -38,7 +38,16 @@ router.get('/students', async (req, res) => {
     // Fetch all exams for these TestTypes, ordered by name to define the sequence
     const allExams = await prisma.exam.findMany({
       where: { testTypeId: { in: testTypeIds } },
-      include: { assignments: true }
+      include: { 
+        assignments: {
+          where: {
+            OR: [
+              { assignmentDate: null },
+              { assignmentDate: { gte: todayUtcMidnight } }
+            ]
+          }
+        }
+      }
     });
 
     allExams.sort((a, b) => {
