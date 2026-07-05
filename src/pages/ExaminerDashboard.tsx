@@ -29,7 +29,7 @@ const ExaminerDashboard = () => {
       
       const interval = setInterval(() => {
         fetchData(parsedUser.id, false);
-      }, 15000); // Tăng lên 15s để giảm tải cho Vercel
+      }, 3000); // Cập nhật mỗi 3s để chuyển học viên mượt mà hơn
       return () => clearInterval(interval);
     }
   }, []);
