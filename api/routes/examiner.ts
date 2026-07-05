@@ -38,8 +38,16 @@ router.get('/students', async (req, res) => {
     // Fetch all exams for these TestTypes, ordered by name to define the sequence
     const allExams = await prisma.exam.findMany({
       where: { testTypeId: { in: testTypeIds } },
-      orderBy: { name: 'asc' },
       include: { assignments: true }
+    });
+
+    allExams.sort((a, b) => {
+      const matchA = a.name.match(/\d+/);
+      const matchB = b.name.match(/\d+/);
+      const numA = matchA ? parseInt(matchA[0], 10) : 0;
+      const numB = matchB ? parseInt(matchB[0], 10) : 0;
+      if (numA !== numB) return numA - numB;
+      return a.name.localeCompare(b.name);
     });
 
     // We only care about exams that have at least one assignment (i.e. someone is grading them)
@@ -102,42 +110,50 @@ router.get('/students', async (req, res) => {
           }
         }
       } else {
-        // Find ALL active exams the student has NOT completed that are assigned to THIS examiner
-        const myUncompletedExams = activeExams.filter(exam => 
-          exam.testTypeId === result.testTypeId && 
-          !completedExamIds.includes(exam.id) &&
-          exam.assignments.some(a => a.examinerId === examinerId)
-        );
+        // Find ALL active exams for this test type, in sequential order
+        const allStudentActiveExams = activeExams.filter(exam => exam.testTypeId === result.testTypeId);
+        
+        // Find the globally next uncompleted exam for the student
+        const firstUncompletedExam = allStudentActiveExams.find(exam => !completedExamIds.includes(exam.id));
 
-        if (myUncompletedExams.length > 0) {
-          const firstExam = myUncompletedExams[0];
-          const myAssignment = assignments.find(a => 
-            a.examinerId === examinerId && 
-            (a.examId === firstExam.id || (a.testTypeId === firstExam.testTypeId && !a.examId))
-          );
+        if (firstUncompletedExam) {
+          // Only show the student to THIS examiner if the next exam is assigned to them
+          const isAssignedToMe = firstUncompletedExam.assignments.some(a => a.examinerId === examinerId);
+          
+          if (isAssignedToMe) {
+            const myAssignment = assignments.find(a => 
+              a.examinerId === examinerId && 
+              (a.examId === firstUncompletedExam.id || (a.testTypeId === firstUncompletedExam.testTypeId && !a.examId))
+            );
 
-          if (myAssignment) {
-            if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
-              const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
-              if (!hasVehicle) continue;
+            if (myAssignment) {
+              if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+                const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+                if (!hasVehicle) continue;
+              }
+
+              // Check if any of my assigned exams are currently IN_PROGRESS
+              const inProgressExam = allStudentActiveExams.find(e => 
+                result.progress.some((p: any) => p.examId === e.id && p.status === 'IN_PROGRESS') &&
+                e.assignments.some(a => a.examinerId === examinerId)
+              );
+              
+              const activeExamToUse = inProgressExam || firstUncompletedExam;
+              const currentProgress = result.progress.find((p: any) => p.examId === activeExamToUse.id);
+
+              const studentData = { 
+                ...result.student, 
+                currentExam: activeExamToUse, 
+                testType: result.testType,
+                allAvailableExams: allStudentActiveExams.filter(e => e.assignments.some(a => a.examinerId === examinerId) && !completedExamIds.includes(e.id)),
+                testResultId: result.id,
+                vehicle: result.vehicle,
+                currentProgress: currentProgress || { status: 'PENDING' },
+                assignmentDate: myAssignment.assignmentDate,
+                showScore: myAssignment.showScore
+              };
+              studentsForExaminer.push(studentData);
             }
-
-            const inProgressExam = myUncompletedExams.find(e => result.progress.some((p: any) => p.examId === e.id && p.status === 'IN_PROGRESS'));
-            const activeExamToUse = inProgressExam || firstExam;
-
-            const currentProgress = result.progress.find((p: any) => p.examId === activeExamToUse.id);
-            const studentData = { 
-              ...result.student, 
-              currentExam: activeExamToUse, 
-              testType: result.testType,
-              allAvailableExams: myUncompletedExams,
-              testResultId: result.id,
-              vehicle: result.vehicle,
-              currentProgress: currentProgress || { status: 'PENDING' },
-              assignmentDate: myAssignment.assignmentDate,
-              showScore: myAssignment.showScore
-            };
-            studentsForExaminer.push(studentData);
           }
         }
       }
