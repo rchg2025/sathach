@@ -634,28 +634,30 @@ const StatisticsManager = () => {
                         <div style={{ padding: '1rem' }}>
                           <h5 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Chi tiết các lỗi vi phạm:</h5>
                           {tr.scores && tr.scores.length > 0 ? (
-                            <table className="table table-sm" style={{ margin: 0, fontSize: '0.9rem' }}>
-                              <thead>
-                                <tr>
-                                  <th>Bài thi</th>
-                                  <th>Lỗi vi phạm</th>
-                                  <th style={{ textAlign: 'right' }}>Điểm trừ</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {tr.scores.map((s: any) => {
-                                  const deducted = (s.timesDeducted || 1) * (s.criterion?.pointsToDeduct || 0);
-                                  if (deducted <= 0) return null;
-                                  return (
-                                    <tr key={s.id}>
-                                      <td>{s.criterion?.exam?.name || '-'}</td>
-                                      <td>{s.criterion?.name || '-'} {s.timesDeducted > 1 ? `(x${s.timesDeducted})` : ''}</td>
-                                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold' }}>-{deducted}</td>
-                                    </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                            <div style={{ overflowX: 'auto' }}>
+                              <table className="table table-sm" style={{ margin: 0, fontSize: '0.9rem', width: '100%' }}>
+                                <thead>
+                                  <tr>
+                                    <th style={{ whiteSpace: 'nowrap', width: '20%' }}>Bài thi</th>
+                                    <th style={{ width: '65%' }}>Lỗi vi phạm</th>
+                                    <th style={{ textAlign: 'right', whiteSpace: 'nowrap', width: '15%' }}>Điểm trừ</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {tr.scores.map((s: any) => {
+                                    const deducted = (s.timesDeducted || 1) * (s.criterion?.pointsToDeduct || 0);
+                                    if (deducted <= 0) return null;
+                                    return (
+                                      <tr key={s.id}>
+                                        <td style={{ whiteSpace: 'normal', wordBreak: 'break-word', minWidth: '120px' }}>{s.criterion?.exam?.name || '-'}</td>
+                                        <td style={{ whiteSpace: 'normal', wordBreak: 'break-word', minWidth: '250px' }}>{s.criterion?.name || '-'} {s.timesDeducted > 1 ? `(x${s.timesDeducted})` : ''}</td>
+                                        <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold', whiteSpace: 'nowrap' }}>-{deducted}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                           ) : (
                             <p style={{ margin: 0, color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>Không có lỗi vi phạm nào.</p>
                           )}
