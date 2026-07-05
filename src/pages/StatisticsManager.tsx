@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, CheckCircle, XCircle, UserX, TrendingUp } from 'lucide-react';
+import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import { getLocalDateString } from '../utils/dateUtils';
@@ -325,15 +325,16 @@ const StatisticsManager = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 400px), 1fr))', gap: '2rem', marginBottom: '2rem' }}>
           {/* Biểu đồ tròn Đậu/Rớt */}
           <div className="card" style={{ padding: '1.5rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Tỉ lệ Đậu / Rớt</h3>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={passFailData}
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <div style={{ height: 300, minWidth: 300 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={passFailData}
                     cx="50%"
                     cy="50%"
                     outerRadius={100}
@@ -349,23 +350,26 @@ const StatisticsManager = () => {
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
+              </div>
             </div>
           </div>
 
           {/* Biểu đồ cột: Tỉ lệ lỗi theo từng bài thi */}
           <div className="card" style={{ padding: '1.5rem' }}>
             <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Tỉ lệ vi phạm theo Trạm thi</h3>
-            <div style={{ height: 300 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={testTypeViolationStats}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Tỉ lệ lỗi (%)" fill="#ef4444" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <div style={{ height: 300, minWidth: 500 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={testTypeViolationStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Tỉ lệ lỗi (%)" fill="#ef4444" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           </div>
         </div>
@@ -409,25 +413,40 @@ const StatisticsManager = () => {
           {filterTeacher ? (
             <div>
               <div className="grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Số học viên</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.total}</div>
+                <div className="stat-card" style={{ padding: '1rem', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Số học viên</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.total}</div>
+                  </div>
+                  <Users size={24} style={{ opacity: 0.2, color: 'var(--text-secondary)' }} />
                 </div>
-                <div style={{ padding: '1rem', background: '#dcfce7', borderRadius: '8px', border: '1px solid #bbf7d0', color: '#166534' }}>
-                  <div style={{ fontSize: '0.875rem' }}>Đậu</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.pass}</div>
+                <div className="stat-card" style={{ padding: '1rem', background: '#dcfce7', borderRadius: '8px', border: '1px solid #bbf7d0', color: '#166534', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Đậu</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.pass}</div>
+                  </div>
+                  <CheckCircle size={24} style={{ opacity: 0.2 }} />
                 </div>
-                <div style={{ padding: '1rem', background: '#fee2e2', borderRadius: '8px', border: '1px solid #fecaca', color: '#991b1b' }}>
-                  <div style={{ fontSize: '0.875rem' }}>Rớt</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.fail}</div>
+                <div className="stat-card" style={{ padding: '1rem', background: '#fee2e2', borderRadius: '8px', border: '1px solid #fecaca', color: '#991b1b', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Rớt</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.fail}</div>
+                  </div>
+                  <XCircle size={24} style={{ opacity: 0.2 }} />
                 </div>
-                <div style={{ padding: '1rem', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e' }}>
-                  <div style={{ fontSize: '0.875rem' }}>Vắng</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.absent}</div>
+                <div className="stat-card" style={{ padding: '1rem', background: '#fef3c7', borderRadius: '8px', border: '1px solid #fde68a', color: '#92400e', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Vắng</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.absent}</div>
+                  </div>
+                  <UserX size={24} style={{ opacity: 0.2 }} />
                 </div>
-                <div style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb', color: '#374151' }}>
-                  <div style={{ fontSize: '0.875rem' }}>Tổng lỗi VP</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.errorCount}</div>
+                <div className="stat-card" style={{ padding: '1rem', background: '#f3f4f6', borderRadius: '8px', border: '1px solid #e5e7eb', color: '#374151', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Tổng lỗi VP</div>
+                    <div style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{teacherStats.errorCount}</div>
+                  </div>
+                  <AlertTriangle size={24} style={{ opacity: 0.2 }} />
                 </div>
               </div>
 
