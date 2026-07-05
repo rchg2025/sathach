@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Play, Car, CheckCircle, UserX, Scan } from 'lucide-react';
-import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -52,29 +52,28 @@ const StationTesting = () => {
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
     if (isScannerOpen) {
-      html5QrCode = new Html5Qrcode("qr-reader", { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], verbose: false });
+      html5QrCode = new Html5Qrcode("qr-reader", { verbose: false });
       html5QrCode.start(
         { facingMode: "environment" },
         {
-          fps: 15,
+          fps: 10,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
             const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxSize = Math.floor(minEdgeSize * 0.7);
+            const qrboxSize = Math.floor(minEdgeSize * 0.85);
             return { width: qrboxSize, height: qrboxSize };
           },
-          aspectRatio: 1.0,
         },
         (decodedText) => {
-          let value = decodedText;
+          let value = decodedText.trim();
           if (value.includes('|')) {
             const parts = value.split('|');
-            if (parts[0] && parts[0].length === 12) {
-              value = parts[0];
+            if (parts[0] && parts[0].length >= 12) {
+              value = parts[0].substring(0, 12);
             }
           }
           setSearchQuery(value);
           setIsScannerOpen(false);
-          toast.success('Đã quét thành công!');
+          toast.success('Đã quét thành công CCCD!');
         },
         () => {
           // ignore scan errors
