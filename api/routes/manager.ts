@@ -1092,7 +1092,7 @@ router.get('/station/students-v2', async (req, res) => {
       studentWhere = { id: { in: studentIds } };
     }
 
-    const students = await prisma.student.findMany({
+    let students = await prisma.student.findMany({
       where: studentWhere,
       include: { 
         course: true,
