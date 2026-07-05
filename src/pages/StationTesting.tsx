@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Play, Car, CheckCircle, UserX, Scan } from 'lucide-react';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -50,25 +50,20 @@ const StationTesting = () => {
   }, []);
 
   useEffect(() => {
-    let scanner: Html5QrcodeScanner | null = null;
+    let html5QrCode: Html5Qrcode | null = null;
     if (isScannerOpen) {
-      scanner = new Html5QrcodeScanner(
-        "qr-reader",
-        { 
+      html5QrCode = new Html5Qrcode("qr-reader", { formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE], verbose: false });
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
           fps: 15,
           qrbox: (viewfinderWidth, viewfinderHeight) => {
             const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-            // Kích thước ô vuông quét bằng 70% cạnh nhỏ nhất
             const qrboxSize = Math.floor(minEdgeSize * 0.7);
             return { width: qrboxSize, height: qrboxSize };
           },
           aspectRatio: 1.0,
-          formatsToSupport: [Html5QrcodeSupportedFormats.QR_CODE],
-          videoConstraints: { facingMode: "environment" } // Ưu tiên camera sau trên điện thoại
         },
-        false
-      );
-      scanner.render(
         (decodedText) => {
           let value = decodedText;
           if (value.includes('|')) {
@@ -79,16 +74,23 @@ const StationTesting = () => {
           }
           setSearchQuery(value);
           setIsScannerOpen(false);
-          scanner?.clear().catch(console.error);
+          toast.success('Đã quét thành công!');
         },
         () => {
-          // ignore error
+          // ignore scan errors
         }
-      );
+      ).catch(err => {
+        console.error(err);
+        toast.error('Không thể truy cập camera. Vui lòng cấp quyền.');
+        setIsScannerOpen(false);
+      });
     }
+
     return () => {
-      if (scanner) {
-        scanner.clear().catch(console.error);
+      if (html5QrCode && html5QrCode.isScanning) {
+        html5QrCode.stop().then(() => {
+          html5QrCode?.clear();
+        }).catch(console.error);
       }
     };
   }, [isScannerOpen]);
@@ -671,33 +673,69 @@ const StationTesting = () => {
       />
 
       {isScannerOpen && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: '90%', maxWidth: '500px' }}>
+            <h3 style={{ color: '#fff', textAlign: 'center', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: '500' }}>
+              Di chuyển camera đến mã QR
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: '2rem', fontSize: '0.9rem' }}>
+              Hệ thống sẽ tự động nhận diện và quét mã trên thẻ CCCD
+            </p>
+            
+            <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000', boxShadow: '0 0 0 2px rgba(255,255,255,0.2)' }}>
+              <div id="qr-reader" style={{ width: '100%', border: 'none' }}></div>
+              <div className="scanner-line"></div>
+            </div>
+            
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button 
+                onClick={() => setIsScannerOpen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 32px',
+                  borderRadius: '30px',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  backdropFilter: 'blur(10px)',
+                  cursor: 'pointer'
+                }}
+              >
+                Hủy quét
+              </button>
+            </div>
+          </div>
+          
           <style>
             {`
-              #qr-reader {
-                border: none !important;
-                border-radius: 8px;
-                overflow: hidden;
-              }
-              #qr-reader__scan_region {
-                background: #000;
+              #qr-reader video {
+                object-fit: cover;
+                border-radius: 16px;
+                width: 100% !important;
+                display: block;
               }
               #qr-shaded-region {
-                border-color: rgba(0, 0, 0, 0.7) !important;
+                border-color: rgba(0, 0, 0, 0.6) !important;
               }
-              #qr-reader__dashboard {
-                background: #fff;
-                padding: 10px;
+              .scanner-line {
+                position: absolute;
+                left: 15%;
+                width: 70%;
+                height: 2px;
+                background: #4ade80;
+                box-shadow: 0 0 10px #4ade80, 0 0 20px #4ade80;
+                animation: scan 2s infinite linear;
+                z-index: 10;
+              }
+              @keyframes scan {
+                0% { top: 15%; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { top: 85%; opacity: 0; }
               }
             `}
           </style>
-          <div style={{ background: '#fff', padding: '1rem', borderRadius: '8px', maxWidth: '500px', width: '95%', position: 'relative' }}>
-            <h3 style={{ marginTop: 0, marginBottom: '1rem', fontSize: '1.25rem', textAlign: 'center' }}>Quét mã QR trên thẻ CCCD</h3>
-            <div id="qr-reader" style={{ width: '100%', background: '#000' }}></div>
-            <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-              <button className="btn btn-danger" style={{ padding: '0.5rem 2rem' }} onClick={() => setIsScannerOpen(false)}>Đóng</button>
-            </div>
-          </div>
         </div>
       )}
     </AdminLayout>
