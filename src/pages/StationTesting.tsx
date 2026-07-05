@@ -139,7 +139,7 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      return !tr || tr.status === 'Chưa thi';
+      return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED'].includes(tr.status);
     });
     
     if (unstartedAssignments.length === 0) {
