@@ -273,7 +273,7 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      return !tr || tr.status === 'Chưa thi';
+      return !tr || tr.status === 'Chưa thi' || tr.status === 'PENDING' || tr.status === 'CONFIRMED';
     });
 
     if (unstartedAssignments.length === 0) return toast.error('Không tìm thấy bài thi chưa bắt đầu');
@@ -634,6 +634,23 @@ const StationTesting = () => {
                                   onClick={() => openStartTestModal(s)}
                                 >
                                   <Play size={16} /> Bắt đầu thi
+                                </button>
+                                <button 
+                                  className="btn btn-secondary" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={() => {
+                                    setConfirmAction({
+                                      isOpen: true,
+                                      title: 'Xác nhận vắng thi',
+                                      message: `Xác nhận đánh dấu vắng thi cho ${s.name}?`,
+                                      onConfirm: () => {
+                                        handleMarkAbsent(s);
+                                        setConfirmAction(null);
+                                      }
+                                    });
+                                  }}
+                                >
+                                  <UserX size={16} /> Vắng
                                 </button>
                               </div>
                             );
