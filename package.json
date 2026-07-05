@@ -19,6 +19,7 @@
     "file-saver": "^2.0.5",
     "google-auth-library": "^10.9.0",
     "googleapis": "^173.0.0",
+    "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.22.0",
     "multer": "^2.2.0",

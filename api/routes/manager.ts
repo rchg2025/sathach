@@ -1095,7 +1095,8 @@ router.get('/station/students-v2', async (req, res) => {
     const students = await prisma.student.findMany({
       where: studentWhere,
       include: { 
-        course: true, 
+        course: true,
+        teacher: { select: { id: true, name: true, username: true } },
         testResults: {
           include: { 
             stationManager: true, 

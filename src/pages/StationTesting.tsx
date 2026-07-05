@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Play, Car, CheckCircle, UserX } from 'lucide-react';
+import { Play, Car, CheckCircle, UserX, Scan } from 'lucide-react';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
@@ -23,6 +24,7 @@ const StationTesting = () => {
   const [selectedTestType, setSelectedTestType] = useState<any>(null);
   const [selectedVehicleId, setSelectedVehicleId] = useState<number | null>(null);
   const [availableAssignments, setAvailableAssignments] = useState<any[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   
   const [confirmAction, setConfirmAction] = useState<{ isOpen: boolean, title: string, message: string, onConfirm: () => void } | null>(null);
 
@@ -46,6 +48,39 @@ const StationTesting = () => {
       return () => clearInterval(interval);
     }
   }, []);
+
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    if (isScannerOpen) {
+      scanner = new Html5QrcodeScanner(
+        "qr-reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+      scanner.render(
+        (decodedText) => {
+          let value = decodedText;
+          if (value.includes('|')) {
+            const parts = value.split('|');
+            if (parts[0] && parts[0].length === 12) {
+              value = parts[0];
+            }
+          }
+          setSearchQuery(value);
+          setIsScannerOpen(false);
+          scanner?.clear().catch(console.error);
+        },
+        () => {
+          // ignore error
+        }
+      );
+    }
+    return () => {
+      if (scanner) {
+        scanner.clear().catch(console.error);
+      }
+    };
+  }, [isScannerOpen]);
 
   const fetchData = async (currentUser: any) => {
     try {
@@ -331,7 +366,7 @@ const StationTesting = () => {
         
         <div className="card" style={{ padding: '0' }}>
           <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-            <div style={{ flex: 1, minWidth: '250px' }}>
+            <div style={{ flex: 1, minWidth: '250px', display: 'flex', gap: '0.5rem' }}>
               <input 
                 type="text" 
                 className="form-control" 
@@ -339,6 +374,14 @@ const StationTesting = () => {
                 value={searchQuery}
                 onChange={handleSearchChange}
               />
+              <button 
+                className="btn btn-primary" 
+                style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => setIsScannerOpen(true)}
+                title="Quét mã QR trên thẻ CCCD"
+              >
+                <Scan size={20} />
+              </button>
             </div>
             <div style={{ flex: 1, minWidth: '250px' }}>
               <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
@@ -615,6 +658,18 @@ const StationTesting = () => {
         onConfirm={confirmAction?.onConfirm || (() => {})}
         onCancel={() => setConfirmAction(null)}
       />
+
+      {isScannerOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ background: '#fff', padding: '2rem', borderRadius: '8px', maxWidth: '500px', width: '90%', position: 'relative' }}>
+            <h3 style={{ marginTop: 0, marginBottom: '1rem' }}>Quét mã QR trên thẻ CCCD</h3>
+            <div id="qr-reader" style={{ width: '100%' }}></div>
+            <div style={{ marginTop: '1.5rem', textAlign: 'right' }}>
+              <button className="btn" style={{ background: '#eee', color: '#333' }} onClick={() => setIsScannerOpen(false)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
