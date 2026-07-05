@@ -83,7 +83,7 @@ const StationTesting = () => {
             () => {}
           );
         } catch (err: any) {
-          console.warn("High res scan failed, trying fallback...", err);
+          console.warn("Attempt 1 failed:", err);
           try {
             // Attempt 2: Safest fallback (let browser decide camera and resolution)
             await html5QrCode!.start(
@@ -93,17 +93,29 @@ const StationTesting = () => {
               () => {}
             );
           } catch (fallbackErr: any) {
-            console.error("Fallback scanner failed:", fallbackErr);
-            const errMsg = fallbackErr?.name || fallbackErr?.message || '';
-            const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
-            if (isZaloOrFB) {
-              alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
-            } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission')) {
-              alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
-            } else {
-              toast.error('Không thể bật camera. Lỗi: ' + errMsg);
+            console.warn("Attempt 2 failed:", fallbackErr);
+            try {
+              // Attempt 3: Retrieve camera list manually and pick the last one (usually back camera)
+              const devices = await Html5Qrcode.getCameras();
+              if (devices && devices.length > 0) {
+                const backCamera = devices.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('sau')) || devices[devices.length - 1];
+                await html5QrCode!.start(backCamera.id, { fps: 10 }, onScanSuccess, () => {});
+              } else {
+                throw new Error("Không tìm thấy thiết bị camera.");
+              }
+            } catch (finalErr: any) {
+              console.error("All scanner attempts failed:", finalErr);
+              let errMsg = typeof finalErr === 'string' ? finalErr : (finalErr?.name || finalErr?.message || JSON.stringify(finalErr) || '');
+              const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
+              if (isZaloOrFB) {
+                alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
+              } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission') || errMsg.includes('Permission')) {
+                alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
+              } else {
+                toast.error('Không thể bật camera. Lỗi: ' + errMsg);
+              }
+              setIsScannerOpen(false);
             }
-            setIsScannerOpen(false);
           }
         }
       };
