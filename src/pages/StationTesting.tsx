@@ -414,13 +414,46 @@ const StationTesting = () => {
     return match;
   }).sort((a, b) => {
     const getWeight = (s: any) => {
-      const st = getStudentStatusText(s);
-      if (st === 'Đang thi') return 1;
-      if (st === 'Đã kết thúc') return 2;
-      if (st === 'Chưa thi') return 3;
-      if (st === 'Đã chuyển điểm') return 4;
-      if (st === 'Hoàn thành bài thi') return 5;
-      return 6;
+      const myAssignments = assignments.filter((assignment: any) => assignment.courseId === s.courseId || (assignment.course && assignment.course.name === s.courseName) || s.RetakeSession?.some((rs: any) => rs.targetCourseId === assignment.courseId));
+      if (myAssignments.length === 0) return 10;
+      
+      const myInProgressTr = s.testResults?.find((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && myAssignments.find(a => a.testType?.id === tr.testTypeId));
+      if (myInProgressTr) return 1; // "Kết thúc" button
+      
+      const readyToStartAssignments = myAssignments.filter(a => {
+        const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+        return tr && tr.status === 'CONFIRMED';
+      });
+      if (readyToStartAssignments.length > 0) return 2; // "Bắt đầu thi" button
+      
+      const unconfirmedAssignments = myAssignments.filter(a => {
+        const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+        return !tr || tr.status === 'Chưa thi' || tr.status === 'PENDING';
+      });
+      if (unconfirmedAssignments.length > 0) return 3; // "Xác nhận thi" button
+
+      const isTestingElsewhere = s.testResults?.some((tr: any) => tr.status === 'IN_PROGRESS' && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
+      if (isTestingElsewhere) return 4; // "Đang thi ở trạm khác" text
+      
+      const isConfirmed = myAssignments.some(a => {
+        const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+        return tr && tr.status === 'CONFIRMED';
+      });
+      if (isConfirmed) return 5; // "Đã xác nhận" text
+
+      const hasFinished = myAssignments.some(a => {
+        const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+        return tr && (tr.status === 'FINISHED' || tr.status === 'TRANSFERRED');
+      });
+      if (hasFinished) return 6; // "Đã chuyển điểm" text
+      
+      const hasAbsent = myAssignments.some(a => {
+        const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+        return tr && tr.status === 'ABSENT';
+      });
+      if (hasAbsent) return 7; // "Vắng" text
+
+      return 8;
     };
     return getWeight(a) - getWeight(b);
   });
@@ -547,7 +580,7 @@ const StationTesting = () => {
                           if (myAssignments.length === 0) return null;
 
                           const myInProgressTr = s.testResults?.find((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && myAssignments.find(a => a.testType?.id === tr.testTypeId));
-                          const isTestingElsewhere = s.testResults?.some((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
+                          const isTestingElsewhere = s.testResults?.some((tr: any) => tr.status === 'IN_PROGRESS' && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
 
                           if (isTestingElsewhere && !myInProgressTr) {
                             return <span className="text-muted small">Đang thi ở trạm khác</span>;
