@@ -276,6 +276,19 @@ const StationTesting = () => {
     return 'Đang chờ';
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = e.target.value;
+    // Detect QR code scan from CCCD which uses '|' character separator
+    // Example: 093088000220|363597757|Nguyễn Văn Luyến|20081988|Nam|...
+    if (value.includes('|')) {
+      const parts = value.split('|');
+      if (parts[0] && parts[0].length === 12) {
+        value = parts[0];
+      }
+    }
+    setSearchQuery(value);
+  };
+
   const filteredStudents = students.filter(s => {
     let match = true;
     if (searchQuery) {
@@ -322,9 +335,9 @@ const StationTesting = () => {
               <input 
                 type="text" 
                 className="form-control" 
-                placeholder="Tìm kiếm theo Tên, CCCD hoặc Mã ĐK..." 
+                placeholder="Tìm kiếm theo Tên, CCCD hoặc Mã ĐK (Hỗ trợ quét mã CCCD)..." 
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
             <div style={{ flex: 1, minWidth: '250px' }}>
