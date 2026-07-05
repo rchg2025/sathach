@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle, Download } from 'lucide-react';
+import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle, Download, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
@@ -24,6 +24,7 @@ const StatisticsManager = () => {
   const [filterTestType, setFilterTestType] = useState('ALL');
   const [filterExam, setFilterExam] = useState('ALL');
   const [filterTeacher, setFilterTeacher] = useState<number | null>(null);
+  const [selectedStudentForDetails, setSelectedStudentForDetails] = useState<any>(null);
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -551,6 +552,7 @@ const StatisticsManager = () => {
                       <th>Khóa</th>
                       <th>Họ tên</th>
                       <th>Trạng thái</th>
+                      <th style={{ textAlign: 'right' }}>Hành động</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -564,9 +566,19 @@ const StatisticsManager = () => {
                             {s.finalStatus}
                           </span>
                         </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button 
+                            className="btn btn-sm" 
+                            style={{ background: '#e0e7ff', color: '#4f46e5', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                            onClick={() => setSelectedStudentForDetails(s)}
+                            title="Xem chi tiết điểm và lỗi"
+                          >
+                            <Eye size={14} /> Chi tiết
+                          </button>
+                        </td>
                       </tr>
                     )) : (
-                      <tr><td colSpan={4} className="text-center text-muted">Chưa có học viên nào</td></tr>
+                      <tr><td colSpan={5} className="text-center text-muted">Chưa có học viên nào</td></tr>
                     )}
                   </tbody>
                 </table>
@@ -580,6 +592,86 @@ const StatisticsManager = () => {
         </div>
 
       </div>
+
+      {selectedStudentForDetails && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '8px', maxWidth: '800px', width: '100%', maxHeight: '90vh', display: 'flex', flexDirection: 'column', boxShadow: '0 10px 25px rgba(0,0,0,0.2)' }}>
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontWeight: 600 }}>Chi tiết bài thi - {selectedStudentForDetails.name}</h3>
+              <button className="btn" style={{ padding: '0.5rem', background: 'transparent', border: 'none', cursor: 'pointer' }} onClick={() => setSelectedStudentForDetails(null)}>
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div style={{ padding: '1.5rem', overflowY: 'auto', flex: 1 }}>
+              {selectedStudentForDetails.testResults?.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                  {selectedStudentForDetails.testResults.map((tr: any) => {
+                    const isFiltered = filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType;
+                    if (isFiltered) return null;
+                    
+                    const score = tr.scores?.reduce((sum: number, s: any) => sum + s.points, 100) || 100;
+                    
+                    return (
+                      <div key={tr.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+                        <div style={{ background: 'var(--surface)', padding: '1rem', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                          <div>
+                            <h4 style={{ margin: '0 0 0.25rem 0', fontWeight: 600 }}>{tr.testType?.name || 'Trạm thi'}</h4>
+                            <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                              Trạng thái: <strong style={{ color: tr.status === 'FINISHED' || tr.status === 'TRANSFERRED' ? 'var(--success)' : 'inherit' }}>{tr.status}</strong>
+                              {tr.vehicle && <span style={{ marginLeft: '1rem' }}>Xe: {tr.vehicle.name}</span>}
+                            </div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: score >= (tr.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)' }}>
+                              {score} điểm
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div style={{ padding: '1rem' }}>
+                          <h5 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Chi tiết các lỗi vi phạm:</h5>
+                          {tr.scores && tr.scores.length > 0 ? (
+                            <table className="table table-sm" style={{ margin: 0, fontSize: '0.9rem' }}>
+                              <thead>
+                                <tr>
+                                  <th>Bài thi</th>
+                                  <th>Lỗi vi phạm</th>
+                                  <th style={{ textAlign: 'right' }}>Điểm trừ</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {tr.scores.map((s: any) => {
+                                  if (s.points >= 0) return null;
+                                  return (
+                                    <tr key={s.id}>
+                                      <td>{s.criterion?.exam?.name || '-'}</td>
+                                      <td>{s.criterion?.name || '-'}</td>
+                                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold' }}>{s.points}</td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          ) : (
+                            <p style={{ margin: 0, color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.9rem' }}>Không có lỗi vi phạm nào.</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-center text-muted" style={{ padding: '2rem 0' }}>Chưa có dữ liệu bài thi</p>
+              )}
+            </div>
+            
+            <div style={{ padding: '1rem 1.5rem', borderTop: '1px solid var(--border)', textAlign: 'right', background: 'var(--surface)' }}>
+              <button className="btn" style={{ background: '#eee', color: '#333' }} onClick={() => setSelectedStudentForDetails(null)}>Đóng</button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
