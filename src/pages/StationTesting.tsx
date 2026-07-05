@@ -53,10 +53,7 @@ const StationTesting = () => {
     let html5QrCode: Html5Qrcode | null = null;
     if (isScannerOpen) {
       html5QrCode = new Html5Qrcode("qr-reader", { 
-        verbose: false,
-        experimentalFeatures: {
-          useBarCodeDetectorIfSupported: true
-        }
+        verbose: false
       } as any);
       
       const onScanSuccess = (decodedText: string) => {
@@ -98,8 +95,11 @@ const StationTesting = () => {
           } catch (fallbackErr: any) {
             console.error("Fallback scanner failed:", fallbackErr);
             const errMsg = fallbackErr?.name || fallbackErr?.message || '';
-            if (errMsg.includes('NotAllowedError') || errMsg.includes('permission')) {
-              alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Cho phép" (Allow) quyền Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
+            const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
+            if (isZaloOrFB) {
+              alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
+            } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission')) {
+              alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 (hoặc chữ i) trên thanh địa chỉ của trình duyệt.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
             } else {
               toast.error('Không thể bật camera. Lỗi: ' + errMsg);
             }
