@@ -52,16 +52,23 @@ const StationTesting = () => {
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
     if (isScannerOpen) {
-      html5QrCode = new Html5Qrcode("qr-reader", { verbose: false });
+      html5QrCode = new Html5Qrcode("qr-reader", { 
+        verbose: false,
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        }
+      } as any);
+      
       html5QrCode.start(
-        { facingMode: "environment" },
+        { 
+          facingMode: "environment",
+          width: { ideal: 1920, min: 1280 },
+          height: { ideal: 1080, min: 720 },
+          advanced: [{ focusMode: "continuous" }]
+        } as any,
         {
-          fps: 10,
-          qrbox: (viewfinderWidth, viewfinderHeight) => {
-            const minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
-            const qrboxSize = Math.floor(minEdgeSize * 0.85);
-            return { width: qrboxSize, height: qrboxSize };
-          },
+          fps: 15,
+          disableFlip: false,
         },
         (decodedText) => {
           let value = decodedText.trim();
@@ -683,6 +690,7 @@ const StationTesting = () => {
             
             <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000', boxShadow: '0 0 0 2px rgba(255,255,255,0.2)' }}>
               <div id="qr-reader" style={{ width: '100%', border: 'none' }}></div>
+              <div style={{ position: 'absolute', top: '10%', left: '10%', right: '10%', bottom: '10%', border: '2px dashed rgba(255,255,255,0.6)', borderRadius: '12px', pointerEvents: 'none', zIndex: 5 }}></div>
               <div className="scanner-line"></div>
             </div>
             
