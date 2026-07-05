@@ -1097,6 +1097,7 @@ router.get('/station/students-v2', async (req, res) => {
       include: { 
         course: true,
         teacher: { select: { id: true, name: true, username: true } },
+        RetakeSession: true,
         testResults: {
           include: { 
             stationManager: true, 

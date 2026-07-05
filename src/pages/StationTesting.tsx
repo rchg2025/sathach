@@ -129,7 +129,8 @@ const StationTesting = () => {
   const openStartTestModal = (student: any) => {
     const studentAssignments = assignments.filter(a => 
       a.courseId === student.courseId || 
-      (a.course && a.course.name === student.courseName)
+      (a.course && a.course.name === student.courseName) ||
+      student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
     );
     if (!studentAssignments || studentAssignments.length === 0) {
       toast.error('Không tìm thấy bài thi được phân công cho khóa này');
@@ -225,7 +226,8 @@ const StationTesting = () => {
   const handleConfirmTest = async (student: any) => {
     const studentAssignments = assignments.filter(a => 
       a.courseId === student.courseId || 
-      (a.course && a.course.name === student.courseName)
+      (a.course && a.course.name === student.courseName) ||
+      student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
     );
     
     const unconfirmedAssignments = studentAssignments.filter(a => {
@@ -268,7 +270,8 @@ const StationTesting = () => {
   const handleMarkAbsent = async (student: any) => {
     const studentAssignments = assignments.filter(a => 
       a.courseId === student.courseId || 
-      (a.course && a.course.name === student.courseName)
+      (a.course && a.course.name === student.courseName) ||
+      student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
     );
     
     const unstartedAssignments = studentAssignments.filter(a => {
@@ -528,7 +531,7 @@ const StationTesting = () => {
                           const tr = s.testResults?.find((t: any) => t.testTypeId === tt.id);
                           if (!tr) return '-';
                           if ((user?.role !== 'ADMIN' && user?.username !== 'quantri') && (user?.role !== 'MANAGER' && user?.username !== 'quantri')) {
-                            const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                            const myAssignment = assignments.find((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName) || s.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId));
                             if (myAssignment?.testType?.id !== tr.testTypeId) return <span className="text-muted" style={{ fontWeight: 'normal', fontSize: '0.9em' }}>Ẩn</span>;
                           }
                           if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
@@ -536,10 +539,10 @@ const StationTesting = () => {
                         })()}
                       </td>
                     ))}
-                    {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && (
+                    {(user?.role === 'STATION_MANAGER' || user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.username === 'quantri') && (
                       <td className="sticky-col-right" style={{ textAlign: 'right' }}>
                         {(() => {
-                          const myAssignments = assignments.filter((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName));
+                          const myAssignments = assignments.filter((a: any) => a.courseId === s.courseId || (a.course && a.course.name === s.courseName) || s.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId));
                           if (myAssignments.length === 0) return null;
 
                           const myInProgressTr = s.testResults?.find((tr: any) => tr.status === 'IN_PROGRESS' && myAssignments.find(a => a.testType?.id === tr.testTypeId));
