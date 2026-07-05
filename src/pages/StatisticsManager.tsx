@@ -2,7 +2,8 @@ import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import { getLocalDateString } from '../utils/dateUtils';
@@ -264,6 +265,48 @@ const StatisticsManager = () => {
     return Object.values(teacherData).filter(d => (d['Đậu'] + d['Rớt'] + d['Vắng']) > 0);
   }, [courseFilteredStudents]);
 
+  const handleExportTeacherStats = () => {
+    if (teacherStudents.length === 0) {
+      toast.error('Không có dữ liệu để xuất Excel');
+      return;
+    }
+    
+    const teacherName = teachers.find(t => t.id === filterTeacher)?.name || 'Giao_Vien';
+    
+    const exportData = teacherStudents.map((s, index) => {
+      let errorCount = 0;
+      let errorDetails: string[] = [];
+      
+      s.testResults?.forEach((tr: any) => {
+        if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
+        tr.scores?.forEach((score: any) => {
+          if (score.points < 0 && score.criterion) {
+            if (filterExam === 'ALL' || String(score.criterion.examId) === filterExam) {
+              errorCount++;
+              errorDetails.push(score.criterion.name);
+            }
+          }
+        });
+      });
+
+      return {
+        'STT': index + 1,
+        'Họ tên': s.name,
+        'Mã đăng ký': s.registrationCode,
+        'CCCD': s.cccd,
+        'Khóa': s.course?.name || '-',
+        'Trạng thái': s.finalStatus || 'CHƯA THI',
+        'Tổng lỗi VP': errorCount,
+        'Chi tiết lỗi': errorDetails.join('; ')
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'ThongKe_GiaoVien');
+    XLSX.writeFile(workbook, `Thong_Ke_${teacherName}_${Date.now()}.xlsx`);
+  };
+
   return (
     <AdminLayout user={user}>
       <div className="container">
@@ -493,7 +536,13 @@ const StatisticsManager = () => {
                 </div>
               </div>
 
-              <h4 style={{ marginBottom: '1rem' }}>Danh sách Học viên</h4>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
+                <h4 style={{ margin: 0 }}>Danh sách Học viên</h4>
+                <button className="btn btn-primary" onClick={handleExportTeacherStats} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Download size={16} />
+                  Xuất Excel
+                </button>
+              </div>
               <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
                 <table className="table">
                   <thead>
