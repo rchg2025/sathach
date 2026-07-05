@@ -333,7 +333,9 @@ router.post('/submit-exam', async (req, res) => {
     
     const allCompleted = activeExamIds.every(id => completedExamIds.includes(id));
     
-    const status = newScore < (testType?.passingScore || 80) ? 'FAILED' : (allCompleted ? 'PASSED' : 'IN_PROGRESS');
+    const status = allCompleted 
+      ? (newScore < (testType?.passingScore || 80) ? 'FAILED' : 'PASSED')
+      : 'IN_PROGRESS';
 
     const updatedResult = await prisma.testResult.update({
       where: { id: result.id },
