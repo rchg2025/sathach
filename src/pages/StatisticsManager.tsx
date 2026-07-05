@@ -246,6 +246,24 @@ const StatisticsManager = () => {
     return { total: teacherStudents.length, pass, fail, absent, errorCount };
   }, [teacherStudents, filterTestType, filterExam]);
 
+  const allTeacherStats = useMemo(() => {
+    const teacherData: Record<number, { name: string, 'Đậu': number, 'Rớt': number, 'Vắng': number }> = {};
+    
+    courseFilteredStudents.forEach(s => {
+      if (s.teacherId) {
+        if (!teacherData[s.teacherId]) {
+          const tName = s.teacher?.name || 'Giáo viên không xác định';
+          teacherData[s.teacherId] = { name: tName, 'Đậu': 0, 'Rớt': 0, 'Vắng': 0 };
+        }
+        if (s.finalStatus === 'ĐẬU') teacherData[s.teacherId]['Đậu']++;
+        else if (s.finalStatus === 'RỚT') teacherData[s.teacherId]['Rớt']++;
+        else if (s.finalStatus === 'VẮNG') teacherData[s.teacherId]['Vắng']++;
+      }
+    });
+
+    return Object.values(teacherData).filter(d => (d['Đậu'] + d['Rớt'] + d['Vắng']) > 0);
+  }, [courseFilteredStudents]);
+
   return (
     <AdminLayout user={user}>
       <div className="container">
@@ -391,6 +409,31 @@ const StatisticsManager = () => {
             </div>
           ) : (
             <p className="text-muted text-center" style={{ padding: '2rem' }}>Chưa có dữ liệu lỗi vi phạm trong khoảng thời gian này.</p>
+          )}
+        </div>
+
+        {/* Biểu đồ tỉ lệ đậu rớt theo giáo viên */}
+        <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
+          <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Tỉ lệ Đậu / Rớt theo Giáo viên</h3>
+          {allTeacherStats.length > 0 ? (
+            <div style={{ overflowX: 'auto', width: '100%' }}>
+              <div style={{ height: 400, minWidth: Math.max(500, allTeacherStats.length * 80) }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={allTeacherStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="Đậu" stackId="a" fill="#166534" />
+                    <Bar dataKey="Rớt" stackId="a" fill="#991b1b" />
+                    <Bar dataKey="Vắng" stackId="a" fill="#92400e" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : (
+            <p className="text-muted text-center" style={{ padding: '2rem' }}>Chưa có dữ liệu học viên của các giáo viên.</p>
           )}
         </div>
 
