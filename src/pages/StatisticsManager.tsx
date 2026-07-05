@@ -610,7 +610,7 @@ const StatisticsManager = () => {
                     const isFiltered = filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType;
                     if (isFiltered) return null;
                     
-                    const score = tr.scores?.reduce((sum: number, s: any) => sum + s.points, 100) || 100;
+                    const score = tr.totalScore ?? 100;
                     
                     return (
                       <div key={tr.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -644,12 +644,13 @@ const StatisticsManager = () => {
                               </thead>
                               <tbody>
                                 {tr.scores.map((s: any) => {
-                                  if (s.points >= 0) return null;
+                                  const deducted = (s.timesDeducted || 1) * (s.criterion?.pointsToDeduct || 0);
+                                  if (deducted <= 0) return null;
                                   return (
                                     <tr key={s.id}>
                                       <td>{s.criterion?.exam?.name || '-'}</td>
-                                      <td>{s.criterion?.name || '-'}</td>
-                                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold' }}>{s.points}</td>
+                                      <td>{s.criterion?.name || '-'} {s.timesDeducted > 1 ? `(x${s.timesDeducted})` : ''}</td>
+                                      <td style={{ textAlign: 'right', color: 'var(--danger)', fontWeight: 'bold' }}>-{deducted}</td>
                                     </tr>
                                   );
                                 })}
