@@ -156,8 +156,8 @@ const RetakeManager = () => {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1.5rem' }}>
             <p style={{ margin: 0 }}>Chọn các học viên bên dưới và chỉ định khóa học sẽ ghép thi chung.</p>
             
-            <div className="row g-2">
-              <div className="col-12 col-md-4">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ flex: '1 1 250px', minWidth: '200px' }}>
                 <select className="form-control" value={filterCourseId} onChange={e => setFilterCourseId(e.target.value)}>
                   <option value="">-- Lọc theo Khóa gốc --</option>
                   {[...new Set(students.map(s => s.courseId))].map(courseId => {
@@ -170,18 +170,16 @@ const RetakeManager = () => {
                 </select>
               </div>
               
-              <div className="col-12 col-md-8">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'nowrap' }}>
-                  <select className="form-control" style={{ flex: 1, minWidth: 0, width: 'auto' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
-                    <option value="">-- Chọn Khóa học ghép thi --</option>
-                    {courses.filter(c => !c.isCompleted).map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                    Xếp lịch
-                  </button>
-                </div>
+              <div style={{ flex: '2 1 350px', minWidth: '300px', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <select className="form-control" style={{ flex: 1, minWidth: 0, width: 'auto' }} value={targetCourseId} onChange={e => setTargetCourseId(e.target.value)}>
+                  <option value="">-- Chọn Khóa học ghép thi --</option>
+                  {courses.filter(c => !c.isCompleted).map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+                <button className="btn btn-primary" onClick={handleCreateRetake} disabled={selectedStudentIds.length === 0 || !targetCourseId} style={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  Xếp lịch
+                </button>
               </div>
             </div>
           </div>
