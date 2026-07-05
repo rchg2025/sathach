@@ -30,7 +30,7 @@ const AssignmentManager = () => {
   const [selectedCourse, setSelectedCourse] = useState('');
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [assignmentDate, setAssignmentDate] = useState('');
-  const [showScore, setShowScore] = useState(true);
+  const [showScore, setShowScore] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   // Delete modal state
@@ -81,11 +81,13 @@ const AssignmentManager = () => {
 
   const availableVehicles = React.useMemo(() => {
     if (roleType === 'EXAMINER') {
-      if (selectedTestTypes.length === 0) return [];
+      if (selectedTestTypes.length === 0 || !assignmentDate) return [];
       
       const smAssignments = assignments.filter(a => {
+        if (!a.assignmentDate) return false;
         return a.examiner?.role === 'STATION_MANAGER' && 
-               selectedTestTypes.includes(String(a.testType?.id));
+               selectedTestTypes.includes(String(a.testType?.id)) &&
+               getLocalDateString(a.assignmentDate) === assignmentDate;
       });
 
       const smVehicleIds = new Set<string>();
@@ -369,6 +371,16 @@ const AssignmentManager = () => {
             )}
 
             <div className="form-group">
+              <label className="form-label">Thời gian thực hiện</label>
+              <input 
+                type="date" 
+                className="form-control" 
+                value={assignmentDate}
+                onChange={(e) => setAssignmentDate(e.target.value)}
+              />
+            </div>
+
+            <div className="form-group">
               <label className="form-label">
                 Số xe {roleType === 'EXAMINER' ? '(Theo Trưởng trạm)' : ''}
               </label>
@@ -385,16 +397,6 @@ const AssignmentManager = () => {
                   menu: (base: any) => ({ ...base, zIndex: 9999 })
                 }}
                 noOptionsMessage={() => "Không tìm thấy số xe"}
-              />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">Thời gian thực hiện</label>
-              <input 
-                type="date" 
-                className="form-control" 
-                value={assignmentDate}
-                onChange={(e) => setAssignmentDate(e.target.value)}
               />
             </div>
 
