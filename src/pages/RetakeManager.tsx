@@ -48,7 +48,19 @@ const RetakeManager = () => {
       const eligibleStudents = allStudents.filter((s: any) => {
         if (!s.testResults || s.testResults.length === 0) return false;
         
-        const hasFailedOrAbsent = s.testResults.some((tr: any) => {
+        // Hide if they are already scheduled for retake
+        const isScheduled = resRetakes.data.some((r: any) => r.studentId === s.id);
+        if (isScheduled) return false;
+
+        // Find the latest test result for each test type
+        const latestTests = new Map();
+        s.testResults.forEach((tr: any) => {
+          if (!latestTests.has(tr.testTypeId) || new Date(tr.createdAt) > new Date(latestTests.get(tr.testTypeId).createdAt)) {
+            latestTests.set(tr.testTypeId, tr);
+          }
+        });
+        
+        const hasFailedOrAbsent = Array.from(latestTests.values()).some((tr: any) => {
           const isFailed = tr.status === 'FAILED';
           const isAbsent = tr.status === 'ABSENT';
           const isFinishedFailed = tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
@@ -215,7 +227,13 @@ const RetakeManager = () => {
               </thead>
               <tbody>
                 {students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true).map(student => {
-                  const failedOrAbsent = student.testResults.filter((tr: any) => {
+                  const latestTests = new Map();
+                  student.testResults.forEach((tr: any) => {
+                    if (!latestTests.has(tr.testTypeId) || new Date(tr.createdAt) > new Date(latestTests.get(tr.testTypeId).createdAt)) {
+                      latestTests.set(tr.testTypeId, tr);
+                    }
+                  });
+                  const failedOrAbsent = Array.from(latestTests.values()).filter((tr: any) => {
                     const isFailed = tr.status === 'FAILED';
                     const isAbsent = tr.status === 'ABSENT';
                     const isFinishedFailed = tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
