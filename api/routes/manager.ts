@@ -1141,7 +1141,11 @@ router.post('/station/confirm-test', async (req, res) => {
   const { studentId, testTypeId, stationManagerId } = req.body;
   try {
     let testResult = await prisma.testResult.findFirst({
-      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      where: { 
+        studentId: Number(studentId), 
+        testTypeId: Number(testTypeId),
+        status: { in: ['PENDING', 'CONFIRMED'] }
+      },
       orderBy: { createdAt: 'desc' }
     });
 
@@ -1178,7 +1182,11 @@ router.post('/station/start-test', async (req, res) => {
   const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;
   try {
     let testResult = await prisma.testResult.findFirst({
-      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      where: { 
+        studentId: Number(studentId), 
+        testTypeId: Number(testTypeId),
+        status: { in: ['PENDING', 'CONFIRMED'] }
+      },
       orderBy: { createdAt: 'desc' }
     });
     

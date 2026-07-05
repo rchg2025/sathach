@@ -592,37 +592,19 @@ const StationTesting = () => {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                                  onClick={() => {
-                                    setConfirmAction({
-                                      isOpen: true,
-                                      title: 'Xác nhận thi',
-                                      message: `Xác nhận cho thí sinh ${s.name} tham gia thi?`,
-                                      onConfirm: () => {
-                                        handleConfirmTest(s);
-                                        setConfirmAction(null);
-                                      }
-                                    });
-                                  }}
+                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Xác nhận thi"
+                                  onClick={() => handleConfirmTest(s)}
                                 >
-                                  <CheckCircle size={16} /> Xác nhận thi
+                                  <CheckCircle size={16} />
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
-                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                                  onClick={() => {
-                                    setConfirmAction({
-                                      isOpen: true,
-                                      title: 'Xác nhận vắng thi',
-                                      message: `Xác nhận đánh dấu vắng thi cho ${s.name}?`,
-                                      onConfirm: () => {
-                                        handleMarkAbsent(s);
-                                        setConfirmAction(null);
-                                      }
-                                    });
-                                  }}
+                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Vắng"
+                                  onClick={() => handleMarkAbsent(s)}
                                 >
-                                  <UserX size={16} /> Vắng
+                                  <UserX size={16} />
                                 </button>
                               </div>
                             );
@@ -633,14 +615,16 @@ const StationTesting = () => {
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                                 <button 
                                   className="btn btn-primary" 
-                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Bắt đầu thi"
                                   onClick={() => openStartTestModal(s)}
                                 >
-                                  <Play size={16} /> Bắt đầu thi
+                                  <Play size={16} />
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
-                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  style={{ padding: '0.3rem 0.5rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                                  title="Vắng"
                                   onClick={() => {
                                     setConfirmAction({
                                       isOpen: true,
@@ -653,7 +637,7 @@ const StationTesting = () => {
                                     });
                                   }}
                                 >
-                                  <UserX size={16} /> Vắng
+                                  <UserX size={16} />
                                 </button>
                               </div>
                             );
@@ -691,7 +675,9 @@ const StationTesting = () => {
                 {filteredStudents.length === 0 && (
                   <tr>
                     <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
-                      Chưa có học viên nào được phân công.
+                      {user?.role === 'STATION_MANAGER' 
+                        ? 'Chưa có thông tin xác nhận từ quản lý.' 
+                        : 'Chưa có học viên nào được phân công.'}
                     </td>
                   </tr>
                 )}
