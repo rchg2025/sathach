@@ -81,16 +81,11 @@ const AssignmentManager = () => {
 
   const availableVehicles = React.useMemo(() => {
     if (roleType === 'EXAMINER') {
-      if (!assignmentDate || selectedTestTypes.length === 0 || !selectedCourse) return [];
+      if (selectedTestTypes.length === 0) return [];
       
-      const dateStr = assignmentDate;
       const smAssignments = assignments.filter(a => {
-        if (!a.assignmentDate) return false;
-        const aDate = getLocalDateString(a.assignmentDate);
-        return aDate === dateStr &&
-               a.examiner?.role === 'STATION_MANAGER' && 
-               selectedTestTypes.includes(String(a.testType?.id)) &&
-               String(a.courseId) === String(selectedCourse);
+        return a.examiner?.role === 'STATION_MANAGER' && 
+               selectedTestTypes.includes(String(a.testType?.id));
       });
 
       const smVehicleIds = new Set<string>();
