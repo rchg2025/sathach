@@ -18,6 +18,7 @@ const RetakeManager = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'pending' | 'scheduled'>('pending');
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
+  const [filterCourseId, setFilterCourseId] = useState<string>('');
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -47,9 +48,13 @@ const RetakeManager = () => {
       const eligibleStudents = allStudents.filter((s: any) => {
         if (!s.testResults || s.testResults.length === 0) return false;
         
-        const hasFailedOrAbsent = s.testResults.some((tr: any) => 
-          tr.status === 'FAILED' || tr.status === 'ABSENT' || (tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80))
-        );
+        const hasFailedOrAbsent = s.testResults.some((tr: any) => {
+          const isFailed = tr.status === 'FAILED';
+          const isAbsent = tr.status === 'ABSENT';
+          const isFinishedFailed = tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
+          const isTransferredFailed = tr.status === 'TRANSFERRED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
+          return isFailed || isAbsent || isFinishedFailed || isTransferredFailed;
+        });
         
         return hasFailedOrAbsent;
       });
@@ -163,6 +168,21 @@ const RetakeManager = () => {
             </div>
           </div>
 
+          <div className="row mb-3">
+            <div className="col-md-4">
+              <select className="form-control" value={filterCourseId} onChange={e => setFilterCourseId(e.target.value)}>
+                <option value="">-- Lọc theo Khóa gốc --</option>
+                {[...new Set(students.map(s => s.courseId))].map(courseId => {
+                  const course = courses.find(c => c.id === courseId);
+                  const name = course ? course.name : (students.find(s => s.courseId === courseId)?.courseName || 'Không xác định');
+                  return (
+                    <option key={courseId} value={String(courseId)}>{name}</option>
+                  );
+                })}
+              </select>
+            </div>
+          </div>
+
           <div className="table-responsive">
             <table className="table">
               <thead>
@@ -170,10 +190,19 @@ const RetakeManager = () => {
                   <th style={{ width: '40px' }}>
                     <input 
                       type="checkbox" 
-                      checked={selectedStudentIds.length === students.length && students.length > 0}
+                      checked={
+                        students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true).length > 0 &&
+                        students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true).every(s => selectedStudentIds.includes(s.id))
+                      }
                       onChange={e => {
-                        if (e.target.checked) setSelectedStudentIds(students.map(s => s.id));
-                        else setSelectedStudentIds([]);
+                        const filtered = students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true);
+                        if (e.target.checked) {
+                          const newIds = new Set([...selectedStudentIds, ...filtered.map(s => s.id)]);
+                          setSelectedStudentIds(Array.from(newIds));
+                        } else {
+                          const filteredIds = filtered.map(s => s.id);
+                          setSelectedStudentIds(selectedStudentIds.filter(id => !filteredIds.includes(id)));
+                        }
                       }}
                     />
                   </th>
@@ -184,10 +213,14 @@ const RetakeManager = () => {
                 </tr>
               </thead>
               <tbody>
-                {students.map(student => {
-                  const failedOrAbsent = student.testResults.filter((tr: any) => 
-                    tr.status === 'FAILED' || tr.status === 'ABSENT' || (tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80))
-                  );
+                {students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true).map(student => {
+                  const failedOrAbsent = student.testResults.filter((tr: any) => {
+                    const isFailed = tr.status === 'FAILED';
+                    const isAbsent = tr.status === 'ABSENT';
+                    const isFinishedFailed = tr.status === 'FINISHED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
+                    const isTransferredFailed = tr.status === 'TRANSFERRED' && tr.totalScore < (tr.testType?.passingScore ?? 80);
+                    return isFailed || isAbsent || isFinishedFailed || isTransferredFailed;
+                  });
                   return (
                     <tr key={student.id}>
                       <td>
@@ -210,9 +243,9 @@ const RetakeManager = () => {
                     </tr>
                   );
                 })}
-                {students.length === 0 && (
+                {students.filter(s => filterCourseId ? String(s.courseId) === filterCourseId : true).length === 0 && (
                   <tr>
-                    <td colSpan={5} className="text-center text-muted">Không có học viên nào cần thi lại</td>
+                    <td colSpan={5} className="text-center text-muted">Không có học viên nào cần thi lại phù hợp với bộ lọc</td>
                   </tr>
                 )}
               </tbody>
