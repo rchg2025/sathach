@@ -76,6 +76,11 @@ const StatisticsManager = () => {
     return Array.from(examMap.values());
   }, [students, filterTestType]);
 
+  const activeTestTypes = useMemo(() => {
+    if (filterTestType === 'ALL') return displayedTestTypes;
+    return displayedTestTypes.filter(tt => String(tt.id) === filterTestType);
+  }, [displayedTestTypes, filterTestType]);
+
   const processedStudents = useMemo(() => {
     return students.map(student => {
       const allTrs = student.testResults || [];
@@ -96,7 +101,7 @@ const StatisticsManager = () => {
       let isAbsent = false;
       let completedCount = 0;
       
-      displayedTestTypes.forEach((tt: any) => {
+      activeTestTypes.forEach((tt: any) => {
         let tr = todayTrs.find((t: any) => t.testTypeId === tt.id);
         if (!tr) {
           const pastPassed = pastTrs.filter(t => 
@@ -124,12 +129,12 @@ const StatisticsManager = () => {
       let finalStatus = '';
       if (isAbsent) finalStatus = 'VẮNG';
       else if (isFail) finalStatus = 'RỚT';
-      else if (displayedTestTypes.length > 0 && completedCount >= displayedTestTypes.length) finalStatus = 'ĐẬU';
+      else if (activeTestTypes.length > 0 && completedCount >= activeTestTypes.length) finalStatus = 'ĐẬU';
       else finalStatus = 'CHƯA HOÀN THÀNH';
 
       return { ...student, finalStatus };
     });
-  }, [students, displayedTestTypes, filterDate]);
+  }, [students, activeTestTypes, filterDate]);
 
   const courseFilteredStudents = useMemo(() => {
     return processedStudents.filter(s => {
