@@ -17,7 +17,8 @@ import {
   FileText,
   Calendar,
   History,
-  Upload
+  Upload,
+  PieChart
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -155,7 +156,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
                 <Upload size={20} /> <span className="sidebar-item-text">Nhập điểm</span>
               </Link>
               <Link to="/manager/reports" className={`sidebar-item ${isActive('/manager/reports')}`} onClick={closeSidebar}>
-                <FileText size={20} /> <span className="sidebar-item-text">Báo cáo - Thống kê</span>
+                <FileText size={20} /> <span className="sidebar-item-text">Báo cáo</span>
+              </Link>
+              <Link to="/manager/statistics" className={`sidebar-item ${isActive('/manager/statistics')}`} onClick={closeSidebar}>
+                <PieChart size={20} /> <span className="sidebar-item-text">Thống kê</span>
               </Link>
               <Link to="/manager/records" className={`sidebar-item ${isActive('/manager/records')}`} onClick={closeSidebar}>
                 <FileText size={20} /> <span className="sidebar-item-text">Biên bản</span>

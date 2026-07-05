@@ -182,16 +182,7 @@ const ReportsManager = () => {
     });
   }, [courseFilteredStudents, debouncedSearchQuery, filterStatus]);
 
-  const stats = useMemo(() => {
-    const totalCourseStudents = courseFilteredStudents.length;
-    const totalPass = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU').length;
-    const totalFail = courseFilteredStudents.filter(s => s.finalStatus === 'RỚT').length;
-    const totalAbsent = courseFilteredStudents.filter(s => s.finalStatus === 'VẮNG').length;
-    const totalCompleted = courseFilteredStudents.filter(s => s.finalStatus === 'ĐẬU' || s.finalStatus === 'RỚT' || s.finalStatus === 'VẮNG').length;
-    const passRate = totalCompleted > 0 ? Math.round((totalPass / totalCompleted) * 100) : 0;
-    
-    return { totalCourseStudents, totalPass, totalFail, totalAbsent, passRate };
-  }, [courseFilteredStudents]);
+
 
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const paginatedStudents = useMemo(() => {
@@ -280,7 +271,7 @@ const ReportsManager = () => {
       </style>
       <div className="container print-container">
         <div className="no-print mb-4">
-          <h2 style={{ margin: '0 0 1rem 0' }}>Báo cáo - Thống kê Sát hạch</h2>
+          <h2 style={{ margin: '0 0 1rem 0' }}>Báo cáo Sát hạch</h2>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button className="btn btn-success" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: '1 1 auto', justifyContent: 'center' }}>
               <Download size={18} /> Xuất Excel
@@ -302,28 +293,6 @@ const ReportsManager = () => {
           )}
         </div>
         
-        <div className="grid no-print" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-          <div className="stat-card" style={{ padding: '1.5rem', background: 'var(--surface)', borderRadius: '12px', border: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Tổng số học viên</h3>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalCourseStudents}</div>
-          </div>
-          <div className="stat-card" style={{ padding: '1.5rem', background: '#dcfce7', borderRadius: '12px', border: '1px solid #bbf7d0', color: '#166534' }}>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Đậu</h3>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalPass}</div>
-          </div>
-          <div className="stat-card" style={{ padding: '1.5rem', background: '#fee2e2', borderRadius: '12px', border: '1px solid #fecaca', color: '#991b1b' }}>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Rớt</h3>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalFail}</div>
-          </div>
-          <div className="stat-card" style={{ padding: '1.5rem', background: '#fef3c7', borderRadius: '12px', border: '1px solid #fde68a', color: '#92400e' }}>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Vắng</h3>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.totalAbsent}</div>
-          </div>
-          <div className="stat-card" style={{ padding: '1.5rem', background: '#e0e7ff', borderRadius: '12px', border: '1px solid #c7d2fe', color: '#3730a3' }}>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Tỉ lệ đậu</h3>
-            <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{stats.passRate}%</div>
-          </div>
-        </div>
 
         <div className="card no-print" style={{ padding: '0' }}>
           <div className="filter-group" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
