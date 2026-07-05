@@ -1117,6 +1117,17 @@ router.get('/station/students-v2', async (req, res) => {
       take: 500 // Limit to avoid massive payloads for admin
     });
 
+    if (role === 'STATION_MANAGER') {
+      const myTestTypeIds = assignments.map(a => a.testTypeId);
+      students = students.filter(s => {
+        return s.testResults.some(tr => 
+          myTestTypeIds.includes(tr.testTypeId) && 
+          tr.status !== 'ABSENT' && 
+          tr.status !== 'PENDING'
+        );
+      });
+    }
+
     res.json({ students, assignments });
   } catch (error) {
     console.error(error);
@@ -1124,6 +1135,43 @@ router.get('/station/students-v2', async (req, res) => {
   }
 });
 
+
+router.post('/station/confirm-test', async (req, res) => {
+  const { studentId, testTypeId, stationManagerId } = req.body;
+  try {
+    let testResult = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (testResult) {
+      testResult = await prisma.testResult.update({
+        where: { id: testResult.id },
+        data: { 
+          status: 'CONFIRMED',
+          stationManagerId: Number(stationManagerId),
+          updatedAt: new Date()
+        }
+      });
+    } else {
+      const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
+      testResult = await prisma.testResult.create({
+        data: {
+          studentId: Number(studentId),
+          testTypeId: Number(testTypeId),
+          status: 'CONFIRMED',
+          stationManagerId: Number(stationManagerId),
+          totalScore: testType?.maxScore || 100,
+        }
+      });
+    }
+
+    res.json(testResult);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 router.post('/station/start-test', async (req, res) => {
   const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;

@@ -222,6 +222,49 @@ const StationTesting = () => {
     }
   };
 
+  const handleConfirmTest = async (student: any) => {
+    const studentAssignments = assignments.filter(a => 
+      a.courseId === student.courseId || 
+      (a.course && a.course.name === student.courseName)
+    );
+    
+    const unconfirmedAssignments = studentAssignments.filter(a => {
+      const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+      return !tr || tr.status === 'Chưa thi' || tr.status === 'PENDING';
+    });
+
+    if (unconfirmedAssignments.length === 0) return toast.error('Không tìm thấy bài thi cần xác nhận');
+
+    try {
+      for (const assignment of unconfirmedAssignments) {
+        await axios.post(`${API_BASE_URL}/api/manager/station/confirm-test`, {
+          studentId: student.id,
+          testTypeId: assignment.testType?.id,
+          stationManagerId: user?.id
+        });
+      }
+      toast.success('Đã xác nhận cho thí sinh thi thành công.');
+      
+      setStudents(prev => prev.map(s => {
+        if (s.id === student.id) {
+          const newTestResults = [...(s.testResults || [])];
+          for (const assignment of unconfirmedAssignments) {
+            const trIndex = newTestResults.findIndex(tr => tr.testTypeId === assignment.testType?.id);
+            if (trIndex > -1) {
+              newTestResults[trIndex] = { ...newTestResults[trIndex], status: 'CONFIRMED' };
+            } else {
+              newTestResults.push({ testTypeId: assignment.testType?.id, status: 'CONFIRMED' });
+            }
+          }
+          return { ...s, testResults: newTestResults };
+        }
+        return s;
+      }));
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi khi xác nhận thi');
+    }
+  };
+
   const handleMarkAbsent = async (student: any) => {
     const studentAssignments = assignments.filter(a => 
       a.courseId === student.courseId || 
@@ -434,7 +477,7 @@ const StationTesting = () => {
                   {displayedTestTypes.map((tt: any) => (
                     <th key={tt.id} style={{ textAlign: 'center' }}>{tt.name}</th>
                   ))}
-                  {(user?.role === 'STATION_MANAGER' || user?.username === 'quantri') && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
+                  {(user?.role === 'STATION_MANAGER' || user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.username === 'quantri') && <th className="sticky-col-right" style={{ textAlign: 'right' }}>Thao tác</th>}
                 </tr>
               </thead>
               <tbody>
@@ -529,20 +572,37 @@ const StationTesting = () => {
                             );
                           }
 
-                          const unstartedAssignments = myAssignments.filter(a => {
+                          const unconfirmedAssignments = myAssignments.filter(a => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-                            return !tr || tr.status === 'Chưa thi';
+                            return !tr || tr.status === 'Chưa thi' || tr.status === 'PENDING';
+                          });
+                          
+                          const readyToStartAssignments = myAssignments.filter(a => {
+                            const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+                            return tr && tr.status === 'CONFIRMED';
                           });
 
-                          if (unstartedAssignments.length > 0) {
+                          const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.username === 'quantri';
+
+                          if (isManagerOrAdmin && unconfirmedAssignments.length > 0) {
                             return (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
                                 <button 
                                   className="btn btn-primary" 
                                   style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                                  onClick={() => openStartTestModal(s)}
+                                  onClick={() => {
+                                    setConfirmAction({
+                                      isOpen: true,
+                                      title: 'Xác nhận thi',
+                                      message: `Xác nhận cho thí sinh ${s.name} tham gia thi?`,
+                                      onConfirm: () => {
+                                        handleConfirmTest(s);
+                                        setConfirmAction(null);
+                                      }
+                                    });
+                                  }}
                                 >
-                                  <Play size={16} /> Bắt đầu thi
+                                  <CheckCircle size={16} /> Xác nhận thi
                                 </button>
                                 <button 
                                   className="btn btn-secondary" 
@@ -565,6 +625,20 @@ const StationTesting = () => {
                             );
                           }
 
+                          if (user?.role === 'STATION_MANAGER' && readyToStartAssignments.length > 0) {
+                            return (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', alignItems: 'flex-end' }}>
+                                <button 
+                                  className="btn btn-primary" 
+                                  style={{ padding: '0.3rem 0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={() => openStartTestModal(s)}
+                                >
+                                  <Play size={16} /> Bắt đầu thi
+                                </button>
+                              </div>
+                            );
+                          }
+
                           const hasFinished = myAssignments.some(a => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
                             return tr && (tr.status === 'FINISHED' || tr.status === 'TRANSFERRED');
@@ -574,11 +648,18 @@ const StationTesting = () => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
                             return tr && tr.status === 'ABSENT';
                           });
+                          
+                          const isConfirmed = myAssignments.some(a => {
+                            const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
+                            return tr && tr.status === 'CONFIRMED';
+                          });
 
                           if (hasFinished) {
                              return <span className="text-success small">Đã chuyển điểm</span>;
                           } else if (hasAbsent) {
                              return <span className="text-muted small">Vắng</span>;
+                          } else if (isManagerOrAdmin && isConfirmed) {
+                             return <span className="text-primary small">Đã xác nhận</span>;
                           }
 
                           return null;
