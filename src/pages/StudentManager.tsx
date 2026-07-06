@@ -832,8 +832,8 @@ const StudentManager = () => {
           display: 'flex', alignItems: 'center', justifyContent: 'center'
         }} onClick={() => setViewStudent(null)}>
           <div style={{
-            backgroundColor: 'white', padding: '2rem', borderRadius: '8px',
-            minWidth: '500px', maxWidth: '800px', width: '90%', maxHeight: '90vh', overflowY: 'auto'
+            backgroundColor: 'white', padding: '1.5rem', borderRadius: '8px',
+            maxWidth: '800px', width: '95%', maxHeight: '90vh', overflowY: 'auto'
           }} onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 style={{ margin: 0 }}>Chi tiết Học viên</h3>
