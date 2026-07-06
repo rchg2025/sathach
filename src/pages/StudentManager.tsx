@@ -388,7 +388,8 @@ const StudentManager = () => {
       'Ngày trúng tuyển': s.passDate || '',
       'Ngày hết hạn': s.licenseExpiryDate || '',
       'Thời gian GPLX': s.licenseDuration || '',
-      'Giáo viên dạy thực hành': s.teacher?.name || ''
+      'Giáo viên dạy thực hành': s.teacher?.name || '',
+      'Mã QR': `${s.cccd}|${s.name}`
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
