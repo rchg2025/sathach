@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Pagination } from '../components/Pagination';
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
@@ -16,7 +17,7 @@ const SystemLogs = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');

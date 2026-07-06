@@ -31,7 +31,7 @@ const StationTesting = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 15;
+  const itemsPerPage = 10;
 
   const displayedTestTypes = testTypes.filter(tt => assignments.some((a: any) => a.testTypeId === tt.id));
 

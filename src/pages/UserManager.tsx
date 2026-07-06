@@ -1,4 +1,5 @@
 import { formatDateDisplay } from '../utils/dateUtils';
+import { Pagination } from '../components/Pagination';
 import toast from 'react-hot-toast';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
@@ -31,7 +32,7 @@ const UserManager = () => {
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 10;
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -345,23 +346,16 @@ const UserManager = () => {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="pagination-wrapper" style={{ padding: '1rem', borderTop: '1px solid var(--border)' }}>
-                <div className="text-muted" style={{ fontSize: '0.9rem' }}>
+              <div className="pagination-wrapper mt-4">
+                <div className="text-muted text-center mb-3" style={{ fontSize: '0.9rem' }}>
                   Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredUsers.length)} / {filteredUsers.length}
                 </div>
-                <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                  <button className="btn" style={{ padding: '0.3rem 0.6rem' }} disabled={currentPage === 1} onClick={() => setCurrentPage(prev => prev - 1)}>Trước</button>
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <button key={i} className="btn"
-                      style={{ padding: '0.3rem 0.6rem', background: currentPage === i + 1 ? 'var(--primary)' : 'transparent', color: currentPage === i + 1 ? '#fff' : 'inherit' }}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-                  <button className="btn" style={{ padding: '0.3rem 0.6rem' }} disabled={currentPage === totalPages} onClick={() => setCurrentPage(prev => prev + 1)}>Sau</button>
-                </div>
-              </div>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
             )}
           </div>
         )}

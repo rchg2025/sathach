@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Pagination } from '../components/Pagination';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 import toast from 'react-hot-toast';

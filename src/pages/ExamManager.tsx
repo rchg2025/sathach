@@ -1,4 +1,5 @@
 import { formatDateDisplay } from '../utils/dateUtils';
+import { Pagination } from '../components/Pagination';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
