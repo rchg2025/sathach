@@ -8,8 +8,8 @@ import { removeAccents } from '../utils/stringUtils';
 import CreatableSelect from 'react-select/creatable';
 import { Pagination } from '../components/Pagination';
 import AdminLayout from '../components/AdminLayout';
-import { Eye, Edit, Trash2, QrCode } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import { Eye, Edit, Trash2, QrCode, Download } from 'lucide-react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { useLocation } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { useDebounce } from '../hooks/useDebounce';
@@ -834,11 +834,27 @@ const StudentManager = () => {
           }} onClick={e => e.stopPropagation()}>
             <h3 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Mã QR Học viên</h3>
             <div style={{ padding: '1rem', background: '#fff', borderRadius: '8px' }}>
-              <QRCodeSVG value={`${qrStudent.cccd}|${qrStudent.name}`} size={200} />
+              <QRCodeCanvas id="qrCodeCanvas" value={`${qrStudent.cccd}|${qrStudent.name}`} size={200} />
             </div>
             <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>{qrStudent.name}</p>
             <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>{qrStudent.cccd}</p>
-            <button className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setQrStudent(null)}>Đóng</button>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', width: '100%' }}>
+              <button className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => {
+                const canvas = document.getElementById("qrCodeCanvas") as HTMLCanvasElement;
+                if (canvas) {
+                  const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+                  const downloadLink = document.createElement("a");
+                  downloadLink.href = pngUrl;
+                  downloadLink.download = `QR_${qrStudent?.cccd}.png`;
+                  document.body.appendChild(downloadLink);
+                  downloadLink.click();
+                  document.body.removeChild(downloadLink);
+                }
+              }}>
+                <Download size={16} /> Tải xuống
+              </button>
+              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setQrStudent(null)}>Đóng</button>
+            </div>
           </div>
         </div>
       )}
