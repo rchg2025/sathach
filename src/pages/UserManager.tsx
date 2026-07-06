@@ -6,7 +6,7 @@ import axios from 'axios';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import * as XLSX from 'xlsx';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Upload, Download, ClipboardList } from 'lucide-react';
 
 const UserManager = () => {
 
@@ -240,9 +240,18 @@ const UserManager = () => {
         <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
           <h2 style={{ margin: 0 }}>Quản lý Thành viên</h2>
           <div className="import-export-group" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
-            <button className="btn" style={{ background: '#28a745', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={exportExcel}>Export</button>
-            <button className="btn" style={{ background: '#17a2b8', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={() => fileInputRef.current?.click()}>Import</button>
-            <button className="btn" style={{ background: '#6c757d', color: 'white', flex: 1, padding: '0.4rem 0.2rem', fontSize: '0.75rem', whiteSpace: 'nowrap', minWidth: 0 }} onClick={downloadTemplate}>File Mẫu</button>
+            <button className="btn" style={{ backgroundColor: '#e2e8f0', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={downloadTemplate}>
+              <ClipboardList size={16} />
+              <span>File Mẫu</span>
+            </button>
+            <button className="btn" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => fileInputRef.current?.click()}>
+              <Upload size={16} />
+              <span>Nhập Excel</span>
+            </button>
+            <button className="btn" style={{ backgroundColor: '#0056b3', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={exportExcel}>
+              <Download size={16} />
+              <span>Xuất Excel</span>
+            </button>
             <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleImport} />
           </div>
         </div>
