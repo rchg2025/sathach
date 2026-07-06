@@ -205,34 +205,11 @@ const TestTypeManager = () => {
 
           {totalPages > 1 && (
             <div className="pagination-wrapper mt-4">
-              <span className="text-muted">
-                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredTestTypes.length)} trong tổng số {filteredTestTypes.length}
-              </span>
-              <div className="pagination flex" style={{ gap: '0.5rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <button 
-                  className="btn btn-outline" 
-                  disabled={currentPage === 1} 
-                  onClick={() => setCurrentPage(prev => prev - 1)}
-                >
-                  Trước
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button 
-                    key={page} 
-                    className={`btn ${currentPage === page ? 'btn-primary' : 'btn-outline'}`}
-                    onClick={() => setCurrentPage(page)}
-                  >
-                    {page}
-                  </button>
-                ))}
-                <button 
-                  className="btn btn-outline" 
-                  disabled={currentPage === totalPages} 
-                  onClick={() => setCurrentPage(prev => prev + 1)}
-                >
-                  Sau
-                </button>
-              </div>
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
             </div>
           )}
         </div>
