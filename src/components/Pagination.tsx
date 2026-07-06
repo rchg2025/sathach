@@ -11,7 +11,7 @@ export const Pagination: React.FC<PaginationProps> = ({ currentPage, totalPages,
   const displayTotalPages = totalPages > 0 ? totalPages : 1;
 
   return (
-    <div className="pagination flex" style={{ gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '2rem', paddingBottom: '1rem', alignItems: 'center' }}>
+    <div className="pagination flex" style={{ gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' }}>
       <button 
         className="btn btn-outline" 
         style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem', borderRadius: '6px', minWidth: '80px', backgroundColor: '#f3f4f6', border: 'none', color: currentPage === 1 ? '#9ca3af' : '#4b5563' }}
