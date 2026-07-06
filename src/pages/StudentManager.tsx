@@ -8,7 +8,8 @@ import { removeAccents } from '../utils/stringUtils';
 import CreatableSelect from 'react-select/creatable';
 import { Pagination } from '../components/Pagination';
 import AdminLayout from '../components/AdminLayout';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { useLocation } from 'react-router-dom';
 import ConfirmModal from '../components/ConfirmModal';
 import { useDebounce } from '../hooks/useDebounce';
@@ -143,6 +144,7 @@ const StudentManager = () => {
   const itemsPerPage = 10;
   
   const [viewStudent, setViewStudent] = useState<any>(null);
+  const [qrStudent, setQrStudent] = useState<any>(null);
   
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
   const [bulkDeleteModal, setBulkDeleteModal] = useState(false);
@@ -615,6 +617,7 @@ const StudentManager = () => {
                     <td>{student.teacher?.name ? <span className="badge badge-primary">{student.teacher.name}</span> : '-'}</td>
                     <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
+                        <button className="action-btn" title="Mã QR" style={{ color: '#28a745' }} onClick={() => setQrStudent(student)}><QrCode size={16} /></button>
                         <button className="action-btn" title="Xem" style={{ color: '#17a2b8' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(student)}><Edit size={16} /></button>
                         <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(student.id)}><Trash2 size={16} /></button>
@@ -816,6 +819,28 @@ const StudentManager = () => {
         onConfirm={confirmBulkDelete}
         onCancel={() => setBulkDeleteModal(false)}
       />
+
+      {/* Modal QR Code */}
+      {qrStudent && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.5)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center'
+        }} onClick={() => setQrStudent(null)}>
+          <div style={{
+            backgroundColor: 'white', padding: '2rem', borderRadius: '8px',
+            minWidth: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center'
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Mã QR Học viên</h3>
+            <div style={{ padding: '1rem', background: '#fff', borderRadius: '8px' }}>
+              <QRCodeSVG value={`${qrStudent.cccd}|${qrStudent.name}`} size={200} />
+            </div>
+            <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>{qrStudent.name}</p>
+            <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>{qrStudent.cccd}</p>
+            <button className="btn btn-outline" style={{ marginTop: '1.5rem', width: '100%' }} onClick={() => setQrStudent(null)}>Đóng</button>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
