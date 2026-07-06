@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
+import QRCode from 'qrcode';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import Select from 'react-select';
@@ -373,29 +375,91 @@ const StudentManager = () => {
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const displayedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const exportToExcel = () => {
-    const dataToExport = filteredStudents.map((s: any, index: number) => ({
-      'STT': index + 1,
-      'Khóa đào tạo': s.courseName || '',
-      'Mã ĐK': s.registrationCode || '',
-      'Họ tên': s.name,
-      'Ngày sinh': s.dob || '',
-      'CCCD': s.cccd,
-      'Địa chỉ': s.address || '',
-      'Số GPLX': s.licenseNumber || '',
-      'Hạng': s.licenseClass || '',
-      'Ngày cấp': s.licenseIssueDate || '',
-      'Ngày trúng tuyển': s.passDate || '',
-      'Ngày hết hạn': s.licenseExpiryDate || '',
-      'Thời gian GPLX': s.licenseDuration || '',
-      'Giáo viên dạy thực hành': s.teacher?.name || '',
-      'Mã QR': `${s.cccd}|${s.name}`
-    }));
-    
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'HocVien');
-    XLSX.writeFile(workbook, 'danh-sach-hoc-vien.xlsx');
+  const exportToExcel = async () => {
+    const toastId = toast.loading('Đang xuất file Excel...');
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('HocVien');
+      
+      // Define columns
+      worksheet.columns = [
+        { header: 'STT', key: 'stt', width: 5 },
+        { header: 'Khóa đào tạo', key: 'course', width: 15 },
+        { header: 'Mã ĐK', key: 'regCode', width: 20 },
+        { header: 'Họ tên', key: 'name', width: 25 },
+        { header: 'Ngày sinh', key: 'dob', width: 15 },
+        { header: 'CCCD', key: 'cccd', width: 15 },
+        { header: 'Địa chỉ', key: 'address', width: 30 },
+        { header: 'Số GPLX', key: 'license', width: 15 },
+        { header: 'Hạng', key: 'class', width: 10 },
+        { header: 'Ngày cấp', key: 'issue', width: 15 },
+        { header: 'Ngày trúng tuyển', key: 'pass', width: 15 },
+        { header: 'Ngày hết hạn', key: 'expiry', width: 15 },
+        { header: 'Thời gian GPLX', key: 'duration', width: 15 },
+        { header: 'Giáo viên dạy thực hành', key: 'teacher', width: 25 },
+        { header: 'Mã QR', key: 'qr', width: 15 } // We'll put image here
+      ];
+
+      // Add rows and images
+      for (let i = 0; i < filteredStudents.length; i++) {
+        const s: any = filteredStudents[i];
+        const row = worksheet.addRow({
+          stt: i + 1,
+          course: s.courseName || '',
+          regCode: s.registrationCode || '',
+          name: s.name,
+          dob: s.dob || '',
+          cccd: s.cccd,
+          address: s.address || '',
+          license: s.licenseNumber || '',
+          class: s.licenseClass || '',
+          issue: s.licenseIssueDate || '',
+          pass: s.passDate || '',
+          expiry: s.licenseExpiryDate || '',
+          duration: s.licenseDuration || '',
+          teacher: s.teacher?.name || ''
+        });
+
+        // Generate QR image base64
+        const qrText = `${s.cccd}|${s.name}`;
+        const qrDataUrl = await QRCode.toDataURL(qrText, { margin: 1 });
+        
+        const imageId = workbook.addImage({
+          base64: qrDataUrl,
+          extension: 'png',
+        });
+        
+        // Add image to the 'O' column (Mã QR) at current row
+        worksheet.addImage(imageId, {
+          tl: { col: 14, row: i + 1 }, // 14 = column O (0-indexed)
+          ext: { width: 80, height: 80 }
+        });
+
+        // Set row height to accommodate the image
+        row.height = 65;
+      }
+      
+      // Center align cells
+      worksheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          cell.alignment = { vertical: 'middle' };
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = 'danh-sach-hoc-vien.xlsx';
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      
+      toast.success('Xuất file thành công', { id: toastId });
+    } catch (error) {
+      console.error(error);
+      toast.error('Có lỗi xảy ra khi xuất file', { id: toastId });
+    }
   };
 
   const downloadTemplate = () => {
@@ -839,7 +903,7 @@ const StudentManager = () => {
             <p style={{ marginTop: '1rem', fontSize: '1.1rem', fontWeight: 'bold', color: '#333' }}>{qrStudent.name}</p>
             <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '0.25rem' }}>{qrStudent.cccd}</p>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.5rem', width: '100%' }}>
-              <button className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }} onClick={() => {
+              <button className="btn btn-primary" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', whiteSpace: 'nowrap' }} onClick={() => {
                 const canvas = document.getElementById("qrCodeCanvas") as HTMLCanvasElement;
                 if (canvas) {
                   const pngUrl = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
@@ -853,7 +917,7 @@ const StudentManager = () => {
               }}>
                 <Download size={16} /> Tải xuống
               </button>
-              <button className="btn btn-outline" style={{ flex: 1 }} onClick={() => setQrStudent(null)}>Đóng</button>
+              <button className="btn btn-outline" style={{ flex: 1, whiteSpace: 'nowrap' }} onClick={() => setQrStudent(null)}>Đóng</button>
             </div>
           </div>
         </div>
