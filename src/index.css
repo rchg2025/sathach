@@ -661,7 +661,7 @@ input:checked + .toggle-slider:before {
   }
 }
 
-.pagination-wrapper { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1rem 0; margin-bottom: 2rem; }
+.pagination-wrapper { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
 
 
 .action-buttons-grid { display: flex; gap: 5px; }
