@@ -663,3 +663,7 @@ input:checked + .toggle-slider:before {
 
 .pagination-wrapper { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; padding: 1rem 0; margin-bottom: 2rem; }
 
+
+.action-buttons-grid { display: flex; gap: 5px; }
+@media (max-width: 768px) { .action-buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; } }
+

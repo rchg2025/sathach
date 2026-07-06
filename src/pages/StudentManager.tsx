@@ -681,7 +681,7 @@ const StudentManager = () => {
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
                     <td>{student.teacher?.name ? <span className="badge badge-primary">{student.teacher.name}</span> : '-'}</td>
                     <td className="sticky-col-right">
-                      <div style={{ display: 'flex', gap: '5px' }}>
+                      <div className="action-buttons-grid">
                         <button className="action-btn" title="Mã QR" style={{ color: '#28a745' }} onClick={() => setQrStudent(student)}><QrCode size={16} /></button>
                         <button className="action-btn" title="Xem" style={{ color: '#17a2b8' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(student)}><Edit size={16} /></button>
