@@ -703,13 +703,13 @@ const StudentManager = () => {
 
           {totalPages > 1 && (
             <div className="pagination-wrapper mt-4">
-              <span className="text-muted">
-                Hiển thị {((currentPage - 1) * itemsPerPage) + 1} đến {Math.min(currentPage * itemsPerPage, filteredStudents.length)} trong tổng số {filteredStudents.length}
-              </span>
+              
               <Pagination 
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredStudents.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

@@ -246,6 +246,8 @@ const CriterionManager = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredCriteria.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

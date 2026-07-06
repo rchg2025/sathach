@@ -209,6 +209,8 @@ const TestTypeManager = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredTestTypes.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

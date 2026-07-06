@@ -716,6 +716,8 @@ const StationTesting = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredStudents.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

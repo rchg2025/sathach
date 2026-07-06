@@ -223,6 +223,8 @@ const ExamManager = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredExams.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

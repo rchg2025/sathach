@@ -555,10 +555,12 @@ const AssignmentManager = () => {
         {totalPages > 1 && (
           <div className="pagination-wrapper mt-4 mb-4">
             <Pagination 
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={filteredAssignments.length}
+                itemsPerPage={itemsPerPage}
+              />
           </div>
         )}
       </div>

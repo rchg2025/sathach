@@ -195,6 +195,8 @@ const SystemLogs = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredLogs.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
             )}

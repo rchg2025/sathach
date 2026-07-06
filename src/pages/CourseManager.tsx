@@ -246,6 +246,8 @@ const CourseManager = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredCourses.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

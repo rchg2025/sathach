@@ -414,6 +414,8 @@ const VehicleTypeManager = () => {
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredVehicles.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
           )}

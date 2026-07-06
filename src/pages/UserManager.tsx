@@ -347,13 +347,13 @@ const UserManager = () => {
             {/* Pagination Controls */}
             {totalPages > 1 && (
               <div className="pagination-wrapper mt-4">
-                <div className="text-muted text-center mb-3" style={{ fontSize: '0.9rem' }}>
-                  Hiển thị {(currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredUsers.length)} / {filteredUsers.length}
-                </div>
+                
               <Pagination 
                 currentPage={currentPage}
                 totalPages={totalPages}
                 onPageChange={setCurrentPage}
+                totalItems={filteredUsers.length}
+                itemsPerPage={itemsPerPage}
               />
             </div>
             )}
