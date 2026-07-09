@@ -146,7 +146,7 @@ const StudentSearch = () => {
       <div className="container" style={{ maxWidth: '1080px', margin: '0 auto' }}>
         <div className="card text-center shadow-lg" style={{ borderTop: '4px solid var(--primary)', backgroundColor: 'rgba(255, 255, 255, 0.95)' }}>
         {logoUrl && (
-          <img src={logoUrl} alt="Logo" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px', objectFit: 'contain' }} />
+          <img src={logoUrl} alt="Logo" width="80" height="80" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px', objectFit: 'contain' }} />
         )}
         <h2>Hệ thống chấm thi thực hành lái xe</h2>
         <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp (Real-time)</p>

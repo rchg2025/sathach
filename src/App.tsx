@@ -45,7 +45,7 @@ const PublicHeader = () => {
       <div className="container">
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            {logoUrl && <img src={logoUrl} alt="Logo" style={{ height: '40px', width: 'auto', objectFit: 'contain', background: 'white', padding: '2px', borderRadius: '5px' }} />}
+            {logoUrl && <img src={logoUrl} alt="Logo" width="40" height="40" style={{ height: '40px', width: 'auto', objectFit: 'contain', background: 'white', padding: '2px', borderRadius: '5px' }} />}
             <h1 style={{ margin: 0 }}>Hệ Thống Chấm Thi Thực Hành</h1>
           </div>
         </Link>

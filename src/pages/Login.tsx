@@ -139,7 +139,7 @@ const Login = () => {
         
         {logoUrl && (
           <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-            <img src={logoUrl} alt="Logo" style={{ maxHeight: '80px', maxWidth: '100%', objectFit: 'contain' }} />
+            <img src={logoUrl} alt="Logo" width="80" height="80" style={{ maxHeight: '80px', maxWidth: '100%', objectFit: 'contain' }} />
           </div>
         )}
         
