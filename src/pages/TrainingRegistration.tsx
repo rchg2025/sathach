@@ -438,19 +438,19 @@ const TrainingRegistration = () => {
 
                   return (
                     <div key={session.id} className="bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
-                      <div className="bg-gray-50/80 p-4 border-b flex flex-col xl:flex-row justify-between xl:items-center gap-4">
-                        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-gray-800 font-medium">
-                          <div className="flex items-center gap-2">
+                      <div style={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', color: '#1f2937', fontWeight: 500 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Calendar size={18} className="text-primary" />
                             <span>{formatDateDisplay(session.date)}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <MapPin size={18} className="text-primary" />
                             <span>{session.trainingGround?.name || 'Chưa xác định'}</span>
                           </div>
                           
-                          <div className="flex items-center gap-2">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <Clock size={18} className="text-primary" />
                             <span>
                               {session.trainingShift?.name} 
@@ -463,13 +463,14 @@ const TrainingRegistration = () => {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                           {session.trainingGround?.mapUrl && (
                             <a 
                               href={session.trainingGround.mapUrl} 
                               target="_blank" 
                               rel="noreferrer"
-                              className="flex items-center gap-1.5 px-3 py-1.5 border border-primary text-primary rounded-lg hover:bg-primary hover:text-white transition-colors text-sm font-medium no-underline"
+                              className="btn-outline-primary"
+                              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none' }}
                             >
                               <Map size={16} /> Xem bản đồ
                             </a>
