@@ -473,7 +473,7 @@ const TrainingSessionManager = () => {
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian bắt đầu (Tuỳ chọn)</label>
                 <input 
-                  type="time" 
+                  type="time" lang="en-GB" 
                   className="form-control" 
                   value={startTime} 
                   onChange={e => setStartTime(e.target.value)} 
@@ -482,7 +482,7 @@ const TrainingSessionManager = () => {
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian kết thúc (Tuỳ chọn)</label>
                 <input 
-                  type="time" 
+                  type="time" lang="en-GB" 
                   className="form-control" 
                   value={endTime} 
                   onChange={e => setEndTime(e.target.value)} 

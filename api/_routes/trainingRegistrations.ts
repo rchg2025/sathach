@@ -117,7 +117,7 @@ router.delete('/:id', async (req, res) => {
     
     // Check role, chỉ cho phép hủy nếu là của mình hoặc Admin/Manager
     const requestUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.role === 'MANAGER' || requestUser?.username === 'quantri';
+    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.username === 'quantri';
     
     if (reg.userId !== Number(userId) && !isAdmin) {
       return res.status(403).json({ error: 'Không có quyền hủy' });
@@ -170,7 +170,7 @@ router.put('/:id', async (req, res) => {
     if (!reg) return res.status(404).json({ error: 'Không tìm thấy đăng ký' });
 
     const requestUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
-    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.role === 'MANAGER' || requestUser?.username === 'quantri';
+    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.username === 'quantri';
     
     if (!isAdmin) {
       return res.status(403).json({ error: 'Không có quyền sửa' });

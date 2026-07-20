@@ -78,6 +78,7 @@ const TrainingRegistration = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER';
+  const isSuperAdmin = user.role === 'ADMIN' || user.username === 'quantri';
 
   const fetchData = async (isAutoRefresh = false) => {
     try {
@@ -427,7 +428,7 @@ const TrainingRegistration = () => {
                   <th>Họ và tên</th>
                   <th>Email / SĐT</th>
                   <th>Thời gian ĐK</th>
-                  <th>Hành động</th>
+                  {isSuperAdmin && <th>Hành động</th>}
                 </tr>
               </thead>
               <tbody>
@@ -453,12 +454,14 @@ const TrainingRegistration = () => {
                         <div className="text-xs text-gray-500">{reg.user?.phone}</div>
                       </td>
                       <td className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="action-btn" title="Sửa" onClick={() => setEditModal({ isOpen: true, reg, newVehicle: reg.vehicle })}><Edit size={16} /></button>
-                          <button className="action-btn text-danger" title="Xóa" onClick={() => handleCancelRegistration(reg.id)}><Trash2 size={16} /></button>
-                        </div>
-                      </td>
+                      {isSuperAdmin && (
+                        <td>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button className="action-btn" title="Sửa" onClick={() => setEditModal({ isOpen: true, reg, newVehicle: reg.vehicle })}><Edit size={16} /></button>
+                            <button className="action-btn text-danger" title="Xóa" onClick={() => handleCancelRegistration(reg.id)}><Trash2 size={16} /></button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))
                 )}
