@@ -98,88 +98,102 @@ const TrainingRegistration = () => {
                         {formatDateDisplay(dateSessions[0].date)}
                       </h3>
                       
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      <div className="space-y-6">
                         {dateSessions.map((session: any) => {
                           const now = new Date();
                           const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
                           const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
                           
                           let status = 'OPEN';
-                          if (openTime && now < openTime) status = 'UPCOMING';
-                          else if (closeTime && now > closeTime) status = 'CLOSED';
+                          let statusText = 'Đang mở đăng ký';
+                          if (openTime && now < openTime) {
+                            status = 'UPCOMING';
+                            statusText = `Sắp mở (${openTime.toLocaleString()})`;
+                          } else if (closeTime && now > closeTime) {
+                            status = 'CLOSED';
+                            statusText = 'Đã đóng đăng ký';
+                          }
 
                           const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
                           const registrations = session.registrations || [];
 
                           if (vehicles.length === 0) return null;
 
-                          return vehicles.map((vehicle: string) => {
-                            const reg = registrations.find((r: any) => r.vehicle === vehicle);
-                            const isMine = reg?.userId === user.id;
-                            const isTaken = !!reg;
-                            const disabled = status !== 'OPEN' || (isTaken && !isMine);
-
-                            return (
-                              <div
-                                key={`${session.id}-${vehicle}`}
-                                onClick={() => {
-                                  if (!disabled) handleRegister(session.id, vehicle);
-                                }}
-                                className={`
-                                  relative flex flex-col p-5 rounded-xl border-2 transition-all duration-200 overflow-hidden
-                                  ${isMine ? 'bg-primary/5 border-primary shadow-md' : 
-                                    isTaken ? 'bg-gray-100 border-gray-200 opacity-75' : 
-                                    status === 'OPEN' ? 'hover:shadow-lg hover:-translate-y-1 hover:border-primary/40 cursor-pointer bg-white border-gray-100 shadow-sm' : 
-                                    'bg-gray-50 border-gray-200 cursor-not-allowed'}
-                                `}
-                              >
-                                {/* Status Banner */}
-                                <div className={`absolute top-0 left-0 right-0 py-1 text-center text-[10px] font-bold uppercase tracking-wider
-                                  ${isMine ? 'bg-primary text-white' : 
-                                    isTaken ? 'bg-gray-300 text-gray-700' : 
-                                    status === 'OPEN' ? 'bg-green-500 text-white' : 
-                                    status === 'UPCOMING' ? 'bg-yellow-400 text-yellow-900' : 
-                                    'bg-gray-400 text-white'}
-                                `}>
-                                  {isMine ? 'Xe của bạn' : isTaken ? 'Đã có người chọn' : status === 'OPEN' ? 'Còn trống - Nhấn để chọn' : status === 'UPCOMING' ? 'Sắp mở đăng ký' : 'Đã đóng đăng ký'}
-                                </div>
-
-                                <div className="flex justify-between items-center mt-4 mb-3">
-                                  <div className="flex items-center gap-3">
-                                    <div className={`p-3 rounded-full ${isMine ? 'bg-primary text-white' : isTaken ? 'bg-gray-300 text-gray-600' : 'bg-blue-50 text-primary'}`}>
-                                      <Car size={24} />
-                                    </div>
-                                    <div>
-                                      <h5 className="font-extrabold text-2xl text-gray-800">{vehicle}</h5>
-                                    </div>
-                                  </div>
-                                </div>
-                                
-                                <div className="space-y-2 mt-2 pt-3 border-t text-sm text-gray-600 flex-grow">
-                                  <div className="flex items-center gap-2">
-                                    <MapPin size={16} className="text-gray-400" /> 
-                                    <span className="font-medium">{session.trainingGround?.name}</span>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Clock size={16} className="text-gray-400" /> 
-                                    <span className="font-medium">{session.trainingShift?.name}</span>
+                          return (
+                            <div key={session.id} className="bg-gray-50/50 rounded-lg p-4 border border-gray-100">
+                              {/* Session Header */}
+                              <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                <div>
+                                  <h4 className="font-bold text-gray-800 flex items-center gap-2">
+                                    <MapPin size={18} className="text-primary" />
+                                    {session.trainingGround?.name}
+                                  </h4>
+                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
+                                    <Clock size={16} />
+                                    {session.trainingShift?.name} 
                                     {(session.startTime || session.endTime) && (
-                                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">
-                                        {session.startTime || '?'} - {session.endTime || '?'}
-                                      </span>
+                                      <span>({session.startTime || '?'} - {session.endTime || '?'})</span>
                                     )}
                                   </div>
                                 </div>
-
-                                {isTaken && reg?.user && (
-                                  <div className="mt-4 p-2 bg-gray-100 rounded-lg flex items-center gap-2 text-sm text-gray-700 font-medium">
-                                    <UserCircle size={18} className={isMine ? 'text-primary' : 'text-gray-500'} /> 
-                                    {reg.user.name}
-                                  </div>
-                                )}
+                                <div>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                                    status === 'OPEN' ? 'bg-green-100 text-green-800' : 
+                                    status === 'UPCOMING' ? 'bg-yellow-100 text-yellow-800' : 
+                                    'bg-gray-200 text-gray-800'
+                                  }`}>
+                                    {statusText}
+                                  </span>
+                                </div>
                               </div>
-                            );
-                          });
+
+                              {/* Vehicles Grid - Simple Square Cards */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                {vehicles.map((vehicle: string) => {
+                                  const reg = registrations.find((r: any) => r.vehicle === vehicle);
+                                  const isMine = reg?.userId === user.id;
+                                  const isTaken = !!reg;
+                                  const disabled = status !== 'OPEN' || (isTaken && !isMine);
+
+                                  return (
+                                    <div
+                                      key={vehicle}
+                                      onClick={() => {
+                                        if (!disabled) handleRegister(session.id, vehicle);
+                                      }}
+                                      className={`
+                                        flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all aspect-square text-center
+                                        ${isMine ? 'bg-primary/10 border-primary cursor-default shadow-sm' : 
+                                          isTaken ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 
+                                          status === 'OPEN' ? 'hover:border-primary hover:shadow-md cursor-pointer bg-white border-gray-200' : 
+                                          'bg-gray-50 border-gray-200 cursor-not-allowed'}
+                                      `}
+                                    >
+                                      <Car size={36} className={`mb-2 ${isMine ? 'text-primary' : isTaken ? 'text-gray-500' : 'text-gray-700'}`} />
+                                      <span className="font-bold text-gray-900">{vehicle}</span>
+                                      
+                                      {/* Status Text inside card */}
+                                      {isMine && (
+                                        <span className="text-[10px] text-primary font-bold mt-1 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                                          Của bạn
+                                        </span>
+                                      )}
+                                      {isTaken && !isMine && reg?.user && (
+                                        <span className="text-[10px] text-gray-600 font-medium mt-1 truncate w-full px-1" title={reg.user.name}>
+                                          {reg.user.name.split(' ').pop()} {/* Chỉ hiện tên cuối */}
+                                        </span>
+                                      )}
+                                      {!isTaken && status === 'OPEN' && (
+                                        <span className="text-[10px] text-green-600 font-medium mt-1">
+                                          Trống
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
                         })}
                       </div>
                     </div>
