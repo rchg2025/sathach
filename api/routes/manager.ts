@@ -1303,8 +1303,8 @@ router.post('/station/mark-absent', async (req, res) => {
 router.post('/station/transfer-score', async (req, res) => {
   const { studentId, testTypeId } = req.body;
   try {
-    const testResult = await prisma.testResult.findUnique({
-      where: { studentId_testTypeId: { studentId: Number(studentId), testTypeId: Number(testTypeId) } }
+    const testResult = await prisma.testResult.findFirst({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) }
     });
     
     if (testResult) {
