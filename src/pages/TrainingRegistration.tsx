@@ -3,6 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
+import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -16,6 +17,19 @@ const TrainingRegistration = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterGround, setFilterGround] = useState('');
+
+  // Dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {}
+  });
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER';
@@ -56,32 +70,46 @@ const TrainingRegistration = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRegister = async (sessionId: number, vehicle: string) => {
-    if (!window.confirm(`Xác nhận đăng ký ${vehicle}?\nLưu ý: Mỗi tài khoản chỉ được đăng ký 1 xe trong cùng một ngày.`)) return;
-    try {
-      await axios.post(`${API_BASE_URL}/api/training-registrations/register`, {
-        trainingSessionId: sessionId,
-        userId: user.id,
-        vehicle
-      });
-      toast.success(`Đăng ký xe ${vehicle} thành công!`);
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Lỗi khi đăng ký xe');
-    }
+  const handleRegister = (sessionId: number, vehicle: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Xác nhận đăng ký',
+      message: `Bạn có chắc chắn muốn đăng ký ${vehicle} không?\nLưu ý: Mỗi tài khoản chỉ được đăng ký 1 xe trong cùng một ngày.`,
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await axios.post(`${API_BASE_URL}/api/training-registrations/register`, {
+            trainingSessionId: sessionId,
+            userId: user.id,
+            vehicle
+          });
+          toast.success(`Đăng ký xe ${vehicle} thành công!`);
+          fetchData();
+        } catch (err: any) {
+          toast.error(err.response?.data?.error || 'Lỗi khi đăng ký xe');
+        }
+      }
+    });
   };
 
-  const handleCancelRegistration = async (registrationId: number) => {
-    if (!window.confirm('Bạn có chắc chắn muốn hủy đăng ký xe này không?')) return;
-    try {
-      await axios.delete(`${API_BASE_URL}/api/training-registrations/${registrationId}`, {
-        data: { userId: user.id }
-      });
-      toast.success('Hủy đăng ký thành công!');
-      fetchData();
-    } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Lỗi khi hủy đăng ký');
-    }
+  const handleCancelRegistration = (registrationId: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Hủy đăng ký',
+      message: 'Bạn có chắc chắn muốn hủy đăng ký xe này không?',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        try {
+          await axios.delete(`${API_BASE_URL}/api/training-registrations/${registrationId}`, {
+            data: { userId: user.id }
+          });
+          toast.success('Hủy đăng ký thành công!');
+          fetchData();
+        } catch (err: any) {
+          toast.error(err.response?.data?.error || 'Lỗi khi hủy đăng ký');
+        }
+      }
+    });
   };
 
   // Prepare data for Admin LIST view
@@ -451,6 +479,14 @@ const TrainingRegistration = () => {
         </div>
       </div>
       )}
+
+      <ConfirmModal
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
     </AdminLayout>
   );
 };
