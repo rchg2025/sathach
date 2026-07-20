@@ -148,12 +148,17 @@ const TrainingRegistration = () => {
                               </div>
 
                               {/* Vehicles Grid - Simple Square Cards */}
-                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                              <div className="vehicle-grid">
                                 {vehicles.map((vehicle: string) => {
                                   const reg = registrations.find((r: any) => r.vehicle === vehicle);
                                   const isMine = reg?.userId === user.id;
                                   const isTaken = !!reg;
                                   const disabled = status !== 'OPEN' || (isTaken && !isMine);
+
+                                  let cardClass = 'vehicle-card';
+                                  if (isMine) cardClass += ' mine';
+                                  else if (isTaken) cardClass += ' taken';
+                                  else if (status !== 'OPEN') cardClass += ' disabled';
 
                                   return (
                                     <div
@@ -161,30 +166,24 @@ const TrainingRegistration = () => {
                                       onClick={() => {
                                         if (!disabled) handleRegister(session.id, vehicle);
                                       }}
-                                      className={`
-                                        flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all aspect-square text-center
-                                        ${isMine ? 'bg-primary/10 border-primary cursor-default shadow-sm' : 
-                                          isTaken ? 'bg-gray-100 border-gray-200 opacity-60 cursor-not-allowed' : 
-                                          status === 'OPEN' ? 'hover:border-primary hover:shadow-md cursor-pointer bg-white border-gray-200' : 
-                                          'bg-gray-50 border-gray-200 cursor-not-allowed'}
-                                      `}
+                                      className={cardClass}
                                     >
-                                      <Car size={36} className={`mb-2 ${isMine ? 'text-primary' : isTaken ? 'text-gray-500' : 'text-gray-700'}`} />
-                                      <span className="font-bold text-gray-900">{vehicle}</span>
+                                      <Car size={36} className="vehicle-card-icon" style={{ color: isMine ? 'var(--primary)' : isTaken ? '#999' : '#333' }} />
+                                      <span className="vehicle-card-title">{vehicle}</span>
                                       
                                       {/* Status Text inside card */}
                                       {isMine && (
-                                        <span className="text-[10px] text-primary font-bold mt-1 bg-white px-2 py-0.5 rounded-full shadow-sm">
+                                        <span className="vehicle-card-badge badge-mine">
                                           Của bạn
                                         </span>
                                       )}
                                       {isTaken && !isMine && reg?.user && (
-                                        <span className="text-[10px] text-gray-600 font-medium mt-1 truncate w-full px-1" title={reg.user.name}>
-                                          {reg.user.name.split(' ').pop()} {/* Chỉ hiện tên cuối */}
+                                        <span className="vehicle-card-badge badge-taken" title={reg.user.name}>
+                                          {reg.user.name.split(' ').pop()}
                                         </span>
                                       )}
                                       {!isTaken && status === 'OPEN' && (
-                                        <span className="text-[10px] text-green-600 font-medium mt-1">
+                                        <span className="vehicle-card-badge badge-free">
                                           Trống
                                         </span>
                                       )}

@@ -129,9 +129,15 @@ router.delete('/:id', async (req, res) => {
 // Lấy danh sách đăng ký của user hiện tại
 router.get('/my-registrations', async (req, res) => {
   const { userId } = req.query;
+  const parsedUserId = Number(userId);
+
+  if (!userId || isNaN(parsedUserId)) {
+    return res.json([]);
+  }
+
   try {
     const regs = await prisma.trainingRegistration.findMany({
-      where: { userId: Number(userId) },
+      where: { userId: parsedUserId },
       include: {
         trainingSession: {
           include: {

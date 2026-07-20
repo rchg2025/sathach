@@ -667,3 +667,84 @@ input:checked + .toggle-slider:before {
 .action-buttons-grid { display: flex; gap: 5px; }
 @media (max-width: 768px) { .action-buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; } }
 
+
+/* Training Registration Grid */
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.vehicle-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background-color: var(--surface);
+  aspect-ratio: 1/1;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.vehicle-card:hover:not(.disabled) {
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-md);
+}
+
+.vehicle-card.mine {
+  background-color: #f0f7ff;
+  border-color: var(--primary);
+}
+
+.vehicle-card.taken {
+  background-color: #f8f9fa;
+  border-color: #e9ecef;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.vehicle-card.disabled {
+  background-color: #f8f9fa;
+  cursor: not-allowed;
+}
+
+.vehicle-card-icon {
+  margin-bottom: 8px;
+}
+
+.vehicle-card-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text);
+}
+
+.vehicle-card-badge {
+  font-size: 10px;
+  font-weight: 600;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.badge-mine {
+  background-color: var(--primary);
+  color: white;
+}
+
+.badge-free {
+  background-color: var(--success);
+  color: white;
+}
+
+.badge-taken {
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
