@@ -32,9 +32,15 @@ const TrainingRegistration = () => {
 
   useEffect(() => {
     fetchData();
+    // Auto-refresh data every 5 seconds to keep data synced with other users
+    const interval = setInterval(() => {
+      fetchData();
+    }, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const handleRegister = async (sessionId: number, vehicle: string) => {
+    if (!window.confirm(`Xác nhận đăng ký ${vehicle}?\nLưu ý: Mỗi tài khoản chỉ được đăng ký 1 xe trong cùng một ngày.`)) return;
     try {
       await axios.post(`${API_BASE_URL}/api/training-registrations/register`, {
         trainingSessionId: sessionId,
@@ -206,7 +212,7 @@ const TrainingRegistration = () => {
                                       )}
                                       {isTaken && !isMine && reg?.user && (
                                         <span className="vehicle-card-badge badge-taken" title={reg.user.name}>
-                                          {reg.user.name.split(' ').pop()}
+                                          {reg.user.name}
                                         </span>
                                       )}
                                       {!isTaken && status === 'OPEN' && (
