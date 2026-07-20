@@ -153,75 +153,82 @@ const TrainingRegistration = () => {
 
   return (
     <AdminLayout user={user}>
-      <div className="mb-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
         <div>
-          <h2>Đăng ký tập xe</h2>
-          <p className="text-muted">
+          <h2 style={{ margin: 0 }}>Đăng ký tập xe</h2>
+          <p className="text-muted" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
             {viewMode === 'GRID' ? 'Chọn các ca tập và xe còn trống để đăng ký' : 'Danh sách thông tin người đăng ký tập xe'}
           </p>
         </div>
-        
-        {isAdmin && (
-          <div className="flex bg-gray-100 p-1 rounded-lg">
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${viewMode === 'GRID' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-gray-900'}`}
-              onClick={() => setViewMode('GRID')}
-            >
-              <Grid size={18} /> Giao diện đăng ký
-            </button>
-            <button
-              className={`flex items-center gap-2 px-4 py-2 rounded-md font-medium transition-colors ${viewMode === 'LIST' ? 'bg-white shadow-sm text-primary' : 'text-gray-600 hover:text-gray-900'}`}
-              onClick={() => setViewMode('LIST')}
-            >
-              <List size={18} /> Danh sách đăng ký
-            </button>
-          </div>
-        )}
       </div>
+      
+      {isAdmin && (
+        <div className="tabs">
+          <div 
+            className={`tab ${viewMode === 'GRID' ? 'active' : ''}`}
+            onClick={() => setViewMode('GRID')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <Grid size={16} /> Giao diện đăng ký
+          </div>
+          <div 
+            className={`tab ${viewMode === 'LIST' ? 'active' : ''}`}
+            onClick={() => setViewMode('LIST')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <List size={16} /> Danh sách đăng ký
+          </div>
+        </div>
+      )}
 
       {viewMode === 'LIST' && isAdmin ? (
-        <div className="card mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-            <h3 className="mb-0">Danh sách đăng ký ({filteredRegistrations.length})</h3>
-            <button onClick={exportToExcel} className="btn btn-success flex items-center gap-2">
-              <Download size={18} /> Xuất Excel
-            </button>
-          </div>
+        <div className="card mb-6" style={{ padding: '0' }}>
+          <div style={{ padding: '1.5rem 1.5rem 0' }}>
+            <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
+              <h3 style={{ margin: 0 }}>Danh sách đăng ký ({filteredRegistrations.length})</h3>
+              <button onClick={exportToExcel} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Download size={16} /> Xuất Excel
+              </button>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-gray-50 p-4 rounded-lg border border-gray-100">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Tìm tên, email, tên xe..."
-                className="form-control pl-10"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-            
-            <div className="relative">
-              <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="date"
-                className="form-control pl-10"
-                value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
-              />
-            </div>
-            
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <select
-                className="form-select pl-10"
-                value={filterGround}
-                onChange={(e) => setFilterGround(e.target.value)}
-              >
-                <option value="">Tất cả trung tâm</option>
-                {uniqueGrounds.map((ground: any) => (
-                  <option key={ground.id} value={ground.id}>{ground.name}</option>
-                ))}
-              </select>
+            <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
+                <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Tìm tên, email, tên xe..."
+                  className="form-control"
+                  style={{ paddingLeft: '35px' }}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              
+              <div style={{ width: '200px', position: 'relative' }}>
+                <Calendar size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ paddingLeft: '35px' }}
+                  value={filterDate}
+                  onChange={(e) => setFilterDate(e.target.value)}
+                />
+              </div>
+              
+              <div style={{ width: '200px', position: 'relative' }}>
+                <Filter size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <select
+                  className="form-control"
+                  style={{ paddingLeft: '35px' }}
+                  value={filterGround}
+                  onChange={(e) => setFilterGround(e.target.value)}
+                >
+                  <option value="">Tất cả trung tâm</option>
+                  {uniqueGrounds.map((ground: any) => (
+                    <option key={ground.id} value={ground.id}>{ground.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
 
@@ -447,27 +454,28 @@ const TrainingRegistration = () => {
             {myRegistrations.length === 0 ? (
               <p className="text-sm text-muted">Bạn chưa đăng ký xe nào.</p>
             ) : (
-              <div className="space-y-4">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {myRegistrations.map(reg => (
-                  <div key={reg.id} className="p-3 border rounded-lg bg-gray-50 relative group">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-lg text-primary">{reg.vehicle}</span>
+                  <div key={reg.id} style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>{reg.vehicle}</span>
                       <button 
                         onClick={() => handleCancelRegistration(reg.id)}
-                        className="text-red-500 hover:text-red-700 p-1 bg-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="action-btn"
+                        style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca' }}
                         title="Hủy đăng ký"
                       >
                         <XCircle size={16} />
                       </button>
                     </div>
-                    <div className="text-sm space-y-1 text-gray-600">
-                      <div className="flex items-center gap-2">
+                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
                         <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
                       </div>
                     </div>
