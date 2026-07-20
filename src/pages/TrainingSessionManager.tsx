@@ -50,8 +50,10 @@ const TrainingSessionManager = () => {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [registrationStartTime, setRegistrationStartTime] = useState('');
-  const [registrationEndTime, setRegistrationEndTime] = useState('');
+  const [regStartDate, setRegStartDate] = useState('');
+  const [regStartTime, setRegStartTime] = useState('');
+  const [regEndDate, setRegEndDate] = useState('');
+  const [regEndTime, setRegEndTime] = useState('');
   
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -93,8 +95,8 @@ const TrainingSessionManager = () => {
         date, 
         startTime, 
         endTime, 
-        registrationStartTime: registrationStartTime ? new Date(registrationStartTime).toISOString() : null, 
-        registrationEndTime: registrationEndTime ? new Date(registrationEndTime).toISOString() : null 
+        registrationStartTime: (regStartDate && regStartTime) ? new Date(`${regStartDate}T${regStartTime}`).toISOString() : null,
+        registrationEndTime: (regEndDate && regEndTime) ? new Date(`${regEndDate}T${regEndTime}`).toISOString() : null
       };
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/training-sessions/${editingId}`, payload);
@@ -118,8 +120,8 @@ const TrainingSessionManager = () => {
     setDate('');
     setStartTime('');
     setEndTime('');
-    setRegistrationStartTime('');
-    setRegistrationEndTime('');
+    setRegStartDate(''); setRegStartTime('');
+    setRegEndDate(''); setRegEndTime('');
     setEditingId(null);
   };
 
@@ -141,8 +143,21 @@ const TrainingSessionManager = () => {
       return localDate.toISOString().slice(0, 16);
     };
 
-    setRegistrationStartTime(s.registrationStartTime ? formatDateTimeLocal(s.registrationStartTime) : '');
-    setRegistrationEndTime(s.registrationEndTime ? formatDateTimeLocal(s.registrationEndTime) : '');
+    const startStr = s.registrationStartTime ? formatDateTimeLocal(s.registrationStartTime) : '';
+    if (startStr) {
+      const [d, t] = startStr.split('T');
+      setRegStartDate(d || ''); setRegStartTime(t || '');
+    } else {
+      setRegStartDate(''); setRegStartTime('');
+    }
+    
+    const endStr = s.registrationEndTime ? formatDateTimeLocal(s.registrationEndTime) : '';
+    if (endStr) {
+      const [d, t] = endStr.split('T');
+      setRegEndDate(d || ''); setRegEndTime(t || '');
+    } else {
+      setRegEndDate(''); setRegEndTime('');
+    }
     
     setActiveTab('add');
   };
@@ -515,40 +530,39 @@ const TrainingSessionManager = () => {
             <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
-                <Flatpickr
-                  data-enable-time
-                  className="form-control"
-                  options={{
-                    enableTime: true,
-                    dateFormat: "H:i d/m/Y",
-                    time_24hr: true
-                  }}
-                  value={registrationStartTime}
-                  onChange={([date]) => {
-                    // YYYY-MM-DDThh:mm format required for saving state
-                    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-                    setRegistrationStartTime(d.toISOString().slice(0,16));
-                  }}
-                  placeholder="--:-- dd/mm/yyyy"
-                />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input type="date" className="form-control" value={regStartDate} onChange={e => setRegStartDate(e.target.value)} style={{ flex: 2 }} />
+                  <Flatpickr
+                    className="form-control"
+                    options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
+                    value={regStartTime}
+                    onChange={([date]) => {
+                      const h = String(date.getHours()).padStart(2, '0');
+                      const m = String(date.getMinutes()).padStart(2, '0');
+                      setRegStartTime(`${h}:${m}`);
+                    }}
+                    placeholder="--:--"
+                    style={{ flex: 1 }}
+                  />
+                </div>
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
-                <Flatpickr
-                  data-enable-time
-                  className="form-control"
-                  options={{
-                    enableTime: true,
-                    dateFormat: "H:i d/m/Y",
-                    time_24hr: true
-                  }}
-                  value={registrationEndTime}
-                  onChange={([date]) => {
-                    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-                    setRegistrationEndTime(d.toISOString().slice(0,16));
-                  }}
-                  placeholder="--:-- dd/mm/yyyy"
-                />
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input type="date" className="form-control" value={regEndDate} onChange={e => setRegEndDate(e.target.value)} style={{ flex: 2 }} />
+                  <Flatpickr
+                    className="form-control"
+                    options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
+                    value={regEndTime}
+                    onChange={([date]) => {
+                      const h = String(date.getHours()).padStart(2, '0');
+                      const m = String(date.getMinutes()).padStart(2, '0');
+                      setRegEndTime(`${h}:${m}`);
+                    }}
+                    placeholder="--:--"
+                    style={{ flex: 1 }}
+                  />
+                </div>
               </div>
             </div>
 
