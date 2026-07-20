@@ -671,7 +671,7 @@ input:checked + .toggle-slider:before {
 /* Training Registration Grid */
 .vehicle-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
   gap: 16px;
   margin-top: 16px;
 }
@@ -685,7 +685,7 @@ input:checked + .toggle-slider:before {
   border-radius: 12px;
   border: 2px solid var(--border);
   background-color: var(--surface);
-  aspect-ratio: 1/1;
+  min-height: 130px;
   text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -724,11 +724,13 @@ input:checked + .toggle-slider:before {
 }
 
 .vehicle-card-badge {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
-  margin-top: 6px;
-  padding: 2px 8px;
+  margin-top: 8px;
+  padding: 4px 10px;
   border-radius: 12px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .badge-mine {
@@ -743,8 +745,5 @@ input:checked + .toggle-slider:before {
 
 .badge-taken {
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
 }
