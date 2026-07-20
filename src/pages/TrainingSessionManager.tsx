@@ -8,6 +8,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
+import Flatpickr from 'react-flatpickr';
+import 'flatpickr/dist/themes/light.css';
 
 const TrainingSessionManager = () => {
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'add'>('active');
@@ -472,20 +474,40 @@ const TrainingSessionManager = () => {
             <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian bắt đầu (Tuỳ chọn)</label>
-                <input 
-                  type="time" lang="en-GB" 
-                  className="form-control" 
-                  value={startTime} 
-                  onChange={e => setStartTime(e.target.value)} 
+                <Flatpickr
+                  className="form-control"
+                  options={{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    time_24hr: true
+                  }}
+                  value={startTime}
+                  onChange={([date]) => {
+                    const h = String(date.getHours()).padStart(2, '0');
+                    const m = String(date.getMinutes()).padStart(2, '0');
+                    setStartTime(`${h}:${m}`);
+                  }}
+                  placeholder="--:--"
                 />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian kết thúc (Tuỳ chọn)</label>
-                <input 
-                  type="time" lang="en-GB" 
-                  className="form-control" 
-                  value={endTime} 
-                  onChange={e => setEndTime(e.target.value)} 
+                <Flatpickr
+                  className="form-control"
+                  options={{
+                    enableTime: true,
+                    noCalendar: true,
+                    dateFormat: "H:i",
+                    time_24hr: true
+                  }}
+                  value={endTime}
+                  onChange={([date]) => {
+                    const h = String(date.getHours()).padStart(2, '0');
+                    const m = String(date.getMinutes()).padStart(2, '0');
+                    setEndTime(`${h}:${m}`);
+                  }}
+                  placeholder="--:--"
                 />
               </div>
             </div>
@@ -493,20 +515,39 @@ const TrainingSessionManager = () => {
             <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
-                <input 
-                  type="datetime-local" lang="en-GB" 
-                  className="form-control" 
-                  value={registrationStartTime} 
-                  onChange={e => setRegistrationStartTime(e.target.value)} 
+                <Flatpickr
+                  data-enable-time
+                  className="form-control"
+                  options={{
+                    enableTime: true,
+                    dateFormat: "Y-m-d\\TH:i",
+                    time_24hr: true
+                  }}
+                  value={registrationStartTime}
+                  onChange={([date]) => {
+                    // YYYY-MM-DDThh:mm format required for saving state
+                    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                    setRegistrationStartTime(d.toISOString().slice(0,16));
+                  }}
+                  placeholder="dd/mm/yyyy --:--"
                 />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
-                <input 
-                  type="datetime-local" lang="en-GB" 
-                  className="form-control" 
-                  value={registrationEndTime} 
-                  onChange={e => setRegistrationEndTime(e.target.value)} 
+                <Flatpickr
+                  data-enable-time
+                  className="form-control"
+                  options={{
+                    enableTime: true,
+                    dateFormat: "Y-m-d\\TH:i",
+                    time_24hr: true
+                  }}
+                  value={registrationEndTime}
+                  onChange={([date]) => {
+                    const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                    setRegistrationEndTime(d.toISOString().slice(0,16));
+                  }}
+                  placeholder="dd/mm/yyyy --:--"
                 />
               </div>
             </div>
