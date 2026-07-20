@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
-import { Edit, Trash2, Calendar, MapPin, Clock, Car, Unlock } from 'lucide-react';
+import { Edit, Trash2, Calendar, MapPin, Clock, Car } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
@@ -84,7 +84,16 @@ const TrainingSessionManager = () => {
     }
 
     try {
-      const payload = { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime, registrationStartTime, registrationEndTime };
+      const payload = { 
+        trainingGroundId, 
+        trainingShiftId, 
+        vehicles, 
+        date, 
+        startTime, 
+        endTime, 
+        registrationStartTime: registrationStartTime ? new Date(registrationStartTime).toISOString() : null, 
+        registrationEndTime: registrationEndTime ? new Date(registrationEndTime).toISOString() : null 
+      };
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/training-sessions/${editingId}`, payload);
         toast.success('Cập nhật Đợt tập xe thành công!');
@@ -255,6 +264,7 @@ const TrainingSessionManager = () => {
                   <th>Sân tập</th>
                   <th>Ca tập</th>
                   <th>Danh sách Xe</th>
+                  <th>Trạng thái ĐK</th>
                   <th className="sticky-col-right">Hành động</th>
                 </tr>
               </thead>
@@ -294,11 +304,59 @@ const TrainingSessionManager = () => {
                         </div>
                       </div>
                     </td>
+                    <td>
+                      {(() => {
+                        const now = new Date();
+                        const openTime = s.registrationStartTime ? new Date(s.registrationStartTime) : null;
+                        const closeTime = s.registrationEndTime ? new Date(s.registrationEndTime) : null;
+                        let isOpen = true;
+                        let isUpcoming = false;
+                        if (openTime && now < openTime) { isOpen = false; isUpcoming = true; }
+                        else if (closeTime && now > closeTime) { isOpen = false; }
+                        
+                        return (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <label className="switch" style={{ position: 'relative', display: 'inline-block', width: '40px', height: '22px' }}>
+                              <input 
+                                type="checkbox" 
+                                style={{ opacity: 0, width: 0, height: 0 }}
+                                checked={isOpen}
+                                onChange={() => {
+                                  // Handle toggle
+                                  let newStart = '';
+                                  let newEnd = '';
+                                  if (s.registrationStartTime) {
+                                    // format it to local time for the datetime-local input
+                                    const d = new Date(s.registrationStartTime);
+                                    newStart = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                  }
+                                  if (s.registrationEndTime) {
+                                    const d = new Date(s.registrationEndTime);
+                                    newEnd = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+                                  }
+                                  setReopenModal({ 
+                                    isOpen: true, 
+                                    session: s, 
+                                    newStart, 
+                                    newEnd 
+                                  });
+                                }}
+                              />
+                              <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isOpen ? '#4ade80' : (isUpcoming ? '#fbbf24' : '#ccc'), transition: '.4s', borderRadius: '34px' }}
+                                className="slider round"
+                              >
+                                <span style={{ position: 'absolute', content: '""', height: '16px', width: '16px', left: '3px', bottom: '3px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: isOpen ? 'translateX(18px)' : 'translateX(0)' }}></span>
+                              </span>
+                            </label>
+                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isOpen ? '#16a34a' : (isUpcoming ? '#d97706' : '#6b7280') }}>
+                              {isOpen ? 'Đang mở' : (isUpcoming ? 'Sắp mở' : 'Đã đóng')}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                    </td>
                     <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
-                        {s.registrationEndTime && new Date() > new Date(s.registrationEndTime) && (
-                          <button className="action-btn" style={{ color: 'var(--success)', backgroundColor: '#d1fae5', border: '1px solid #a7f3d0' }} title="Mở lại đăng ký" onClick={() => setReopenModal({ isOpen: true, session: s, newStart: s.registrationStartTime ? new Date(s.registrationStartTime).toISOString().slice(0, 16) : '', newEnd: s.registrationEndTime ? new Date(s.registrationEndTime).toISOString().slice(0, 16) : '' })}><Unlock size={16} /></button>
-                        )}
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(s)}><Edit size={16} /></button>
                         <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(s.id)}><Trash2 size={16} /></button>
                       </div>
