@@ -520,7 +520,7 @@ const TrainingSessionManager = () => {
                   className="form-control"
                   options={{
                     enableTime: true,
-                    dateFormat: "Y-m-d\\TH:i",
+                    dateFormat: "H:i d/m/Y",
                     time_24hr: true
                   }}
                   value={registrationStartTime}
@@ -529,7 +529,7 @@ const TrainingSessionManager = () => {
                     const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
                     setRegistrationStartTime(d.toISOString().slice(0,16));
                   }}
-                  placeholder="dd/mm/yyyy --:--"
+                  placeholder="--:-- dd/mm/yyyy"
                 />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
@@ -539,7 +539,7 @@ const TrainingSessionManager = () => {
                   className="form-control"
                   options={{
                     enableTime: true,
-                    dateFormat: "Y-m-d\\TH:i",
+                    dateFormat: "H:i d/m/Y",
                     time_24hr: true
                   }}
                   value={registrationEndTime}
@@ -547,7 +547,7 @@ const TrainingSessionManager = () => {
                     const d = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
                     setRegistrationEndTime(d.toISOString().slice(0,16));
                   }}
-                  placeholder="dd/mm/yyyy --:--"
+                  placeholder="--:-- dd/mm/yyyy"
                 />
               </div>
             </div>
