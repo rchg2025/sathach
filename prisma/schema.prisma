@@ -28,7 +28,8 @@ model User {
   isOnline       Boolean          @default(false)
   lastPingAt     DateTime?
   logs           SystemLog[]
-  students       Student[]        @relation("StudentTeacher")
+  students              Student[]              @relation("StudentTeacher")
+  trainingRegistrations TrainingRegistration[]
 }
 
 model SystemLog {
@@ -236,15 +237,31 @@ model TrainingShift {
 }
 
 model TrainingSession {
-  id               Int            @id @default(autoincrement())
-  trainingGroundId Int
-  trainingGround   TrainingGround @relation(fields: [trainingGroundId], references: [id])
-  trainingShiftId  Int
-  trainingShift    TrainingShift  @relation(fields: [trainingShiftId], references: [id])
-  vehicles         String         
-  date             DateTime
-  startTime        String?
-  endTime          String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  id                    Int                    @id @default(autoincrement())
+  trainingGroundId      Int
+  trainingGround        TrainingGround         @relation(fields: [trainingGroundId], references: [id])
+  trainingShiftId       Int
+  trainingShift         TrainingShift          @relation(fields: [trainingShiftId], references: [id])
+  vehicles              String         
+  date                  DateTime
+  startTime             String?
+  endTime               String?
+  registrationStartTime DateTime?
+  registrationEndTime   DateTime?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  registrations         TrainingRegistration[]
+}
+
+model TrainingRegistration {
+  id                Int             @id @default(autoincrement())
+  trainingSessionId Int
+  trainingSession   TrainingSession @relation(fields: [trainingSessionId], references: [id])
+  userId            Int
+  user              User            @relation(fields: [userId], references: [id])
+  vehicle           String
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@unique([trainingSessionId, vehicle])
 }

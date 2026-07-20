@@ -26,6 +26,8 @@ const TrainingSessionManager = () => {
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [registrationStartTime, setRegistrationStartTime] = useState('');
+  const [registrationEndTime, setRegistrationEndTime] = useState('');
   
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -60,7 +62,7 @@ const TrainingSessionManager = () => {
     }
 
     try {
-      const payload = { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime };
+      const payload = { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime, registrationStartTime, registrationEndTime };
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/training-sessions/${editingId}`, payload);
         toast.success('Cập nhật Đợt tập xe thành công!');
@@ -83,6 +85,8 @@ const TrainingSessionManager = () => {
     setDate('');
     setStartTime('');
     setEndTime('');
+    setRegistrationStartTime('');
+    setRegistrationEndTime('');
     setEditingId(null);
   };
 
@@ -94,6 +98,19 @@ const TrainingSessionManager = () => {
     setDate(s.date ? new Date(s.date).toISOString().split('T')[0] : '');
     setStartTime(s.startTime || '');
     setEndTime(s.endTime || '');
+    
+    const formatDateTimeLocal = (dateStr: string) => {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      // Adjust to local timezone for datetime-local input
+      const localOffset = d.getTimezoneOffset() * 60000;
+      const localDate = new Date(d.getTime() - localOffset);
+      return localDate.toISOString().slice(0, 16);
+    };
+
+    setRegistrationStartTime(s.registrationStartTime ? formatDateTimeLocal(s.registrationStartTime) : '');
+    setRegistrationEndTime(s.registrationEndTime ? formatDateTimeLocal(s.registrationEndTime) : '');
+    
     setActiveTab('add');
   };
 
@@ -351,6 +368,27 @@ const TrainingSessionManager = () => {
                   className="form-control" 
                   value={endTime} 
                   onChange={e => setEndTime(e.target.value)} 
+                />
+              </div>
+            </div>
+
+            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
+                <input 
+                  type="datetime-local" 
+                  className="form-control" 
+                  value={registrationStartTime} 
+                  onChange={e => setRegistrationStartTime(e.target.value)} 
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
+                <input 
+                  type="datetime-local" 
+                  className="form-control" 
+                  value={registrationEndTime} 
+                  onChange={e => setRegistrationEndTime(e.target.value)} 
                 />
               </div>
             </div>
