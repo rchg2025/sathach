@@ -80,58 +80,40 @@ const TrainingRegistration = () => {
                 Không có đợt tập xe nào đang mở đăng ký.
               </div>
             ) : (
-              <div className="space-y-6">
-                {sessions.map(session => {
-                  const now = new Date();
-                  const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
-                  const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
+              <div className="space-y-8">
+                {Object.keys(
+                  sessions.reduce((acc: any, session: any) => {
+                    const dateStr = session.date.split('T')[0];
+                    if (!acc[dateStr]) acc[dateStr] = [];
+                    acc[dateStr].push(session);
+                    return acc;
+                  }, {})
+                ).map((dateStr) => {
+                  const dateSessions = sessions.filter((s: any) => s.date.split('T')[0] === dateStr);
                   
-                  let status = 'OPEN';
-                  let statusText = 'Đang mở đăng ký';
-                  if (openTime && now < openTime) {
-                    status = 'UPCOMING';
-                    statusText = `Sắp mở (${openTime.toLocaleString()})`;
-                  } else if (closeTime && now > closeTime) {
-                    status = 'CLOSED';
-                    statusText = 'Đã đóng đăng ký';
-                  }
-
-                  const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
-                  const registrations = session.registrations || [];
-
                   return (
-                    <div key={session.id} className="border rounded-lg p-4 bg-white shadow-sm" style={{ border: '1px solid var(--border)' }}>
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="text-lg font-bold flex items-center gap-2 mb-1">
-                            <Calendar size={18} className="text-primary" />
-                            {formatDateDisplay(session.date)}
-                          </h4>
-                          <div className="flex flex-wrap gap-4 text-sm text-gray-600 mt-2">
-                            <div className="flex items-center gap-1">
-                              <MapPin size={16} /> {session.trainingGround?.name}
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Clock size={16} /> {session.trainingShift?.name} 
-                              {(session.startTime || session.endTime) && ` (${session.startTime || '?'} - ${session.endTime || '?'})`}
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            status === 'OPEN' ? 'bg-green-100 text-green-800' : 
-                            status === 'UPCOMING' ? 'bg-yellow-100 text-yellow-800' : 
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {statusText}
-                          </span>
-                        </div>
-                      </div>
+                    <div key={dateStr} className="bg-white rounded-xl shadow-sm border p-5">
+                      <h3 className="text-xl font-bold flex items-center gap-2 mb-5 text-primary border-b pb-3">
+                        <Calendar size={24} /> 
+                        {formatDateDisplay(dateSessions[0].date)}
+                      </h3>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                        {dateSessions.map((session: any) => {
+                          const now = new Date();
+                          const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
+                          const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
+                          
+                          let status = 'OPEN';
+                          if (openTime && now < openTime) status = 'UPCOMING';
+                          else if (closeTime && now > closeTime) status = 'CLOSED';
 
-                      <div className="mt-4 pt-4 border-t">
-                        <p className="text-sm font-medium mb-2">Chọn xe tập:</p>
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                          {vehicles.length > 0 ? vehicles.map((vehicle: string) => {
+                          const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
+                          const registrations = session.registrations || [];
+
+                          if (vehicles.length === 0) return null;
+
+                          return vehicles.map((vehicle: string) => {
                             const reg = registrations.find((r: any) => r.vehicle === vehicle);
                             const isMine = reg?.userId === user.id;
                             const isTaken = !!reg;
@@ -139,52 +121,66 @@ const TrainingRegistration = () => {
 
                             return (
                               <div
-                                key={vehicle}
+                                key={`${session.id}-${vehicle}`}
                                 onClick={() => {
                                   if (!disabled) handleRegister(session.id, vehicle);
                                 }}
                                 className={`
-                                  relative flex flex-col p-4 rounded-xl border shadow-sm transition-all
-                                  ${isMine ? 'bg-primary/5 border-primary' : 
-                                    isTaken ? 'bg-gray-100 border-gray-200 opacity-80' : 
-                                    status === 'OPEN' ? 'hover:shadow-md hover:border-primary/50 cursor-pointer bg-white' : 
+                                  relative flex flex-col p-5 rounded-xl border-2 transition-all duration-200 overflow-hidden
+                                  ${isMine ? 'bg-primary/5 border-primary shadow-md' : 
+                                    isTaken ? 'bg-gray-100 border-gray-200 opacity-75' : 
+                                    status === 'OPEN' ? 'hover:shadow-lg hover:-translate-y-1 hover:border-primary/40 cursor-pointer bg-white border-gray-100 shadow-sm' : 
                                     'bg-gray-50 border-gray-200 cursor-not-allowed'}
                                 `}
                               >
-                                <div className="flex justify-between items-start mb-3">
-                                  <div className={`p-2 rounded-lg ${isMine ? 'bg-primary text-white' : isTaken ? 'bg-gray-300 text-gray-600' : 'bg-blue-100 text-blue-600'}`}>
-                                    <Car size={24} />
-                                  </div>
-                                  <div>
-                                    {isMine && <span className="bg-primary text-white text-[10px] px-2 py-1 rounded-full font-medium">Của bạn</span>}
-                                    {isTaken && !isMine && <span className="bg-gray-300 text-gray-700 text-[10px] px-2 py-1 rounded-full font-medium">Đã chọn</span>}
-                                    {!isTaken && status === 'OPEN' && <span className="bg-green-100 text-green-700 text-[10px] px-2 py-1 rounded-full font-medium">Còn trống</span>}
+                                {/* Status Banner */}
+                                <div className={`absolute top-0 left-0 right-0 py-1 text-center text-[10px] font-bold uppercase tracking-wider
+                                  ${isMine ? 'bg-primary text-white' : 
+                                    isTaken ? 'bg-gray-300 text-gray-700' : 
+                                    status === 'OPEN' ? 'bg-green-500 text-white' : 
+                                    status === 'UPCOMING' ? 'bg-yellow-400 text-yellow-900' : 
+                                    'bg-gray-400 text-white'}
+                                `}>
+                                  {isMine ? 'Xe của bạn' : isTaken ? 'Đã có người chọn' : status === 'OPEN' ? 'Còn trống - Nhấn để chọn' : status === 'UPCOMING' ? 'Sắp mở đăng ký' : 'Đã đóng đăng ký'}
+                                </div>
+
+                                <div className="flex justify-between items-center mt-4 mb-3">
+                                  <div className="flex items-center gap-3">
+                                    <div className={`p-3 rounded-full ${isMine ? 'bg-primary text-white' : isTaken ? 'bg-gray-300 text-gray-600' : 'bg-blue-50 text-primary'}`}>
+                                      <Car size={24} />
+                                    </div>
+                                    <div>
+                                      <h5 className="font-extrabold text-2xl text-gray-800">{vehicle}</h5>
+                                    </div>
                                   </div>
                                 </div>
                                 
-                                <h5 className="font-bold text-lg mb-2">{vehicle}</h5>
-                                
-                                <div className="text-xs text-gray-600 space-y-1">
-                                  <div className="flex items-center gap-1">
-                                    <Clock size={12} /> {session.trainingShift?.name}
+                                <div className="space-y-2 mt-2 pt-3 border-t text-sm text-gray-600 flex-grow">
+                                  <div className="flex items-center gap-2">
+                                    <MapPin size={16} className="text-gray-400" /> 
+                                    <span className="font-medium">{session.trainingGround?.name}</span>
                                   </div>
-                                  {(session.startTime || session.endTime) && (
-                                    <div className="flex items-center gap-1 text-muted">
-                                      {session.startTime || '?'} - {session.endTime || '?'}
-                                    </div>
-                                  )}
-                                  {isTaken && reg?.user && (
-                                    <div className="flex items-center gap-1 mt-2 pt-2 border-t text-primary font-medium">
-                                      <UserCircle size={12} /> {reg.user.name}
-                                    </div>
-                                  )}
+                                  <div className="flex items-center gap-2">
+                                    <Clock size={16} className="text-gray-400" /> 
+                                    <span className="font-medium">{session.trainingShift?.name}</span>
+                                    {(session.startTime || session.endTime) && (
+                                      <span className="text-xs bg-gray-100 px-2 py-0.5 rounded-full text-gray-500">
+                                        {session.startTime || '?'} - {session.endTime || '?'}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
+
+                                {isTaken && reg?.user && (
+                                  <div className="mt-4 p-2 bg-gray-100 rounded-lg flex items-center gap-2 text-sm text-gray-700 font-medium">
+                                    <UserCircle size={18} className={isMine ? 'text-primary' : 'text-gray-500'} /> 
+                                    {reg.user.name}
+                                  </div>
+                                )}
                               </div>
                             );
-                          }) : (
-                            <span className="text-sm text-gray-500">Chưa có danh sách xe.</span>
-                          )}
-                        </div>
+                          });
+                        })}
                       </div>
                     </div>
                   );
