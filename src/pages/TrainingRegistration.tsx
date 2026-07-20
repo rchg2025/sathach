@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map } from 'lucide-react';
 
 const TrainingRegistration = () => {
   const [sessions, setSessions] = useState<any[]>([]);
@@ -99,53 +99,80 @@ const TrainingRegistration = () => {
                       </h3>
                       
                       <div className="space-y-6">
-                        {dateSessions.map((session: any) => {
-                          const now = new Date();
-                          const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
-                          const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
-                          
-                          let status = 'OPEN';
-                          let statusText = 'Đang mở đăng ký';
-                          if (openTime && now < openTime) {
-                            status = 'UPCOMING';
-                            statusText = `Sắp mở (${openTime.toLocaleString()})`;
-                          } else if (closeTime && now > closeTime) {
-                            status = 'CLOSED';
-                            statusText = 'Đã đóng đăng ký';
-                          }
+                        {(() => {
+                          // Group sessions by training ground for this date
+                          const sessionsByGround = dateSessions.reduce((acc: any, session: any) => {
+                            const groundName = session.trainingGround?.name || 'Chưa xác định';
+                            if (!acc[groundName]) {
+                              acc[groundName] = { ground: session.trainingGround, sessions: [] };
+                            }
+                            acc[groundName].sessions.push(session);
+                            return acc;
+                          }, {});
 
-                          const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
-                          const registrations = session.registrations || [];
-
-                          if (vehicles.length === 0) return null;
-
-                          return (
-                            <div key={session.id} className="bg-gray-50/50 rounded-lg p-4 border border-gray-100">
-                              {/* Session Header */}
-                              <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
-                                <div>
-                                  <h4 className="font-bold text-gray-800 flex items-center gap-2">
-                                    <MapPin size={18} className="text-primary" />
-                                    {session.trainingGround?.name}
-                                  </h4>
-                                  <div className="flex items-center gap-2 mt-1 text-sm text-gray-600">
-                                    <Clock size={16} />
-                                    {session.trainingShift?.name} 
-                                    {(session.startTime || session.endTime) && (
-                                      <span>({session.startTime || '?'} - {session.endTime || '?'})</span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div>
-                                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                    status === 'OPEN' ? 'bg-green-100 text-green-800' : 
-                                    status === 'UPCOMING' ? 'bg-yellow-100 text-yellow-800' : 
-                                    'bg-gray-200 text-gray-800'
-                                  }`}>
-                                    {statusText}
-                                  </span>
-                                </div>
+                          return Object.values(sessionsByGround).map(({ ground, sessions: groundSessions }: any) => (
+                            <div key={ground?.id || 'unknown'} className="mb-6 border rounded-xl overflow-hidden">
+                              {/* Training Ground Header */}
+                              <div className="bg-gray-100 p-4 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                                <h4 className="font-bold text-lg text-primary flex items-center gap-2">
+                                  <MapPin size={20} />
+                                  {ground?.name || 'Chưa xác định'}
+                                </h4>
+                                {ground?.mapUrl && (
+                                  <a 
+                                    href={ground.mapUrl} 
+                                    target="_blank" 
+                                    rel="noreferrer"
+                                    className="btn btn-sm btn-outline-primary flex items-center gap-1"
+                                    style={{ display: 'inline-flex', padding: '6px 12px', border: '1px solid var(--primary)', borderRadius: '6px', color: 'var(--primary)', background: 'transparent', textDecoration: 'none', fontSize: '13px', fontWeight: '600' }}
+                                  >
+                                    <Map size={16} /> Xem bản đồ
+                                  </a>
+                                )}
                               </div>
+                              
+                              <div className="p-4 space-y-4 bg-white">
+                                {groundSessions.map((session: any) => {
+                                  const now = new Date();
+                                  const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
+                                  const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
+                                  
+                                  let status = 'OPEN';
+                                  let statusText = 'Đang mở đăng ký';
+                                  if (openTime && now < openTime) {
+                                    status = 'UPCOMING';
+                                    statusText = `Sắp mở (${openTime.toLocaleString()})`;
+                                  } else if (closeTime && now > closeTime) {
+                                    status = 'CLOSED';
+                                    statusText = 'Đã đóng đăng ký';
+                                  }
+
+                                  const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
+                                  const registrations = session.registrations || [];
+
+                                  if (vehicles.length === 0) return null;
+
+                                  return (
+                                    <div key={session.id} className="bg-gray-50/50 rounded-lg p-4 border border-gray-100 mb-4 last:mb-0">
+                                      {/* Session Header */}
+                                      <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                                        <div>
+                                          <div className="flex items-center gap-2 font-semibold text-gray-800">
+                                            <Clock size={16} className="text-primary" />
+                                            {session.trainingShift?.name} 
+                                            {(session.startTime || session.endTime) && (
+                                              <span className="text-sm font-normal text-gray-600">
+                                                ({session.startTime || '?'} - {session.endTime || '?'})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div>
+                                          <span className="vehicle-card-badge" style={{ backgroundColor: status === 'OPEN' ? '#e6f4ea' : status === 'UPCOMING' ? '#fef7e0' : '#f1f3f4', color: status === 'OPEN' ? '#137333' : status === 'UPCOMING' ? '#b06000' : '#3c4043', padding: '4px 10px', fontSize: '12px' }}>
+                                            {statusText}
+                                          </span>
+                                        </div>
+                                      </div>
 
                               {/* Vehicles Grid - Simple Square Cards */}
                               <div className="vehicle-grid">
@@ -195,6 +222,10 @@ const TrainingRegistration = () => {
                           );
                         })}
                       </div>
+                    </div>
+                  ));
+                })()}
+              </div>
                     </div>
                   );
                 })}
