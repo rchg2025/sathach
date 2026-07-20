@@ -212,3 +212,23 @@ model RetakeSession {
 
   @@unique([studentId, targetCourseId])
 }
+
+model TrainingGround {
+  id        Int      @id @default(autoincrement())
+  name      String
+  address   String
+  phone     String?
+  email     String?
+  mapUrl    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TrainingShift {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startTime String
+  endTime   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

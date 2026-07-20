@@ -8,6 +8,8 @@ import authRoutes from './routes/auth';
 import managerRoutes from './routes/manager';
 import examinerRoutes from './routes/examiner';
 import studentRoutes from './routes/student';
+import trainingGroundsRoutes from './routes/trainingGrounds';
+import trainingShiftsRoutes from './routes/trainingShifts';
 
 const app = expressApp();
 
@@ -17,6 +19,8 @@ app.use(expressApp.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/manager', managerRoutes);
+app.use('/api/manager/training-grounds', trainingGroundsRoutes);
+app.use('/api/manager/training-shifts', trainingShiftsRoutes);
 app.use('/api/examiner', examinerRoutes);
 app.use('/api/student', studentRoutes);
 app.get('/api/seo-bot', async (req, res) => {

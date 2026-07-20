@@ -5,9 +5,10 @@ import VehicleTypeManager from './VehicleTypeManager';
 import TestTypeManager from './TestTypeManager';
 import ExamManager from './ExamManager';
 import CriterionManager from './CriterionManager';
+import TrainingTabWrapper from './TrainingTabWrapper';
 
 const CategoryManager = () => {
-  const [activeCategory, setActiveCategory] = useState<'courses' | 'vehicles' | 'stations' | 'exams' | 'criteria'>('courses');
+  const [activeCategory, setActiveCategory] = useState<'courses' | 'vehicles' | 'stations' | 'exams' | 'criteria' | 'training'>('courses');
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
   return (
@@ -44,6 +45,12 @@ const CategoryManager = () => {
         >
           Tiêu chí
         </div>
+        <div 
+          className={`tab ${activeCategory === 'training' ? 'active' : ''}`}
+          onClick={() => setActiveCategory('training')}
+        >
+          Quản lý sân và Ca tập lái
+        </div>
       </div>
 
       <div className="category-content">
@@ -52,6 +59,7 @@ const CategoryManager = () => {
         {activeCategory === 'stations' && <TestTypeManager />}
         {activeCategory === 'exams' && <ExamManager />}
         {activeCategory === 'criteria' && <CriterionManager />}
+        {activeCategory === 'training' && <TrainingTabWrapper />}
       </div>
     </AdminLayout>
   );
