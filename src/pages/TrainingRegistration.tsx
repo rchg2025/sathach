@@ -5,18 +5,25 @@ import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import Select from 'react-select';
 const TrainingRegistration = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Admin / Manager features
-  const [viewMode, setViewMode] = useState<'GRID' | 'LIST'>('GRID');
+  const [viewMode, setViewMode] = useState<'GRID' | 'LIST' | 'ALLOCATE'>('GRID');
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterGround, setFilterGround] = useState('');
+
+  // Allocation state
+  const [users, setUsers] = useState<any[]>([]);
+  const [allocateSessionId, setAllocateSessionId] = useState<number | null>(null);
+  const [allocateVehicle, setAllocateVehicle] = useState<string>('');
+  const [allocateUserId, setAllocateUserId] = useState<number | null>(null);
 
   // Dialog state
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -60,6 +67,22 @@ const TrainingRegistration = () => {
       if (!isAutoRefresh) setLoading(false);
     }
   };
+
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/users`);
+      setUsers(res.data);
+    } catch (err) {
+      console.error(err);
+      toast.error('Không thể tải danh sách người dùng');
+    }
+  };
+
+  useEffect(() => {
+    if (viewMode === 'ALLOCATE' && users.length === 0) {
+      fetchUsers();
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     fetchData();
@@ -157,7 +180,7 @@ const TrainingRegistration = () => {
         <div>
           <h2 style={{ margin: 0 }}>Đăng ký tập xe</h2>
           <p className="text-muted" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
-            {viewMode === 'GRID' ? 'Chọn các ca tập và xe còn trống để đăng ký' : 'Danh sách thông tin người đăng ký tập xe'}
+            {viewMode === 'GRID' ? 'Chọn các ca tập và xe còn trống để đăng ký' : viewMode === 'LIST' ? 'Danh sách thông tin người đăng ký tập xe' : 'Phân bổ xe thủ công cho người dùng'}
           </p>
         </div>
       </div>
@@ -178,10 +201,102 @@ const TrainingRegistration = () => {
           >
             <List size={16} /> Danh sách đăng ký
           </div>
+          <div 
+            className={`tab ${viewMode === 'ALLOCATE' ? 'active' : ''}`}
+            onClick={() => setViewMode('ALLOCATE')}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+          >
+            <ClipboardList size={16} /> Phân bổ xe
+          </div>
         </div>
       )}
 
-      {viewMode === 'LIST' && isAdmin ? (
+            {viewMode === 'ALLOCATE' && isAdmin ? (
+        <div className="card mb-6">
+          <h3 className="mb-4 flex items-center gap-2"><ClipboardList size={20} className="text-primary"/> Phân bổ xe thủ công</h3>
+          <p className="text-muted mb-4">Dành cho quản lý/admin: Cho phép gán xe trống cho người dùng bất kể thời gian đóng mở đăng ký.</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4" style={{ gap: '1.5rem' }}>
+            <div>
+              <label className="block mb-2 font-medium">Đợt tập xe</label>
+              <Select 
+                options={sessions.map(s => ({
+                  value: s.id,
+                  label: `${formatDateDisplay(s.date)} - ${s.trainingGround?.name} - ${s.trainingShift?.name}`
+                }))}
+                onChange={(val: any) => {
+                  setAllocateSessionId(val?.value || null);
+                  setAllocateVehicle('');
+                }}
+                placeholder="Tìm kiếm hoặc chọn đợt tập..."
+                isClearable
+                noOptionsMessage={() => "Không tìm thấy đợt tập nào"}
+              />
+            </div>
+            
+            {allocateSessionId && (
+              <div>
+                <label className="block mb-2 font-medium">Chọn Xe trống</label>
+                <Select 
+                  options={(sessions.find(s => s.id === allocateSessionId)?.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v) || [])
+                    .filter((v: string) => !(sessions.find(s => s.id === allocateSessionId)?.registrations || []).some((r: any) => r.vehicle === v))
+                    .map((v: string) => ({ value: v, label: v }))
+                  }
+                  onChange={(val: any) => setAllocateVehicle(val?.value || '')}
+                  placeholder="Chọn xe..."
+                  isClearable
+                  noOptionsMessage={() => "Không còn xe nào trống trong đợt tập này"}
+                />
+              </div>
+            )}
+
+            {allocateSessionId && allocateVehicle && (
+              <div className="md:col-span-2">
+                <label className="block mb-2 font-medium">Chọn người dùng</label>
+                <Select 
+                  options={users.map(u => ({
+                    value: u.id,
+                    label: `${u.name || 'Không tên'} (${u.email || u.phone || u.username}) - ${u.role}`
+                  }))}
+                  onChange={(val: any) => setAllocateUserId(val?.value || null)}
+                  placeholder="Tìm kiếm theo tên, email, sđt..."
+                  isClearable
+                />
+              </div>
+            )}
+            
+            {allocateSessionId && allocateVehicle && allocateUserId && (
+              <div className="md:col-span-2 mt-2">
+                <button 
+                  className="btn btn-primary w-full md:w-auto px-6 py-2"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      await axios.post(`${API_BASE_URL}/api/training-registrations/register`, {
+                        trainingSessionId: allocateSessionId,
+                        vehicle: allocateVehicle,
+                        userId: allocateUserId,
+                        isAdminAction: true
+                      });
+                      toast.success('Phân bổ xe thành công!');
+                      setAllocateSessionId(null);
+                      setAllocateVehicle('');
+                      setAllocateUserId(null);
+                      fetchData(true);
+                    } catch (err: any) {
+                      toast.error(err.response?.data?.error || 'Lỗi khi phân bổ xe');
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                  disabled={loading}
+                >
+                  {loading ? 'Đang xử lý...' : 'Phân bổ xe này'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      ) : viewMode === 'LIST' && isAdmin ? (
         <div className="card mb-6" style={{ padding: '0' }}>
           <div style={{ padding: '1.5rem 1.5rem 0' }}>
             <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
@@ -261,7 +376,7 @@ const TrainingRegistration = () => {
                       <td className="text-sm text-gray-600">{reg.session.startTime || '?'} - {reg.session.endTime || '?'}</td>
                       <td>{reg.session.trainingGround?.name}</td>
                       <td>
-                        <span className="badge bg-primary text-white px-2 py-1 rounded">{reg.vehicle}</span>
+                        <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{reg.vehicle}</span>
                       </td>
                       <td className="font-medium">{reg.user?.name}</td>
                       <td>
@@ -454,11 +569,24 @@ const TrainingRegistration = () => {
             {myRegistrations.length === 0 ? (
               <p className="text-sm text-muted">Bạn chưa đăng ký xe nào.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="registered-vehicle-list">
                 {myRegistrations.map(reg => (
-                  <div key={reg.id} style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa', position: 'relative' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <div key={reg.id} className="registered-vehicle-card">
+                    <div className="registered-vehicle-card-header">
                       <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>{reg.vehicle}</span>
+                    </div>
+                    <div className="registered-vehicle-card-body">
+                      <div className="registered-vehicle-card-item">
+                        <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
+                      </div>
+                      <div className="registered-vehicle-card-item">
+                        <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
+                      </div>
+                      <div className="registered-vehicle-card-item">
+                        <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
+                      </div>
+                    </div>
+                    <div>
                       <button 
                         onClick={() => handleCancelRegistration(reg.id)}
                         className="action-btn"
@@ -467,17 +595,6 @@ const TrainingRegistration = () => {
                       >
                         <XCircle size={16} />
                       </button>
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                        <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
-                      </div>
                     </div>
                   </div>
                 ))}

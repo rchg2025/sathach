@@ -3,7 +3,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
-import { Edit, Trash2, Calendar, MapPin, Clock, Car } from 'lucide-react';
+import { Edit, Trash2, Calendar, MapPin, Clock, Car, Unlock } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
@@ -18,7 +18,29 @@ const TrainingSessionManager = () => {
   
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deleteModal, setDeleteModal] = useState<{isOpen: boolean, id: number | null}>({isOpen: false, id: null});
-  
+  const [reopenModal, setReopenModal] = useState<{isOpen: boolean, session: any, newStart: string, newEnd: string}>({ isOpen: false, session: null, newStart: '', newEnd: '' });
+
+  const [loading, setLoading] = useState(false);
+
+  const handleReopenRegistration = async () => {
+    if (!reopenModal.session) return;
+    try {
+      setLoading(true);
+      const payload = {
+        ...reopenModal.session,
+        registrationStartTime: reopenModal.newStart ? new Date(reopenModal.newStart).toISOString() : null,
+        registrationEndTime: reopenModal.newEnd ? new Date(reopenModal.newEnd).toISOString() : null
+      };
+      await axios.put(`${API_BASE_URL}/api/manager/training-sessions/${reopenModal.session.id}`, payload);
+      toast.success('Gia hạn/Mở lại thời gian đăng ký thành công');
+      setReopenModal({ isOpen: false, session: null, newStart: '', newEnd: '' });
+      fetchData();
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi khi cập nhật thời gian đăng ký');
+    } finally {
+      setLoading(false);
+    }
+  };
   // Form state
   const [trainingGroundId, setTrainingGroundId] = useState('');
   const [trainingShiftId, setTrainingShiftId] = useState('');
@@ -274,6 +296,9 @@ const TrainingSessionManager = () => {
                     </td>
                     <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
+                        {s.registrationEndTime && new Date() > new Date(s.registrationEndTime) && (
+                          <button className="action-btn" style={{ color: 'var(--success)', backgroundColor: '#d1fae5', border: '1px solid #a7f3d0' }} title="Mở lại đăng ký" onClick={() => setReopenModal({ isOpen: true, session: s, newStart: s.registrationStartTime ? new Date(s.registrationStartTime).toISOString().slice(0, 16) : '', newEnd: s.registrationEndTime ? new Date(s.registrationEndTime).toISOString().slice(0, 16) : '' })}><Unlock size={16} /></button>
+                        )}
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(s)}><Edit size={16} /></button>
                         <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(s.id)}><Trash2 size={16} /></button>
                       </div>
@@ -288,6 +313,41 @@ const TrainingSessionManager = () => {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Reopen Registration Modal */}
+      {reopenModal.isOpen && reopenModal.session && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <h3 className="mb-4">Gia hạn / Mở lại đăng ký</h3>
+            <p className="text-muted mb-4">Bạn đang gia hạn đăng ký cho Đợt tập: <strong>{formatDateDisplay(reopenModal.session.date)} ({reopenModal.session.trainingShift?.name})</strong></p>
+            
+            <div className="form-group mb-3">
+              <label>Thời gian mở đăng ký mới</label>
+              <input 
+                type="datetime-local" 
+                className="form-control" 
+                value={reopenModal.newStart} 
+                onChange={(e) => setReopenModal({...reopenModal, newStart: e.target.value})} 
+              />
+            </div>
+            
+            <div className="form-group mb-4">
+              <label>Thời gian kết thúc mới (Hạn chót)</label>
+              <input 
+                type="datetime-local" 
+                className="form-control" 
+                value={reopenModal.newEnd} 
+                onChange={(e) => setReopenModal({...reopenModal, newEnd: e.target.value})} 
+              />
+            </div>
+
+            <div className="flex justify-end" style={{ gap: '1rem' }}>
+              <button className="btn btn-secondary" onClick={() => setReopenModal({ isOpen: false, session: null, newStart: '', newEnd: '' })}>Hủy</button>
+              <button className="btn btn-primary" onClick={handleReopenRegistration} disabled={loading}>Lưu thời gian</button>
+            </div>
           </div>
         </div>
       )}

@@ -35,7 +35,7 @@ router.get('/sessions', async (req, res) => {
 
 // Người dùng đăng ký xe
 router.post('/register', async (req, res) => {
-  const { trainingSessionId, vehicle, userId } = req.body;
+  const { trainingSessionId, vehicle, userId, isAdminAction } = req.body;
   try {
     // 1. Kiểm tra session có tồn tại và trong thời gian mở đăng ký không
     const session = await prisma.trainingSession.findUnique({
@@ -50,11 +50,14 @@ router.post('/register', async (req, res) => {
     const openTime = session.registrationStartTime;
     const closeTime = session.registrationEndTime;
 
-    if (openTime && now < openTime) {
-      return res.status(400).json({ error: 'Chưa đến thời gian mở đăng ký' });
-    }
-    if (closeTime && now > closeTime) {
-      return res.status(400).json({ error: 'Đã hết thời gian đăng ký' });
+    // Bỏ qua kiểm tra thời gian nếu là hành động của Admin/Manager phân bổ xe
+    if (!isAdminAction) {
+      if (openTime && now < openTime) {
+        return res.status(400).json({ error: 'Chưa đến thời gian mở đăng ký' });
+      }
+      if (closeTime && now > closeTime) {
+        return res.status(400).json({ error: 'Đã hết thời gian đăng ký' });
+      }
     }
 
     // 2. Kiểm tra giới hạn 1 xe/ngày
