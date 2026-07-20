@@ -34,9 +34,9 @@ const TrainingRegistration = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER';
 
-  const fetchData = async () => {
+  const fetchData = async (isAutoRefresh = false) => {
     try {
-      setLoading(true);
+      if (!isAutoRefresh) setLoading(true);
       const [sessionsRes, myRegRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/training-registrations/sessions`),
         axios.get(`${API_BASE_URL}/api/training-registrations/my-registrations?userId=${user.id}`)
@@ -55,9 +55,9 @@ const TrainingRegistration = () => {
       setMyRegistrations(myRegRes.data);
     } catch (err) {
       console.error(err);
-      toast.error('Không thể tải danh sách đợt tập xe');
+      if (!isAutoRefresh) toast.error('Không thể tải danh sách đợt tập xe');
     } finally {
-      setLoading(false);
+      if (!isAutoRefresh) setLoading(false);
     }
   };
 
@@ -65,7 +65,7 @@ const TrainingRegistration = () => {
     fetchData();
     // Auto-refresh data every 5 seconds to keep data synced with other users
     const interval = setInterval(() => {
-      fetchData();
+      fetchData(true);
     }, 5000);
     return () => clearInterval(interval);
   }, []);
