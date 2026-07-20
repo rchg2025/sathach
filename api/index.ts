@@ -10,6 +10,7 @@ import examinerRoutes from './routes/examiner';
 import studentRoutes from './routes/student';
 import trainingGroundsRoutes from './routes/trainingGrounds';
 import trainingShiftsRoutes from './routes/trainingShifts';
+import trainingSessionsRoutes from './routes/trainingSessions';
 
 const app = expressApp();
 
@@ -21,6 +22,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/manager', managerRoutes);
 app.use('/api/manager/training-grounds', trainingGroundsRoutes);
 app.use('/api/manager/training-shifts', trainingShiftsRoutes);
+app.use('/api/manager/training-sessions', trainingSessionsRoutes);
 app.use('/api/examiner', examinerRoutes);
 app.use('/api/student', studentRoutes);
 app.get('/api/seo-bot', async (req, res) => {

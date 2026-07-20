@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TrainingGroundManager from './TrainingGroundManager';
 import TrainingShiftManager from './TrainingShiftManager';
 

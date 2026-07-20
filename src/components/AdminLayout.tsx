@@ -143,6 +143,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`} onClick={closeSidebar}>
                 <Users size={20} /> <span className="sidebar-item-text">Quản lý học viên</span>
               </Link>
+              <Link to="/manager/training-sessions" className={`sidebar-item ${isActive('/manager/training-sessions')}`} onClick={closeSidebar}>
+                <Car size={20} /> <span className="sidebar-item-text">Quản lý tập xe</span>
+              </Link>
               <Link to="/manager/retakes" className={`sidebar-item ${isActive('/manager/retakes')}`} onClick={closeSidebar}>
                 <Calendar size={20} /> <span className="sidebar-item-text">Tổ chức thi lại</span>
               </Link>

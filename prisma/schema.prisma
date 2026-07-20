@@ -222,6 +222,7 @@ model TrainingGround {
   mapUrl    String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  sessions  TrainingSession[]
 }
 
 model TrainingShift {
@@ -231,4 +232,17 @@ model TrainingShift {
   endTime   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  sessions  TrainingSession[]
+}
+
+model TrainingSession {
+  id               Int            @id @default(autoincrement())
+  trainingGroundId Int
+  trainingGround   TrainingGround @relation(fields: [trainingGroundId], references: [id])
+  trainingShiftId  Int
+  trainingShift    TrainingShift  @relation(fields: [trainingShiftId], references: [id])
+  vehicles         String         
+  date             DateTime
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 }
