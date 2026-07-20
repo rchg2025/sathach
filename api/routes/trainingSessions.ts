@@ -17,14 +17,16 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { trainingGroundId, trainingShiftId, vehicles, date } = req.body;
+  const { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime } = req.body;
   try {
     const session = await prisma.trainingSession.create({
       data: { 
         trainingGroundId: Number(trainingGroundId), 
         trainingShiftId: Number(trainingShiftId), 
         vehicles, 
-        date: new Date(date) 
+        date: new Date(date),
+        startTime,
+        endTime
       }
     });
     res.json(session);
@@ -33,7 +35,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { trainingGroundId, trainingShiftId, vehicles, date } = req.body;
+  const { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime } = req.body;
   try {
     const session = await prisma.trainingSession.update({
       where: { id: Number(id) },
@@ -41,7 +43,9 @@ router.put('/:id', async (req, res) => {
         trainingGroundId: Number(trainingGroundId), 
         trainingShiftId: Number(trainingShiftId), 
         vehicles, 
-        date: new Date(date) 
+        date: new Date(date),
+        startTime,
+        endTime
       }
     });
     res.json(session);

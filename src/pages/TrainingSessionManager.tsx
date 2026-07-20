@@ -24,6 +24,8 @@ const TrainingSessionManager = () => {
   const [trainingShiftId, setTrainingShiftId] = useState('');
   const [vehicles, setVehicles] = useState('');
   const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -58,7 +60,7 @@ const TrainingSessionManager = () => {
     }
 
     try {
-      const payload = { trainingGroundId, trainingShiftId, vehicles, date };
+      const payload = { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime };
       if (editingId) {
         await axios.put(`${API_BASE_URL}/api/manager/training-sessions/${editingId}`, payload);
         toast.success('Cập nhật Đợt tập xe thành công!');
@@ -79,6 +81,8 @@ const TrainingSessionManager = () => {
     setTrainingShiftId('');
     setVehicles('');
     setDate('');
+    setStartTime('');
+    setEndTime('');
     setEditingId(null);
   };
 
@@ -88,6 +92,8 @@ const TrainingSessionManager = () => {
     setTrainingShiftId(s.trainingShiftId.toString());
     setVehicles(s.vehicles || '');
     setDate(s.date ? new Date(s.date).toISOString().split('T')[0] : '');
+    setStartTime(s.startTime || '');
+    setEndTime(s.endTime || '');
     setActiveTab('add');
   };
 
@@ -135,7 +141,8 @@ const TrainingSessionManager = () => {
       'Sân tập': s.trainingGround?.name || '',
       'Ca tập': s.trainingShift?.name || '',
       'Danh sách xe': s.vehicles || '',
-      'Ngày thực hiện': s.date ? formatDateDisplay(s.date) : ''
+      'Ngày thực hiện': s.date ? formatDateDisplay(s.date) : '',
+      'Thời gian': s.startTime && s.endTime ? `${s.startTime} - ${s.endTime}` : ''
     }));
     
     const worksheet = XLSX.utils.json_to_sheet(dataToExport);
@@ -221,6 +228,12 @@ const TrainingSessionManager = () => {
                         <Calendar size={16} className="text-muted" />
                         <strong>{formatDateDisplay(s.date)}</strong>
                       </div>
+                      {(s.startTime || s.endTime) && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '4px', fontSize: '0.85rem' }}>
+                          <Clock size={14} className="text-muted" />
+                          <span>{s.startTime || '?'} - {s.endTime || '?'}</span>
+                        </div>
+                      )}
                     </td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -317,6 +330,27 @@ const TrainingSessionManager = () => {
                   value={date} 
                   onChange={e => setDate(e.target.value)} 
                   required 
+                />
+              </div>
+            </div>
+
+            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Thời gian bắt đầu (Tuỳ chọn)</label>
+                <input 
+                  type="time" 
+                  className="form-control" 
+                  value={startTime} 
+                  onChange={e => setStartTime(e.target.value)} 
+                />
+              </div>
+              <div className="form-group" style={{ flex: 1 }}>
+                <label>Thời gian kết thúc (Tuỳ chọn)</label>
+                <input 
+                  type="time" 
+                  className="form-control" 
+                  value={endTime} 
+                  onChange={e => setEndTime(e.target.value)} 
                 />
               </div>
             </div>
