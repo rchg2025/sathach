@@ -385,7 +385,7 @@ const TrainingSessionManager = () => {
             <div className="form-group mb-3">
               <label>Thời gian mở đăng ký mới</label>
               <input 
-                type="datetime-local" 
+                type="datetime-local" lang="en-GB" 
                 className="form-control" 
                 value={reopenModal.newStart} 
                 onChange={(e) => setReopenModal({...reopenModal, newStart: e.target.value})} 
@@ -395,7 +395,7 @@ const TrainingSessionManager = () => {
             <div className="form-group mb-4">
               <label>Thời gian kết thúc mới (Hạn chót)</label>
               <input 
-                type="datetime-local" 
+                type="datetime-local" lang="en-GB" 
                 className="form-control" 
                 value={reopenModal.newEnd} 
                 onChange={(e) => setReopenModal({...reopenModal, newEnd: e.target.value})} 
@@ -494,7 +494,7 @@ const TrainingSessionManager = () => {
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
                 <input 
-                  type="datetime-local" 
+                  type="datetime-local" lang="en-GB" 
                   className="form-control" 
                   value={registrationStartTime} 
                   onChange={e => setRegistrationStartTime(e.target.value)} 
@@ -503,7 +503,7 @@ const TrainingSessionManager = () => {
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
                 <input 
-                  type="datetime-local" 
+                  type="datetime-local" lang="en-GB" 
                   className="form-control" 
                   value={registrationEndTime} 
                   onChange={e => setRegistrationEndTime(e.target.value)} 
