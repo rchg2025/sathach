@@ -57,8 +57,30 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Đã hết thời gian đăng ký' });
     }
 
-    // 2. Kiểm tra xem xe này có trong danh sách xe của session không
-    const vehiclesArr = session.vehicles.split(',').map(v => v.trim()).filter(v => v);
+    // 2. Kiểm tra giới hạn 1 xe/ngày
+    const startOfDay = new Date(session.date);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(session.date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingRegistration = await prisma.trainingRegistration.findFirst({
+      where: {
+        userId: Number(userId),
+        trainingSession: {
+          date: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        }
+      }
+    });
+
+    if (existingRegistration) {
+      return res.status(400).json({ error: 'Bạn đã đăng ký 1 xe trong ngày này rồi. Mỗi tài khoản chỉ được đăng ký tối đa 1 xe mỗi ngày!' });
+    }
+
+    // 3. Kiểm tra xem xe này có trong danh sách xe của session không
+    const vehiclesArr = session.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v);
     if (!vehiclesArr.includes(vehicle)) {
       return res.status(400).json({ error: 'Xe này không thuộc đợt tập' });
     }
