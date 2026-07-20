@@ -228,8 +228,8 @@ model TrainingGround {
 model TrainingShift {
   id        Int      @id @default(autoincrement())
   name      String
-  startTime String
-  endTime   String
+  startTime String?
+  endTime   String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   sessions  TrainingSession[]

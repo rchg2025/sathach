@@ -289,7 +289,9 @@ const TrainingSessionManager = () => {
                 <select className="form-control" value={trainingShiftId} onChange={e => setTrainingShiftId(e.target.value)} required>
                   <option value="">-- Chọn Ca tập --</option>
                   {shifts.map(s => (
-                    <option key={s.id} value={s.id}>{s.name} ({s.startTime} - {s.endTime})</option>
+                    <option key={s.id} value={s.id}>
+                      {s.name} {s.startTime && s.endTime ? `(${s.startTime} - ${s.endTime})` : ''}
+                    </option>
                   ))}
                 </select>
               </div>

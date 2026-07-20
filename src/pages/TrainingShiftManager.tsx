@@ -132,8 +132,8 @@ const TrainingShiftManager = () => {
                   <tr key={s.id}>
                     <td>{idx + 1}</td>
                     <td><strong>{s.name}</strong></td>
-                    <td>{s.startTime}</td>
-                    <td>{s.endTime}</td>
+                    <td>{s.startTime || '-'}</td>
+                    <td>{s.endTime || '-'}</td>
                     <td className="sticky-col-right">
                       <div style={{ display: 'flex', gap: '5px' }}>
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(s)}><Edit size={16} /></button>
@@ -173,11 +173,21 @@ const TrainingShiftManager = () => {
             <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian bắt đầu</label>
-                <input type="time" className="form-control" value={startTime} onChange={e => setStartTime(e.target.value)} required />
+                <input 
+                  type="time" 
+                  className="form-control" 
+                  value={startTime} 
+                  onChange={e => setStartTime(e.target.value)} 
+                />
               </div>
               <div className="form-group" style={{ flex: 1 }}>
                 <label>Thời gian kết thúc</label>
-                <input type="time" className="form-control" value={endTime} onChange={e => setEndTime(e.target.value)} required />
+                <input 
+                  type="time" 
+                  className="form-control" 
+                  value={endTime} 
+                  onChange={e => setEndTime(e.target.value)} 
+                />
               </div>
             </div>
             <button type="submit" className="btn btn-primary mt-2">Lưu thông tin</button>
