@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import prisma from './prisma';
+import prisma from './_prisma';
 
 export default async function handler(req: Request, res: Response) {
   try {

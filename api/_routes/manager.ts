@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import nodemailer from 'nodemailer';
-import prisma from '../prisma';
+import prisma from '../_prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
-import { uploadFileToDrive, testDriveConnection, getDriveFileStream } from '../utils/drive';
+import { uploadFileToDrive, testDriveConnection, getDriveFileStream } from '../_utils/drive';
 
 const upload = multer({ storage: multer.memoryStorage() });
 

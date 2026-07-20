@@ -2,16 +2,16 @@ import expressApp from 'express';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
-import prisma from './prisma';
+import prisma from './_prisma';
 
-import authRoutes from './routes/auth';
-import managerRoutes from './routes/manager';
-import examinerRoutes from './routes/examiner';
-import studentRoutes from './routes/student';
-import trainingGroundsRoutes from './routes/trainingGrounds';
-import trainingShiftsRoutes from './routes/trainingShifts';
-import trainingSessionsRoutes from './routes/trainingSessions';
-import trainingRegistrationsRoutes from './routes/trainingRegistrations';
+import authRoutes from './_routes/auth';
+import managerRoutes from './_routes/manager';
+import examinerRoutes from './_routes/examiner';
+import studentRoutes from './_routes/student';
+import trainingGroundsRoutes from './_routes/trainingGrounds';
+import trainingShiftsRoutes from './_routes/trainingShifts';
+import trainingSessionsRoutes from './_routes/trainingSessions';
+import trainingRegistrationsRoutes from './_routes/trainingRegistrations';
 
 const app = expressApp();
 

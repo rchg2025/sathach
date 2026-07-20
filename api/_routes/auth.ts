@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import prisma from '../prisma';
+import prisma from '../_prisma';
 import nodemailer from 'nodemailer';
 import { OAuth2Client } from 'google-auth-library';
 

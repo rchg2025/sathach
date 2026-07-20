@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import stream from 'stream';
-import prisma from '../prisma';
+import prisma from '../_prisma';
 
 function formatPrivateKey(key: string) {
   let formatted = key;
