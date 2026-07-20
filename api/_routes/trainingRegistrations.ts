@@ -116,8 +116,10 @@ router.delete('/:id', async (req, res) => {
     if (!reg) return res.status(404).json({ error: 'Không tìm thấy đăng ký' });
     
     // Check role, chỉ cho phép hủy nếu là của mình hoặc Admin/Manager
-    // Tạm thời cho phép hủy nếu userId trùng
-    if (reg.userId !== Number(userId)) {
+    const requestUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.role === 'MANAGER' || requestUser?.username === 'quantri';
+    
+    if (reg.userId !== Number(userId) && !isAdmin) {
       return res.status(403).json({ error: 'Không có quyền hủy' });
     }
     
@@ -152,6 +154,47 @@ router.get('/my-registrations', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
     res.json(regs);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Lỗi server' });
+  }
+});
+
+
+// Sửa đăng ký xe (dành cho Admin)
+router.put('/:id', async (req, res) => {
+  const id = Number(req.params.id);
+  const { userId, vehicle } = req.body;
+  try {
+    const reg = await prisma.trainingRegistration.findUnique({ where: { id } });
+    if (!reg) return res.status(404).json({ error: 'Không tìm thấy đăng ký' });
+
+    const requestUser = await prisma.user.findUnique({ where: { id: Number(userId) } });
+    const isAdmin = requestUser?.role === 'ADMIN' || requestUser?.role === 'MANAGER' || requestUser?.username === 'quantri';
+    
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Không có quyền sửa' });
+    }
+
+    // Check if vehicle is already taken in that session by another user
+    const existing = await prisma.trainingRegistration.findFirst({
+      where: {
+        trainingSessionId: reg.trainingSessionId,
+        vehicle,
+        id: { not: id }
+      }
+    });
+
+    if (existing) {
+      return res.status(400).json({ error: 'Xe này đã có người đăng ký' });
+    }
+
+    const updatedReg = await prisma.trainingRegistration.update({
+      where: { id },
+      data: { vehicle }
+    });
+
+    res.json({ success: true, registration: updatedReg });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Lỗi server' });

@@ -5,7 +5,7 @@ import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 
@@ -52,6 +52,7 @@ const TrainingRegistration = () => {
 
   // Admin / Manager features
   const [viewMode, setViewMode] = useState<'GRID' | 'LIST' | 'ALLOCATE'>('GRID');
+  const [editModal, setEditModal] = useState<any>({ isOpen: false, reg: null, newVehicle: '' });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState('');
   const [filterGround, setFilterGround] = useState('');
@@ -150,6 +151,25 @@ const TrainingRegistration = () => {
         }
       }
     });
+  };
+
+  
+  const handleEditRegistration = async () => {
+    if (!editModal.newVehicle) {
+      toast.error('Vui lòng chọn xe');
+      return;
+    }
+    try {
+      await axios.put(`${API_BASE_URL}/api/training-registrations/${editModal.reg.id}`, {
+        userId: user.id,
+        vehicle: editModal.newVehicle
+      });
+      toast.success('Cập nhật đăng ký thành công!');
+      setEditModal({ isOpen: false, reg: null, newVehicle: '' });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi khi cập nhật đăng ký');
+    }
   };
 
   const handleCancelRegistration = (registrationId: number) => {
@@ -407,6 +427,7 @@ const TrainingRegistration = () => {
                   <th>Họ và tên</th>
                   <th>Email / SĐT</th>
                   <th>Thời gian ĐK</th>
+                  <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -432,6 +453,12 @@ const TrainingRegistration = () => {
                         <div className="text-xs text-gray-500">{reg.user?.phone}</div>
                       </td>
                       <td className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button className="action-btn" title="Sửa" onClick={() => setEditModal({ isOpen: true, reg, newVehicle: reg.vehicle })}><Edit size={16} /></button>
+                          <button className="action-btn text-danger" title="Xóa" onClick={() => handleCancelRegistration(reg.id)}><Trash2 size={16} /></button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -632,6 +659,43 @@ const TrainingRegistration = () => {
         onConfirm={confirmDialog.onConfirm}
         onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
       />
+    
+      {editModal.isOpen && (
+        <div className="modal-backdrop">
+          <div className="modal-content" style={{ maxWidth: '400px' }}>
+            <h3 className="mb-4">Sửa đăng ký xe</h3>
+            <div className="form-group mb-4">
+              <label>Học viên: <strong>{editModal.reg.user?.name}</strong></label>
+            </div>
+            <div className="form-group mb-4">
+              <label>Đợt tập: <strong>{formatDateDisplay(editModal.reg.session?.date)} ({editModal.reg.session?.trainingShift?.name})</strong></label>
+            </div>
+            <div className="form-group mb-4">
+              <label>Chọn xe mới</label>
+              <select 
+                className="form-control" 
+                value={editModal.newVehicle} 
+                onChange={e => setEditModal({...editModal, newVehicle: e.target.value})}
+              >
+                <option value="">-- Chọn xe --</option>
+                {editModal.reg.session?.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v).map((v: string) => {
+                  const isTaken = editModal.reg.session.registrations?.some((r: any) => r.vehicle === v && r.id !== editModal.reg.id);
+                  return (
+                    <option key={v} value={v} disabled={isTaken}>
+                      {v} {isTaken ? '(Đã có người đăng ký)' : ''}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button className="btn btn-secondary" onClick={() => setEditModal({ isOpen: false, reg: null, newVehicle: '' })}>Hủy</button>
+              <button className="btn btn-primary" onClick={handleEditRegistration}>Lưu thay đổi</button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </AdminLayout>
   );
 };
