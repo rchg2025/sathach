@@ -41,7 +41,7 @@ const PublicHeader = () => {
       .catch(console.error);
   }, []);
 
-  if (location.pathname.startsWith('/manager') || location.pathname.startsWith('/examiner') || location.pathname.startsWith('/profile')) return null;
+  if (location.pathname.startsWith('/manager') || location.pathname.startsWith('/examiner') || location.pathname.startsWith('/profile') || location.pathname.startsWith('/training-registration')) return null;
   return (
     <div className="app-header">
       <div className="container">
