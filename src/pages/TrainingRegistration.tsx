@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import AdminLayout from '../components/AdminLayout';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, UserCircle } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car } from 'lucide-react';
 
 const TrainingRegistration = () => {
   const [sessions, setSessions] = useState<any[]>([]);
