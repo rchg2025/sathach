@@ -223,7 +223,7 @@ const TrainingRegistration = () => {
       </div>
       
       {isAdmin && (
-        <div className="tabs">
+        <div className="tabs mb-4" style={{ borderBottom: '1px solid var(--border)' }}>
           <div 
             className={`tab ${viewMode === 'GRID' ? 'active' : ''}`}
             onClick={() => setViewMode('GRID')}
