@@ -582,28 +582,35 @@ const TrainingRegistration = () => {
             {myRegistrations.length === 0 ? (
               <p className="text-sm text-muted">Bạn chưa đăng ký xe nào.</p>
             ) : (
-              <div className="registered-vehicle-list">
+              <div className="registered-vehicle-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 {myRegistrations.map(reg => (
-                  <div key={reg.id} className="registered-vehicle-card">
-                    <div className="registered-vehicle-card-header">
-                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)' }}>{reg.vehicle}</span>
+                  <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', flex: 1 }}>
+                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)', minWidth: '60px' }}>{reg.vehicle}</span>
+                      
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                          <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                          <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                          <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
+                          {(reg.trainingSession?.startTime || reg.trainingSession?.endTime) && (
+                            <span style={{ marginLeft: '4px' }}>
+                              ({reg.trainingSession?.startTime || '?'} - {reg.trainingSession?.endTime || '?'})
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                    <div className="registered-vehicle-card-body">
-                      <div className="registered-vehicle-card-item">
-                        <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
-                      </div>
-                      <div className="registered-vehicle-card-item">
-                        <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
-                      </div>
-                      <div className="registered-vehicle-card-item">
-                        <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
-                      </div>
-                    </div>
-                    <div>
+                    
+                    <div style={{ marginLeft: '0.5rem' }}>
                       <button 
                         onClick={() => handleCancelRegistration(reg.id)}
                         className="action-btn"
-                        style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca' }}
+                        style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
                         title="Hủy đăng ký"
                       >
                         <XCircle size={16} />
