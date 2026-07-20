@@ -8,6 +8,43 @@ import { formatDateDisplay } from '../utils/dateUtils';
 import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
+
+const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
+  const [timeLeft, setTimeLeft] = useState('');
+
+  useEffect(() => {
+    const calculateTimeLeft = () => {
+      const difference = targetDate.getTime() - new Date().getTime();
+      if (difference <= 0) {
+        return 'Đang mở đăng ký';
+      }
+
+      const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((difference / 1000 / 60) % 60);
+      const seconds = Math.floor((difference / 1000) % 60);
+
+      let result = 'Sắp mở (Còn ';
+      if (days > 0) result += `${days} ngày `;
+      if (hours > 0 || days > 0) result += `${hours} giờ `;
+      if (minutes > 0 || hours > 0 || days > 0) result += `${minutes} phút `;
+      result += `${seconds} giây)`;
+      
+      return result;
+    };
+
+    setTimeLeft(calculateTimeLeft());
+
+    const timer = setInterval(() => {
+      setTimeLeft(calculateTimeLeft());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [targetDate]);
+
+  return <span>{timeLeft}</span>;
+};
+
 const TrainingRegistration = () => {
   const [sessions, setSessions] = useState<any[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<any[]>([]);
@@ -422,10 +459,10 @@ const TrainingRegistration = () => {
                   const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
                   
                   let status = 'OPEN';
-                  let statusText = 'Đang mở đăng ký';
+                  let statusText: React.ReactNode = 'Đang mở đăng ký';
                   if (openTime && now < openTime) {
                     status = 'UPCOMING';
-                    statusText = `Sắp mở (${openTime.toLocaleString()})`;
+                    statusText = <CountdownTimer targetDate={openTime} />;
                   } else if (closeTime && now > closeTime) {
                     status = 'CLOSED';
                     statusText = 'Đã đóng đăng ký';
@@ -461,6 +498,14 @@ const TrainingRegistration = () => {
                               )}
                             </span>
                           </div>
+                          
+                          {(openTime || closeTime) && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280', paddingLeft: '1.5rem', borderLeft: '1px solid #e5e7eb' }}>
+                              <span style={{fontWeight: 'normal'}}>
+                                Đăng ký: {openTime ? openTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + openTime.toLocaleDateString() : '...'} - {closeTime ? closeTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + closeTime.toLocaleDateString() : '...'}
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
