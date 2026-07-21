@@ -8,6 +8,7 @@ import { formatDateDisplay } from '../utils/dateUtils';
 import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
+import { useLocation } from 'react-router-dom';
 
 const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
   const [timeLeft, setTimeLeft] = useState('');
@@ -46,17 +47,23 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
 };
 
 const TrainingRegistration = () => {
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const initialDate = queryParams.get('date') || '';
+  const initialGround = queryParams.get('groundId') || '';
+  const initialViewMode = (queryParams.get('view') as 'GRID' | 'LIST' | 'ALLOCATE') || 'GRID';
+
   const [sessions, setSessions] = useState<any[]>([]);
   const [allSessions, setAllSessions] = useState<any[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Admin / Manager features
-  const [viewMode, setViewMode] = useState<'GRID' | 'LIST' | 'ALLOCATE'>('GRID');
+  const [viewMode, setViewMode] = useState<'GRID' | 'LIST' | 'ALLOCATE'>(initialViewMode);
   const [editModal, setEditModal] = useState<any>({ isOpen: false, reg: null, newVehicle: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDate, setFilterDate] = useState('');
-  const [filterGround, setFilterGround] = useState('');
+  const [filterDate, setFilterDate] = useState(initialDate);
+  const [filterGround, setFilterGround] = useState(initialGround);
 
   // Allocation state
   const [users, setUsers] = useState<any[]>([]);

@@ -10,8 +10,10 @@ import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
 import Flatpickr from 'react-flatpickr';
 import 'flatpickr/dist/themes/light.css';
+import { useNavigate } from 'react-router-dom';
 
 const TrainingSessionManager = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'active' | 'archived' | 'add'>('active');
   
   const [sessions, setSessions] = useState<any[]>([]);
@@ -324,19 +326,40 @@ const TrainingSessionManager = () => {
                       </div>
                     </td>
                     <td>
-                      <div style={{ maxWidth: '250px', maxHeight: '100px', overflowY: 'auto', fontSize: '0.85rem' }}>
-                        {s.registrations && s.registrations.length > 0 ? (
-                          <ul style={{ paddingLeft: '1rem', margin: 0 }}>
-                            {s.registrations.map((r: any) => (
-                              <li key={r.id}>
-                                <strong>{r.vehicle}</strong>: {r.user?.name || r.user?.email || 'N/A'}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <span className="text-muted">Chưa có</span>
-                        )}
-                      </div>
+                      {s.registrations && s.registrations.length > 0 ? (
+                        <button 
+                          onClick={() => {
+                            const date = s.date ? s.date.split('T')[0] : '';
+                            const groundId = s.trainingGroundId || '';
+                            navigate(`/training-registration?view=LIST&date=${date}&groundId=${groundId}`);
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            padding: '6px 12px',
+                            backgroundColor: 'transparent',
+                            border: '1px solid var(--primary)',
+                            color: 'var(--primary)',
+                            borderRadius: '6px',
+                            fontSize: '0.85rem',
+                            fontWeight: 500,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = 'var(--primary)';
+                            e.currentTarget.style.color = '#fff';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = 'transparent';
+                            e.currentTarget.style.color = 'var(--primary)';
+                          }}
+                        >
+                          Xem danh sách ({s.registrations.length})
+                        </button>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>Chưa có</span>
+                      )}
                     </td>
                     <td>
                       {(() => {

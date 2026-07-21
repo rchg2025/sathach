@@ -13,9 +13,6 @@ router.get('/sessions', async (req, res) => {
     today.setHours(0, 0, 0, 0);
 
     const sessions = await prisma.trainingSession.findMany({
-      where: {
-        date: { gte: today },
-      },
       include: {
         trainingGround: true,
         trainingShift: true,
@@ -23,7 +20,7 @@ router.get('/sessions', async (req, res) => {
           include: { user: true }
         }
       },
-      orderBy: { date: 'asc' }
+      orderBy: { date: 'desc' }
     });
     
     res.json(sessions);
