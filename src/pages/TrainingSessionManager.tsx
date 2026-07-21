@@ -179,7 +179,7 @@ const TrainingSessionManager = () => {
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = new Date().toLocaleDateString('en-CA');
 
   const filteredSessions = sessions.filter((s: any) => {
     const keyword = removeAccents(searchKeyword);
@@ -206,6 +206,7 @@ const TrainingSessionManager = () => {
       'Sân tập': s.trainingGround?.name || '',
       'Ca tập': s.trainingShift?.name || '',
       'Danh sách xe': s.vehicles || '',
+      'Giáo viên đã ĐK': s.registrations ? s.registrations.map((r: any) => `${r.vehicle}: ${r.user?.name || r.user?.email}`).join(', ') : '',
       'Ngày thực hiện': s.date ? formatDateDisplay(s.date) : '',
       'Thời gian': s.startTime && s.endTime ? `${s.startTime} - ${s.endTime}` : ''
     }));
@@ -281,6 +282,7 @@ const TrainingSessionManager = () => {
                   <th>Sân tập</th>
                   <th>Ca tập</th>
                   <th>Danh sách Xe</th>
+                  <th>Giáo viên đã ĐK</th>
                   <th>Trạng thái ĐK</th>
                   <th className="sticky-col-right">Hành động</th>
                 </tr>
@@ -316,9 +318,24 @@ const TrainingSessionManager = () => {
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Car size={16} className="text-success" />
-                        <div style={{ maxWidth: '300px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.vehicles}>
+                        <div style={{ maxWidth: '200px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={s.vehicles}>
                           {s.vehicles || '-'}
                         </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div style={{ maxWidth: '250px', maxHeight: '100px', overflowY: 'auto', fontSize: '0.85rem' }}>
+                        {s.registrations && s.registrations.length > 0 ? (
+                          <ul style={{ paddingLeft: '1rem', margin: 0 }}>
+                            {s.registrations.map((r: any) => (
+                              <li key={r.id}>
+                                <strong>{r.vehicle}</strong>: {r.user?.name || r.user?.email || 'N/A'}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-muted">Chưa có</span>
+                        )}
                       </div>
                     </td>
                     <td>
@@ -326,10 +343,15 @@ const TrainingSessionManager = () => {
                         const now = new Date();
                         const openTime = s.registrationStartTime ? new Date(s.registrationStartTime) : null;
                         const closeTime = s.registrationEndTime ? new Date(s.registrationEndTime) : null;
+                        const dateStr = s.date ? s.date.split('T')[0] : '';
+                        const todayStr = new Date().toLocaleDateString('en-CA');
+                        const isPast = dateStr !== '' && dateStr < todayStr;
+                        
                         let isOpen = true;
                         let isUpcoming = false;
                         if (openTime && now < openTime) { isOpen = false; isUpcoming = true; }
                         else if (closeTime && now > closeTime) { isOpen = false; }
+                        if (isPast) { isOpen = false; isUpcoming = false; }
                         
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -338,6 +360,7 @@ const TrainingSessionManager = () => {
                                 type="checkbox" 
                                 style={{ opacity: 0, width: 0, height: 0 }}
                                 checked={isOpen}
+                                disabled={isPast}
                                 onChange={() => {
                                   // Handle toggle
                                   let newStart = '';
@@ -359,14 +382,14 @@ const TrainingSessionManager = () => {
                                   });
                                 }}
                               />
-                              <span style={{ position: 'absolute', cursor: 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isOpen ? '#4ade80' : (isUpcoming ? '#fbbf24' : '#ccc'), transition: '.4s', borderRadius: '34px' }}
+                              <span style={{ position: 'absolute', cursor: isPast ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isOpen ? '#4ade80' : (isPast ? '#ef4444' : (isUpcoming ? '#fbbf24' : '#ccc')), transition: '.4s', borderRadius: '34px' }}
                                 className="slider round"
                               >
                                 <span style={{ position: 'absolute', content: '""', height: '16px', width: '16px', left: '3px', bottom: '3px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: isOpen ? 'translateX(18px)' : 'translateX(0)' }}></span>
                               </span>
                             </label>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isOpen ? '#16a34a' : (isUpcoming ? '#d97706' : '#6b7280') }}>
-                              {isOpen ? 'Đang mở' : (isUpcoming ? 'Sắp mở' : 'Đã đóng')}
+                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isPast ? '#ef4444' : (isOpen ? '#16a34a' : (isUpcoming ? '#d97706' : '#6b7280')) }}>
+                              {isPast ? 'Đã khoá' : (isOpen ? 'Đang mở' : (isUpcoming ? 'Sắp mở' : 'Đã đóng'))}
                             </span>
                           </div>
                         );

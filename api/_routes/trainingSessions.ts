@@ -8,7 +8,10 @@ router.get('/', async (req, res) => {
     const sessions = await prisma.trainingSession.findMany({
       include: {
         trainingGround: true,
-        trainingShift: true
+        trainingShift: true,
+        registrations: {
+          include: { user: true }
+        }
       },
       orderBy: { date: 'desc' }
     });

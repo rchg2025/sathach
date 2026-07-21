@@ -47,6 +47,7 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
 
 const TrainingRegistration = () => {
   const [sessions, setSessions] = useState<any[]>([]);
+  const [allSessions, setAllSessions] = useState<any[]>([]);
   const [myRegistrations, setMyRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -98,6 +99,7 @@ const TrainingRegistration = () => {
       });
 
       setSessions(upcomingSessions);
+      setAllSessions(sessionsRes.data);
       setMyRegistrations(myRegRes.data);
     } catch (err) {
       console.error(err);
@@ -194,7 +196,7 @@ const TrainingRegistration = () => {
   };
 
   // Prepare data for Admin LIST view
-  const allRegistrations = sessions.flatMap(session => 
+  const allRegistrations = allSessions.flatMap(session => 
     (session.registrations || []).map((reg: any) => ({
       ...reg,
       session
@@ -229,8 +231,8 @@ const TrainingRegistration = () => {
     XLSX.writeFile(wb, "danh_sach_dang_ky_xe.xlsx");
   };
 
-  const uniqueGrounds = Array.from(new Set(sessions.map(s => s.trainingGround?.id))).filter(Boolean)
-                             .map(id => sessions.find(s => s.trainingGround?.id === id)?.trainingGround);
+  const uniqueGrounds = Array.from(new Set(allSessions.map(s => s.trainingGround?.id))).filter(Boolean)
+                             .map(id => allSessions.find(s => s.trainingGround?.id === id)?.trainingGround);
 
   return (
     <AdminLayout user={user}>
@@ -284,7 +286,7 @@ const TrainingRegistration = () => {
               <div className="form-group">
                 <label className="block mb-2 font-semibold text-gray-700">1. Chọn Đợt tập xe</label>
                 <Select 
-                  options={sessions.map(s => ({
+                  options={allSessions.map(s => ({
                     value: s.id,
                     label: `${formatDateDisplay(s.date)} - ${s.trainingGround?.name} - ${s.trainingShift?.name}`
                   }))}
@@ -303,8 +305,8 @@ const TrainingRegistration = () => {
                 <div className="form-group animate-fadeIn">
                   <label className="block mb-2 font-semibold text-gray-700">2. Chọn Xe trống</label>
                   <Select 
-                    options={(sessions.find(s => s.id === allocateSessionId)?.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v) || [])
-                      .filter((v: string) => !(sessions.find(s => s.id === allocateSessionId)?.registrations || []).some((r: any) => r.vehicle === v))
+                    options={(allSessions.find(s => s.id === allocateSessionId)?.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v) || [])
+                      .filter((v: string) => !(allSessions.find(s => s.id === allocateSessionId)?.registrations || []).some((r: any) => r.vehicle === v))
                       .map((v: string) => ({ value: v, label: v }))
                     }
                     onChange={(val: any) => setAllocateVehicle(val?.value || '')}
