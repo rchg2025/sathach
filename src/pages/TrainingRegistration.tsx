@@ -9,6 +9,7 @@ import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Do
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import { useLocation } from 'react-router-dom';
+import { Pagination } from '../components/Pagination';
 
 const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
   const [timeLeft, setTimeLeft] = useState('');
@@ -49,7 +50,7 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
 const TrainingRegistration = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const initialDate = queryParams.get('date') || '';
+  const initialDate = queryParams.get('date') || new Date().toLocaleDateString('en-CA');
   const initialGround = queryParams.get('groundId') || '';
   const initialViewMode = (queryParams.get('view') as 'GRID' | 'LIST' | 'ALLOCATE') || 'GRID';
 
@@ -64,6 +65,13 @@ const TrainingRegistration = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDate, setFilterDate] = useState(initialDate);
   const [filterGround, setFilterGround] = useState(initialGround);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterDate, filterGround, viewMode]);
 
   // Allocation state
   const [users, setUsers] = useState<any[]>([]);
@@ -220,7 +228,7 @@ const TrainingRegistration = () => {
   });
 
   const exportToExcel = () => {
-    const dataToExport = filteredRegistrations.map((reg: any) => ({
+    const dataToExport = filteredRegistrations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((reg: any) => ({
       'Ngày tập': formatDateDisplay(reg.session.date),
       'Ca tập': reg.session.trainingShift?.name || '',
       'Giờ tập': `${reg.session.startTime || '?'} - ${reg.session.endTime || '?'}`,
@@ -477,6 +485,17 @@ const TrainingRegistration = () => {
               </tbody>
             </table>
           </div>
+          {filteredRegistrations.length > 0 && (
+            <div className="p-4 border-t">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredRegistrations.length / itemsPerPage)}
+                onPageChange={setCurrentPage}
+                totalItems={filteredRegistrations.length}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
       ) : (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -491,121 +510,134 @@ const TrainingRegistration = () => {
                 Không có đợt tập xe nào đang mở đăng ký.
               </div>
             ) : (
-              <div className="space-y-4">
-                {sessions.map((session: any) => {
-                  const now = new Date();
-                  const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
-                  const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
-                  
-                  let status = 'OPEN';
-                  let statusText: React.ReactNode = 'Đang mở đăng ký';
-                  if (openTime && now < openTime) {
-                    status = 'UPCOMING';
-                    statusText = <CountdownTimer targetDate={openTime} />;
-                  } else if (closeTime && now > closeTime) {
-                    status = 'CLOSED';
-                    statusText = 'Đã đóng đăng ký';
-                  }
+              <>
+                <div className="space-y-4">
+                  {sessions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((session: any) => {
+                    const now = new Date();
+                    const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
+                    const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
+                    
+                    let status = 'OPEN';
+                    let statusText: React.ReactNode = 'Đang mở đăng ký';
+                    if (openTime && now < openTime) {
+                      status = 'UPCOMING';
+                      statusText = <CountdownTimer targetDate={openTime} />;
+                    } else if (closeTime && now > closeTime) {
+                      status = 'CLOSED';
+                      statusText = 'Đã đóng đăng ký';
+                    }
 
-                  const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
-                  const registrations = session.registrations || [];
+                    const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
+                    const registrations = session.registrations || [];
 
-                  if (vehicles.length === 0) return null;
+                    if (vehicles.length === 0) return null;
 
-                  return (
-                    <div key={session.id} className="bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
-                      <div style={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', color: '#1f2937', fontWeight: 500 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Calendar size={18} className="text-primary" />
-                            <span>{formatDateDisplay(session.date)}</span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <MapPin size={18} className="text-primary" />
-                            <span>{session.trainingGround?.name || 'Chưa xác định'}</span>
-                          </div>
-                          
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={18} className="text-primary" />
-                            <span>
-                              {session.trainingShift?.name} 
-                              {(session.startTime || session.endTime) && (
-                                <span className="text-gray-500 font-normal ml-1">
-                                  ({session.startTime || '?'} - {session.endTime || '?'})
-                                </span>
-                              )}
-                            </span>
-                          </div>
-                          
-                          {(openTime || closeTime) && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280', paddingLeft: '1.5rem', borderLeft: '1px solid #e5e7eb' }}>
-                              <span style={{fontWeight: 'normal'}}>
-                                Đăng ký: {openTime ? openTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + openTime.toLocaleDateString() : '...'} - {closeTime ? closeTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + closeTime.toLocaleDateString() : '...'}
+                    return (
+                      <div key={session.id} className="bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
+                        <div style={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', color: '#1f2937', fontWeight: 500 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Calendar size={18} className="text-primary" />
+                              <span>{formatDateDisplay(session.date)}</span>
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <MapPin size={18} className="text-primary" />
+                              <span>{session.trainingGround?.name || 'Chưa xác định'}</span>
+                            </div>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Clock size={18} className="text-primary" />
+                              <span>
+                                {session.trainingShift?.name} 
+                                {(session.startTime || session.endTime) && (
+                                  <span className="text-gray-500 font-normal ml-1">
+                                    ({session.startTime || '?'} - {session.endTime || '?'})
+                                  </span>
+                                )}
                               </span>
                             </div>
-                          )}
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                          {session.trainingGround?.mapUrl && (
-                            <a 
-                              href={session.trainingGround.mapUrl} 
-                              target="_blank" 
-                              rel="noreferrer"
-                              className="btn-outline-primary"
-                              style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none' }}
-                            >
-                              <Map size={16} /> Xem bản đồ
-                            </a>
-                          )}
-                          <span className="vehicle-card-badge m-0" style={{ backgroundColor: status === 'OPEN' ? '#e6f4ea' : status === 'UPCOMING' ? '#fef7e0' : '#f1f3f4', color: status === 'OPEN' ? '#137333' : status === 'UPCOMING' ? '#b06000' : '#3c4043', padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}>
-                            {statusText}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="p-5">
-                        <div className="vehicle-grid">
-                          {vehicles.map((vehicle: string) => {
-                            const reg = registrations.find((r: any) => r.vehicle === vehicle);
-                            const isMine = reg?.userId === user.id;
-                            const isTaken = !!reg;
-                            const disabled = status !== 'OPEN' || (isTaken && !isMine);
-
-                            let cardClass = 'vehicle-card';
-                            if (isMine) cardClass += ' mine';
-                            else if (isTaken) cardClass += ' taken';
-                            else if (disabled) cardClass += ' disabled';
-
-                            return (
-                              <div 
-                                key={vehicle} 
-                                className={cardClass}
-                                onClick={() => !disabled && handleRegister(session.id, vehicle)}
-                              >
-                                <Car size={24} className="vehicle-card-icon" style={{ 
-                                  color: isMine ? 'white' : isTaken ? '#adb5bd' : 'var(--primary)' 
-                                }} />
-                                <div className="vehicle-card-title">{vehicle}</div>
-                                {isMine ? (
-                                  <div className="vehicle-card-badge badge-mine">Của bạn</div>
-                                ) : isTaken ? (
-                                  <div className="vehicle-card-badge badge-taken">{reg.user?.name || 'Đã có người ĐK'}</div>
-                                ) : disabled ? (
-                                  <div className="vehicle-card-badge badge-taken">Không khả dụng</div>
-                                ) : (
-                                  <div className="vehicle-card-badge badge-free">Trống</div>
-                                )}
+                            
+                            {(openTime || closeTime) && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280', paddingLeft: '1.5rem', borderLeft: '1px solid #e5e7eb' }}>
+                                <span style={{fontWeight: 'normal'}}>
+                                  Đăng ký: {openTime ? openTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + openTime.toLocaleDateString() : '...'} - {closeTime ? closeTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + closeTime.toLocaleDateString() : '...'}
+                                </span>
                               </div>
-                            );
-                          })}
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                            {session.trainingGround?.mapUrl && (
+                              <a 
+                                href={session.trainingGround.mapUrl} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="btn-outline-primary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', padding: '0.375rem 0.75rem', border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: '0.5rem', fontSize: '0.875rem', fontWeight: 500, textDecoration: 'none' }}
+                              >
+                                <Map size={16} /> Xem bản đồ
+                              </a>
+                            )}
+                            <span className="vehicle-card-badge m-0" style={{ backgroundColor: status === 'OPEN' ? '#e6f4ea' : status === 'UPCOMING' ? '#fef7e0' : '#f1f3f4', color: status === 'OPEN' ? '#137333' : status === 'UPCOMING' ? '#b06000' : '#3c4043', padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}>
+                              {statusText}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-5">
+                          <div className="vehicle-grid">
+                            {vehicles.map((vehicle: string) => {
+                              const reg = registrations.find((r: any) => r.vehicle === vehicle);
+                              const isMine = reg?.userId === user.id;
+                              const isTaken = !!reg;
+                              const disabled = status !== 'OPEN' || (isTaken && !isMine);
+
+                              let cardClass = 'vehicle-card';
+                              if (isMine) cardClass += ' mine';
+                              else if (isTaken) cardClass += ' taken';
+                              else if (disabled) cardClass += ' disabled';
+
+                              return (
+                                <div 
+                                  key={vehicle} 
+                                  className={cardClass}
+                                  onClick={() => !disabled && handleRegister(session.id, vehicle)}
+                                >
+                                  <Car size={24} className="vehicle-card-icon" style={{ 
+                                    color: isMine ? 'white' : isTaken ? '#adb5bd' : 'var(--primary)' 
+                                  }} />
+                                  <div className="vehicle-card-title">{vehicle}</div>
+                                  {isMine ? (
+                                    <div className="vehicle-card-badge badge-mine">Của bạn</div>
+                                  ) : isTaken ? (
+                                    <div className="vehicle-card-badge badge-taken">{reg.user?.name || 'Đã có người ĐK'}</div>
+                                  ) : disabled ? (
+                                    <div className="vehicle-card-badge badge-taken">Không khả dụng</div>
+                                  ) : (
+                                    <div className="vehicle-card-badge badge-free">Trống</div>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+                {sessions.length > 0 && (
+                  <div className="mt-6 border-t pt-4">
+                    <Pagination 
+                      currentPage={currentPage}
+                      totalPages={Math.ceil(sessions.length / itemsPerPage)}
+                      onPageChange={setCurrentPage}
+                      totalItems={sessions.length}
+                      itemsPerPage={itemsPerPage}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

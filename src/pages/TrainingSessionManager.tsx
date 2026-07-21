@@ -11,6 +11,7 @@ import AdminLayout from '../components/AdminLayout';
 import Flatpickr from 'react-flatpickr';
 import 'flatpickr/dist/themes/light.css';
 import { useNavigate } from 'react-router-dom';
+import { Pagination } from '../components/Pagination';
 
 const TrainingSessionManager = () => {
   const navigate = useNavigate();
@@ -60,6 +61,13 @@ const TrainingSessionManager = () => {
   // Filters
   const [searchKeyword, setSearchKeyword] = useState('');
   const [filterGroundId, setFilterGroundId] = useState('');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKeyword, filterGroundId, activeTab]);
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -290,9 +298,9 @@ const TrainingSessionManager = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredSessions.length > 0 ? filteredSessions.map((s: any, idx: number) => (
+                {filteredSessions.length > 0 ? filteredSessions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((s: any, idx: number) => (
                   <tr key={s.id}>
-                    <td>{idx + 1}</td>
+                    <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <Calendar size={16} className="text-muted" />
@@ -435,6 +443,17 @@ const TrainingSessionManager = () => {
               </tbody>
             </table>
           </div>
+          {filteredSessions.length > 0 && (
+            <div className="p-4 border-t">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredSessions.length / itemsPerPage)}
+                onPageChange={setCurrentPage}
+                totalItems={filteredSessions.length}
+                itemsPerPage={itemsPerPage}
+              />
+            </div>
+          )}
         </div>
       )}
 
@@ -485,8 +504,8 @@ const TrainingSessionManager = () => {
         <div className="card">
           <h3 className="mb-4">{editingId ? 'Cập nhật Đợt tập xe' : 'Thêm Đợt tập xe mới'}</h3>
           <form onSubmit={handleAdd}>
-            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-group">
                 <label>Sân tập</label>
                 <select className="form-control" value={trainingGroundId} onChange={e => setTrainingGroundId(e.target.value)} required>
                   <option value="">-- Chọn Sân tập --</option>
@@ -495,7 +514,7 @@ const TrainingSessionManager = () => {
                   ))}
                 </select>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label>Ca tập</label>
                 <select className="form-control" value={trainingShiftId} onChange={e => setTrainingShiftId(e.target.value)} required>
                   <option value="">-- Chọn Ca tập --</option>
@@ -508,8 +527,8 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ flex: 2 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-group">
                 <label>Danh sách Xe (cách nhau bằng dấu phẩy)</label>
                 <input 
                   type="text" 
@@ -520,7 +539,7 @@ const TrainingSessionManager = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label>Ngày thực hiện</label>
                 <input 
                   type="date" 
@@ -532,8 +551,8 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-group">
                 <label>Thời gian bắt đầu (Tuỳ chọn)</label>
                 <Flatpickr
                   className="form-control"
@@ -544,7 +563,7 @@ const TrainingSessionManager = () => {
                     time_24hr: true
                   }}
                   value={startTime}
-                  onChange={([date]) => {
+                  onChange={([date]: Date[]) => {
                     const h = String(date.getHours()).padStart(2, '0');
                     const m = String(date.getMinutes()).padStart(2, '0');
                     setStartTime(`${h}:${m}`);
@@ -552,7 +571,7 @@ const TrainingSessionManager = () => {
                   placeholder="--:--"
                 />
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label>Thời gian kết thúc (Tuỳ chọn)</label>
                 <Flatpickr
                   className="form-control"
@@ -563,7 +582,7 @@ const TrainingSessionManager = () => {
                     time_24hr: true
                   }}
                   value={endTime}
-                  onChange={([date]) => {
+                  onChange={([date]: Date[]) => {
                     const h = String(date.getHours()).padStart(2, '0');
                     const m = String(date.getMinutes()).padStart(2, '0');
                     setEndTime(`${h}:${m}`);
@@ -573,34 +592,33 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="flex" style={{ gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ flex: 1 }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="form-group">
                 <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="date" className="form-control" value={regStartDate} onChange={e => setRegStartDate(e.target.value)} style={{ flex: 2 }} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" className="form-control" value={regStartDate} onChange={e => setRegStartDate(e.target.value)} />
                   <Flatpickr
                     className="form-control"
                     options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
                     value={regStartTime}
-                    onChange={([date]) => {
+                    onChange={([date]: Date[]) => {
                       const h = String(date.getHours()).padStart(2, '0');
                       const m = String(date.getMinutes()).padStart(2, '0');
                       setRegStartTime(`${h}:${m}`);
                     }}
                     placeholder="--:--"
-                    style={{ flex: 1 }}
                   />
                 </div>
               </div>
-              <div className="form-group" style={{ flex: 1 }}>
+              <div className="form-group">
                 <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <input type="date" className="form-control" value={regEndDate} onChange={e => setRegEndDate(e.target.value)} style={{ flex: 2 }} />
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="date" className="form-control" value={regEndDate} onChange={e => setRegEndDate(e.target.value)} />
                   <Flatpickr
                     className="form-control"
                     options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
                     value={regEndTime}
-                    onChange={([date]) => {
+                    onChange={([date]: Date[]) => {
                       const h = String(date.getHours()).padStart(2, '0');
                       const m = String(date.getMinutes()).padStart(2, '0');
                       setRegEndTime(`${h}:${m}`);

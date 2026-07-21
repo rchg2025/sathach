@@ -1,47 +1,64 @@
 const fs = require('fs');
-const path = require('path');
 
-const pagesDir = path.join(__dirname, 'src', 'pages');
+// 1. Update TrainingRegistration.tsx
+let tr = fs.readFileSync('src/pages/TrainingRegistration.tsx', 'utf8');
 
-const files = fs.readdirSync(pagesDir).filter(f => f.endsWith('.tsx'));
+// Imports
+tr = tr.replace("import { useLocation } from 'react-router-dom';", "import { useLocation } from 'react-router-dom';\nimport { Pagination } from '../components/Pagination';");
 
-for (const file of files) {
-  let content = fs.readFileSync(path.join(pagesDir, file), 'utf8');
+// Initial Date
+tr = tr.replace("const initialDate = queryParams.get('date') || '';", "const initialDate = queryParams.get('date') !== null ? queryParams.get('date') : new Date().toLocaleDateString('en-CA');");
 
-  // Check if it uses Pagination
-  if (!content.includes('<Pagination')) continue;
+// State and pagination logic
+tr = tr.replace("const [filterGround, setFilterGround] = useState(initialGround);", `const [filterGround, setFilterGround] = useState(initialGround);
 
-  // We need to figure out what the "totalItems" array/variable is called.
-  // Usually it's in a Math.ceil(xyz.length / itemsPerPage) line.
-  const totalPagesRegex = /totalPages\s*=\s*Math\.ceil\((.*?)\.length\s*\/\s*itemsPerPage\)/;
-  const match = content.match(totalPagesRegex);
-  
-  let listName = '[]';
-  if (match) {
-    listName = match[1];
-  } else {
-    // If not found this way, maybe look for `.length` before `/ itemsPerPage`
-    const altRegex = /Math\.ceil\((.*?)\.length\s*\/\s*itemsPerPage\)/;
-    const altMatch = content.match(altRegex);
-    if (altMatch) listName = altMatch[1];
-  }
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Add totalItems and itemsPerPage to Pagination
-  if (listName !== '[]' && listName) {
-    content = content.replace(
-      /<Pagination\s+currentPage=\{currentPage\}\s+totalPages=\{totalPages\}\s+onPageChange=\{([a-zA-Z0-9_]+)\}\s*\/>/g,
-      `<Pagination \n                currentPage={currentPage}\n                totalPages={totalPages}\n                onPageChange={$1}\n                totalItems={${listName}.length}\n                itemsPerPage={itemsPerPage}\n              />`
-    );
-  }
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterDate, filterGround, viewMode]);`);
 
-  // Remove manually added text-muted tags in StudentManager and UserManager
-  if (file === 'StudentManager.tsx') {
-    content = content.replace(/<span className="text-muted">[\s\S]*?<\/span>/, '');
-  }
-  if (file === 'UserManager.tsx') {
-    content = content.replace(/<div className="text-muted text-center mb-3"[\s\S]*?<\/div>/, '');
-  }
+// Update GRID view map
+tr = tr.replace("{sessions.map((session: any) => {", `
+                {sessions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((session: any) => {`);
 
-  fs.writeFileSync(path.join(pagesDir, file), content, 'utf8');
-}
-console.log('Pages updated');
+// Add pagination after GRID view
+tr = tr.replace("                })}\n              </div>", `                })}\n              </div>\n              {sessions.length > 0 && (\n                <div className="mt-6 border-t pt-4">\n                  <Pagination \n                    currentPage={currentPage}\n                    totalPages={Math.ceil(sessions.length / itemsPerPage)}\n                    onPageChange={setCurrentPage}\n                    totalItems={sessions.length}\n                    itemsPerPage={itemsPerPage}\n                  />\n                </div>\n              )}`);
+
+// Update LIST view map
+tr = tr.replace("filteredRegistrations.map((reg: any) => (", "filteredRegistrations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((reg: any) => (");
+
+// Add pagination after LIST view
+tr = tr.replace("              </tbody>\n            </table>\n          </div>\n        </div>", `              </tbody>\n            </table>\n          </div>\n          {filteredRegistrations.length > 0 && (\n            <div className="p-4 border-t">\n              <Pagination \n                currentPage={currentPage}\n                totalPages={Math.ceil(filteredRegistrations.length / itemsPerPage)}\n                onPageChange={setCurrentPage}\n                totalItems={filteredRegistrations.length}\n                itemsPerPage={itemsPerPage}\n              />\n            </div>\n          )}\n        </div>`);
+
+fs.writeFileSync('src/pages/TrainingRegistration.tsx', tr);
+
+// 2. Update TrainingSessionManager.tsx
+let ts = fs.readFileSync('src/pages/TrainingSessionManager.tsx', 'utf8');
+
+// Imports
+ts = ts.replace("import { useNavigate } from 'react-router-dom';", "import { useNavigate } from 'react-router-dom';\nimport { Pagination } from '../components/Pagination';");
+
+// State and logic
+ts = ts.replace("const [filterGroundId, setFilterGroundId] = useState('');", `const [filterGroundId, setFilterGroundId] = useState('');
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchKeyword, filterGroundId, activeTab]);`);
+
+// Update Table Map
+ts = ts.replace("filteredSessions.length > 0 ? filteredSessions.map((s: any, idx: number) => (", "filteredSessions.length > 0 ? filteredSessions.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((s: any, idx: number) => (");
+
+// STT in map
+ts = ts.replace("<td>{idx + 1}</td>", "<td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>");
+
+// Add Pagination
+ts = ts.replace("              </tbody>\n            </table>\n          </div>\n        </div>", `              </tbody>\n            </table>\n          </div>\n          {filteredSessions.length > 0 && (\n            <div className="p-4 border-t">\n              <Pagination \n                currentPage={currentPage}\n                totalPages={Math.ceil(filteredSessions.length / itemsPerPage)}\n                onPageChange={setCurrentPage}\n                totalItems={filteredSessions.length}\n                itemsPerPage={itemsPerPage}\n              />\n            </div>\n          )}\n        </div>`);
+
+fs.writeFileSync('src/pages/TrainingSessionManager.tsx', ts);
+
+console.log("Updated both files successfully.");
