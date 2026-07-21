@@ -504,8 +504,8 @@ const TrainingSessionManager = () => {
         <div className="card">
           <h3 className="mb-4">{editingId ? 'Cập nhật Đợt tập xe' : 'Thêm Đợt tập xe mới'}</h3>
           <form onSubmit={handleAdd}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="form-group">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Sân tập</label>
                 <select className="form-control" value={trainingGroundId} onChange={e => setTrainingGroundId(e.target.value)} required>
                   <option value="">-- Chọn Sân tập --</option>
@@ -514,7 +514,7 @@ const TrainingSessionManager = () => {
                   ))}
                 </select>
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Ca tập</label>
                 <select className="form-control" value={trainingShiftId} onChange={e => setTrainingShiftId(e.target.value)} required>
                   <option value="">-- Chọn Ca tập --</option>
@@ -527,8 +527,8 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="form-group">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: '2 1 300px' }}>
                 <label>Danh sách Xe (cách nhau bằng dấu phẩy)</label>
                 <input 
                   type="text" 
@@ -539,7 +539,7 @@ const TrainingSessionManager = () => {
                   required 
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ flex: '1 1 200px' }}>
                 <label>Ngày thực hiện</label>
                 <input 
                   type="date" 
@@ -551,8 +551,8 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="form-group">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Thời gian bắt đầu (Tuỳ chọn)</label>
                 <Flatpickr
                   className="form-control"
@@ -571,7 +571,7 @@ const TrainingSessionManager = () => {
                   placeholder="--:--"
                 />
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Thời gian kết thúc (Tuỳ chọn)</label>
                 <Flatpickr
                   className="form-control"
@@ -592,11 +592,11 @@ const TrainingSessionManager = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="form-group">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Thời gian mở đăng ký (Tuỳ chọn)</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <input type="date" className="form-control" value={regStartDate} onChange={e => setRegStartDate(e.target.value)} />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <input type="date" className="form-control" value={regStartDate} onChange={e => setRegStartDate(e.target.value)} style={{ flex: '2 1 120px' }} />
                   <Flatpickr
                     className="form-control"
                     options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
@@ -607,13 +607,14 @@ const TrainingSessionManager = () => {
                       setRegStartTime(`${h}:${m}`);
                     }}
                     placeholder="--:--"
+                    style={{ flex: '1 1 80px' }}
                   />
                 </div>
               </div>
-              <div className="form-group">
+              <div className="form-group" style={{ flex: '1 1 250px' }}>
                 <label>Thời gian đóng đăng ký (Tuỳ chọn)</label>
-                <div className="grid grid-cols-2 gap-2">
-                  <input type="date" className="form-control" value={regEndDate} onChange={e => setRegEndDate(e.target.value)} />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <input type="date" className="form-control" value={regEndDate} onChange={e => setRegEndDate(e.target.value)} style={{ flex: '2 1 120px' }} />
                   <Flatpickr
                     className="form-control"
                     options={{ enableTime: true, noCalendar: true, dateFormat: "H:i", time_24hr: true }}
@@ -624,13 +625,17 @@ const TrainingSessionManager = () => {
                       setRegEndTime(`${h}:${m}`);
                     }}
                     placeholder="--:--"
-                    style={{ flex: 1 }}
+                    style={{ flex: '1 1 80px' }}
                   />
                 </div>
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary mt-4">Lưu thông tin</button>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginTop: '1.5rem' }}>
+              <button type="submit" className="btn btn-primary" disabled={loading} style={{ padding: '0.75rem 1.5rem' }}>
+                Lưu thông tin
+              </button>
+            </div>
           </form>
         </div>
       )}
