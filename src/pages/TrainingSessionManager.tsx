@@ -444,7 +444,7 @@ const TrainingSessionManager = () => {
             </table>
           </div>
           {filteredSessions.length > 0 && (
-            <div className="p-4 border-t">
+            <div className="pagination-wrapper p-4 border-t">
               <Pagination 
                 currentPage={currentPage}
                 totalPages={Math.ceil(filteredSessions.length / itemsPerPage)}

@@ -486,7 +486,7 @@ const TrainingRegistration = () => {
             </table>
           </div>
           {filteredRegistrations.length > 0 && (
-            <div className="p-4 border-t">
+            <div className="pagination-wrapper p-4 border-t">
               <Pagination 
                 currentPage={currentPage}
                 totalPages={Math.ceil(filteredRegistrations.length / itemsPerPage)}
@@ -626,10 +626,10 @@ const TrainingRegistration = () => {
                     );
                   })}
                 </div>
-                {sessions.length > 0 && (
-                  <div className="mt-6 border-t pt-4">
-                    <Pagination 
-                      currentPage={currentPage}
+              {sessions.length > 0 && (
+                <div className="pagination-wrapper mt-6 border-t pt-4 px-2">
+                  <Pagination 
+                    currentPage={currentPage}
                       totalPages={Math.ceil(sessions.length / itemsPerPage)}
                       onPageChange={setCurrentPage}
                       totalItems={sessions.length}
