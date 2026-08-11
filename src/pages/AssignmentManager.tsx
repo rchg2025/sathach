@@ -96,24 +96,45 @@ const AssignmentManager = () => {
       });
       return vehicles.filter(v => smVehicleIds.has(String(v.id)));
     } else {
-      if (!assignmentDate) return vehicles;
-      const dateStr = assignmentDate;
-      const assignedVehicleIds = new Set<string>();
-      assignments.forEach(a => {
-        if (!a.assignmentDate) return;
-        const aDate = getLocalDateString(a.assignmentDate);
-        if (aDate === dateStr && a.examiner?.role === 'STATION_MANAGER') {
-          if (editingId && a.id === editingId) return;
-          a.vehicles?.forEach((v: any) => assignedVehicleIds.add(String(v.id)));
-        }
-      });
-      return vehicles.filter(v => !assignedVehicleIds.has(String(v.id)));
+      // Cho phép chọn lại tất cả các xe cho trưởng trạm
+      return vehicles;
     }
   }, [vehicles, assignments, roleType, assignmentDate, selectedTestTypes, selectedCourse, editingId]);
 
   useEffect(() => {
     setSelectedExams([]);
   }, [selectedTestTypes]);
+
+  const handleVehiclePaste = (e: React.ClipboardEvent) => {
+    const pastedText = e.clipboardData.getData('text');
+    if (pastedText && /[\s,;]+/.test(pastedText)) {
+      e.preventDefault();
+      const vehicleNames = pastedText.split(/[\s,;]+/).filter(Boolean);
+      
+      const newSelected = [...selectedVehicles];
+      const notFound: string[] = [];
+
+      vehicleNames.forEach(name => {
+        const found = availableVehicles.find(v => v.name.toLowerCase() === name.toLowerCase());
+        if (found) {
+          if (!newSelected.includes(String(found.id))) {
+            newSelected.push(String(found.id));
+          }
+        } else {
+          notFound.push(name);
+        }
+      });
+
+      setSelectedVehicles(newSelected);
+      
+      if (notFound.length > 0) {
+        toast.error(`Không tìm thấy xe: ${notFound.join(', ')}`);
+      } else {
+        toast.success(`Đã thêm ${vehicleNames.length - notFound.length} số xe`);
+      }
+    }
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -357,6 +378,7 @@ const AssignmentManager = () => {
                 <label className="form-label">Bài thi</label>
                 <Select
                   isMulti
+                  closeMenuOnSelect={false}
                   options={filteredExams.map(e => ({ value: String(e.id), label: e.name }))}
                   value={filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))}
                   onChange={(selected: any) => setSelectedExams(selected ? selected.map((s: any) => s.value) : [])}
@@ -384,20 +406,23 @@ const AssignmentManager = () => {
               <label className="form-label">
                 Số xe {roleType === 'EXAMINER' ? '(Theo Trưởng trạm)' : ''}
               </label>
-              <Select
-                isMulti
-                options={availableVehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
-                value={availableVehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
-                onChange={(selected: any) => {
-                  setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
-                }}
-                placeholder="Tìm chọn số xe..."
-                styles={{ 
-                  control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                  menu: (base: any) => ({ ...base, zIndex: 9999 })
-                }}
-                noOptionsMessage={() => "Không tìm thấy số xe"}
-              />
+              <div onPaste={handleVehiclePaste}>
+                <Select
+                  isMulti
+                  closeMenuOnSelect={false}
+                  options={availableVehicles.map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                  value={availableVehicles.filter(v => selectedVehicles.includes(String(v.id))).map(v => ({ value: String(v.id), label: `${v.name} ${v.brand ? `(${v.brand})` : ''}` }))}
+                  onChange={(selected: any) => {
+                    setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
+                  }}
+                  placeholder="Tìm chọn, hoặc copy/paste danh sách số xe..."
+                  styles={{ 
+                    control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  }}
+                  noOptionsMessage={() => "Không tìm thấy số xe"}
+                />
+              </div>
             </div>
 
             {roleType === 'EXAMINER' && (
