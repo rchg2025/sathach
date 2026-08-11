@@ -322,7 +322,11 @@ const AssignmentManager = () => {
                 onChange={(selected: any) => setSelectedUser(selected ? selected.value : '')}
                 placeholder="Tìm thành viên..."
                 isClearable
-                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
+                menuPortalTarget={document.body}
+                styles={{ 
+                  control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
+                  menuPortal: (base: any) => ({ ...base, zIndex: 9999 })
+                }}
               />
             </div>
 
@@ -338,6 +342,7 @@ const AssignmentManager = () => {
                 onChange={(selected: any) => setSelectedCourse(selected ? selected.value : '')}
                 placeholder="Tìm kiếm khóa đào tạo..."
                 isClearable
+                menuPortalTarget={document.body}
                 styles={{ 
                   control: (base: any) => ({ 
                     ...base, 
@@ -346,7 +351,8 @@ const AssignmentManager = () => {
                     minHeight: '38px',
                     boxShadow: 'none' 
                   }),
-                  menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  menu: (base: any) => ({ ...base, zIndex: 9999 }),
+                  menuPortal: (base: any) => ({ ...base, zIndex: 9999 })
                 }}
               />
             </div>
@@ -366,9 +372,11 @@ const AssignmentManager = () => {
                 }}
                 placeholder="Tìm trạm thi..."
                 isClearable
+                menuPortalTarget={document.body}
                 styles={{ 
                   control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                  menu: (base: any) => ({ ...base, zIndex: 9999 })
+                  menu: (base: any) => ({ ...base, zIndex: 9999 }),
+                  menuPortal: (base: any) => ({ ...base, zIndex: 9999 })
                 }}
               />
             </div>
@@ -383,9 +391,11 @@ const AssignmentManager = () => {
                   value={filteredExams.filter(e => selectedExams.includes(String(e.id))).map(e => ({ value: String(e.id), label: e.name }))}
                   onChange={(selected: any) => setSelectedExams(selected ? selected.map((s: any) => s.value) : [])}
                   placeholder="Tìm chọn bài thi..."
+                  menuPortalTarget={document.body}
                   styles={{ 
                     control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                    menu: (base: any) => ({ ...base, zIndex: 9999 }),
+                    menuPortal: (base: any) => ({ ...base, zIndex: 9999 })
                   }}
                   noOptionsMessage={() => "Không tìm thấy bài thi"}
                 />
@@ -416,9 +426,11 @@ const AssignmentManager = () => {
                     setSelectedVehicles(selected ? selected.map((s: any) => s.value) : []);
                   }}
                   placeholder="Tìm chọn, hoặc copy/paste danh sách số xe..."
+                  menuPortalTarget={document.body}
                   styles={{ 
                     control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }),
-                    menu: (base: any) => ({ ...base, zIndex: 9999 })
+                    menu: (base: any) => ({ ...base, zIndex: 9999 }),
+                    menuPortal: (base: any) => ({ ...base, zIndex: 9999 })
                   }}
                   noOptionsMessage={() => "Không tìm thấy số xe"}
                 />
