@@ -654,7 +654,12 @@ const TrainingRegistration = () => {
               <p className="text-sm text-muted">Bạn chưa đăng ký xe nào.</p>
             ) : (
               <div className="registered-vehicle-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {myRegistrations.map(reg => (
+                {myRegistrations.map(reg => {
+                  const now = new Date();
+                  const closeTime = reg.trainingSession?.registrationEndTime ? new Date(reg.trainingSession.registrationEndTime) : null;
+                  const isClosed = closeTime && now > closeTime;
+
+                  return (
                   <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', flex: 1 }}>
                       <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)', minWidth: '60px' }}>{reg.vehicle}</span>
@@ -678,17 +683,19 @@ const TrainingRegistration = () => {
                     </div>
                     
                     <div style={{ marginLeft: '0.5rem' }}>
-                      <button 
-                        onClick={() => handleCancelRegistration(reg.id)}
-                        className="action-btn"
-                        style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
-                        title="Hủy đăng ký"
-                      >
-                        <XCircle size={16} />
-                      </button>
+                      {!isClosed && (
+                        <button 
+                          onClick={() => handleCancelRegistration(reg.id)}
+                          className="action-btn"
+                          style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
+                          title="Hủy đăng ký"
+                        >
+                          <XCircle size={16} />
+                        </button>
+                      )}
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             )}
           </div>
