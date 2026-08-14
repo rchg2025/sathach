@@ -7,6 +7,7 @@ import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
 import { formatDateDisplay } from '../utils/dateUtils';
+import { useDebounce } from '../hooks/useDebounce';
 
 const PrintTicketsManager = () => {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -18,6 +19,8 @@ const PrintTicketsManager = () => {
   const [assignedTestTypes, setAssignedTestTypes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [printingStudentIds, setPrintingStudentIds] = useState<number[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState('');
+  const debouncedSearchKeyword = useDebounce(searchKeyword, 300);
 
   useEffect(() => {
     if (selectedDate) {
@@ -73,6 +76,11 @@ const PrintTicketsManager = () => {
     }, 100);
   };
 
+  const filteredStudents = students.filter(student => 
+    (student.name || '').toLowerCase().includes(debouncedSearchKeyword.toLowerCase()) || 
+    (student.cccd || '').toLowerCase().includes(debouncedSearchKeyword.toLowerCase())
+  );
+
   return (
     <AdminLayout user={user}>
       <div className="no-print">
@@ -114,13 +122,13 @@ const PrintTicketsManager = () => {
                 {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
               </button>
               
-              {students.length > 0 && assignedTestTypes.length > 0 && (
+              {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
                 <button 
                   className="btn btn-success flex items-center"
                   style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500 }}
-                  onClick={() => handlePrint(students.map(s => s.id))}
+                  onClick={() => handlePrint(filteredStudents.map(s => s.id))}
                 >
-                  <Printer size={18} /> In toàn phiếu ({students.length})
+                  <Printer size={18} /> In danh sách hiển thị ({filteredStudents.length})
                 </button>
               )}
             </div>
@@ -129,6 +137,16 @@ const PrintTicketsManager = () => {
 
         {students.length > 0 && (
           <div className="card" style={{ padding: 0 }}>
+            <div style={{ padding: '1rem', borderBottom: '1px solid var(--border)' }}>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="🔍 Tìm kiếm theo tên hoặc số CCCD..." 
+                value={searchKeyword}
+                onChange={e => setSearchKeyword(e.target.value)}
+                style={{ maxWidth: '400px' }}
+              />
+            </div>
             <div className="table-responsive">
               <table className="table">
                 <thead>
@@ -141,7 +159,7 @@ const PrintTicketsManager = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {students.map((student, idx) => (
+                  {filteredStudents.length > 0 ? filteredStudents.map((student, idx) => (
                     <tr key={student.id}>
                       <td>{idx + 1}</td>
                       <td><strong>{student.name}</strong></td>
@@ -158,7 +176,13 @@ const PrintTicketsManager = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                  )) : (
+                    <tr>
+                      <td colSpan={5} className="text-center text-muted" style={{ padding: '2rem' }}>
+                        Không tìm thấy học viên phù hợp
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
