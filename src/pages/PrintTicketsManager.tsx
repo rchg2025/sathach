@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { Printer } from 'lucide-react';
@@ -160,7 +160,7 @@ const PrintTicketsManager = () => {
 
       {/* Print Only Area */}
       <div className="print-only">
-        {printingStudentIds.map((id, index) => {
+        {printingStudentIds.map((id) => {
           const student = students.find(s => s.id === id);
           if (!student) return null;
           
