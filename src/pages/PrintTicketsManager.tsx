@@ -89,7 +89,7 @@ const PrintTicketsManager = () => {
         </div>
 
         <div className="card mb-4" style={{ padding: '1.5rem', maxWidth: '800px' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div className="grid-cols-2-responsive" style={{ gap: '1rem' }}>
             <div>
               <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Ngày thi</label>
               <input 
@@ -112,17 +112,18 @@ const PrintTicketsManager = () => {
                 styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '42px', boxShadow: 'none' }) }}
               />
             </div>
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
-              <button 
-                className="btn btn-primary"
-                onClick={handleFetchData}
-                disabled={isLoading}
-                style={{ padding: '0.5rem 1.5rem', fontWeight: 500 }}
-              >
-                {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
-              </button>
+          </div>
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button 
+              className="btn btn-primary"
+              onClick={handleFetchData}
+              disabled={isLoading}
+              style={{ padding: '0.5rem 1.5rem', fontWeight: 500 }}
+            >
+              {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
+            </button>
               
-              {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
+            {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
                 <button 
                   className="btn btn-success flex items-center"
                   style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500 }}
@@ -132,7 +133,6 @@ const PrintTicketsManager = () => {
                 </button>
               )}
             </div>
-          </div>
         </div>
 
         {students.length > 0 && (
@@ -209,7 +209,7 @@ const PrintTicketsManager = () => {
               </div>
               
               <div className="ticket-qr">
-                <QRCodeSVG value={student.cccd || ''} size={130} />
+                <QRCodeSVG value={student.cccd || ''} size={100} />
               </div>
               
               <div className="ticket-body">

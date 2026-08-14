@@ -820,9 +820,17 @@ input:checked + .toggle-slider:before {
 }
 
 @media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
   body {
     background-color: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+  
   .no-print {
     display: none !important;
   }
@@ -845,14 +853,15 @@ input:checked + .toggle-slider:before {
     flex-wrap: wrap;
     width: 100%;
     margin: 0;
-    padding: 0;
+    padding: 10mm; /* A4 internal padding */
+    box-sizing: border-box;
   }
   
   .exam-ticket {
     width: 48%; /* 2 columns */
     margin: 1%;
-    height: 140mm; /* Half of A4 height minus some margin */
-    padding: 20px;
+    height: 135mm; /* Fit 2 rows on A4 safely */
+    padding: 15px;
     font-family: 'Times New Roman', Times, serif;
     border: 2px solid #000;
     box-sizing: border-box;
@@ -874,46 +883,46 @@ input:checked + .toggle-slider:before {
   }
 
   .ticket-title-top {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: bold;
     text-transform: uppercase;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .ticket-title-main {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
   }
 
   .ticket-date, .ticket-name {
-    font-size: 16px;
-    margin-bottom: 8px;
+    font-size: 14px;
+    margin-bottom: 6px;
   }
 
   .ticket-qr {
     text-align: center;
-    margin: 15px 0;
+    margin: 10px 0;
   }
 
   .ticket-body {
-    font-size: 14px;
-    margin-bottom: 15px;
+    font-size: 13px;
+    margin-bottom: 10px;
   }
 
   .exam-list {
     list-style-type: none;
-    padding-left: 20px;
-    margin: 10px 0;
+    padding-left: 15px;
+    margin: 8px 0;
   }
 
   .exam-list li {
-    margin-bottom: 6px;
+    margin-bottom: 4px;
   }
 
   .ticket-footer {
-    font-size: 12px;
-    margin-top: 20px;
+    font-size: 11px;
+    margin-top: 15px;
     font-style: italic;
   }
 }
