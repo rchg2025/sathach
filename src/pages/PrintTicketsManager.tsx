@@ -203,19 +203,19 @@ const PrintTicketsManager = () => {
           <h2 style={{ fontWeight: 600, margin: 0 }}>In Phiếu Dự Thi</h2>
         </div>
 
-        <div className="card mb-4" style={{ padding: '1.5rem', maxWidth: '800px' }}>
-          <div className="row" style={{ rowGap: '1rem' }}>
-            <div className="col-12 col-md-6">
+        <div className="card mb-4" style={{ padding: '1.5rem', width: '100%' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+            <div style={{ flex: '1 1 300px' }}>
               <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Ngày thi</label>
               <input 
                 type="date" 
                 className="form-control"
                 value={selectedDate}
                 onChange={e => setSelectedDate(e.target.value)}
-                style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #d1d5db', width: '100%' }}
+                style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #d1d5db', width: '100%', height: '42px' }}
               />
             </div>
-            <div className="col-12 col-md-6">
+            <div style={{ flex: '1 1 300px' }}>
               <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Khóa thi</label>
               <Select
                 options={courses.map(c => ({ value: String(c.id), label: c.name }))}
@@ -227,27 +227,27 @@ const PrintTicketsManager = () => {
                 styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '42px', boxShadow: 'none' }) }}
               />
             </div>
-          </div>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-            <button 
-              className="btn btn-primary"
-              onClick={handleFetchData}
-              disabled={isLoading}
-              style={{ padding: '0.5rem 1.5rem', fontWeight: 500 }}
-            >
-              {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
-            </button>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+              <button 
+                className="btn btn-primary"
+                onClick={handleFetchData}
+                disabled={isLoading}
+                style={{ padding: '0.5rem 1.5rem', fontWeight: 500, height: '42px' }}
+              >
+                {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
+              </button>
               
-            {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
+              {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
                 <button 
                   className="btn btn-success flex items-center"
-                  style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500 }}
+                  style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500, height: '42px' }}
                   onClick={() => handlePrint(filteredStudents.map(s => s.id))}
                 >
-                  <Printer size={18} /> In danh sách hiển thị ({filteredStudents.length})
+                  <Printer size={18} /> In {filteredStudents.length} phiếu
                 </button>
               )}
             </div>
+          </div>
         </div>
 
         {students.length > 0 && (
