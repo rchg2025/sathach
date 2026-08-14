@@ -213,7 +213,7 @@ const PrintTicketsManager = () => {
               </div>
               
               <div className="ticket-body">
-                <div style={{ marginBottom: '8px' }}>Học viên thực hiện trạm thi theo thứ tự sau:</div>
+                <div style={{ marginBottom: '8px' }}>Học viên phải thực hiện đầy đủ các trạm thi sau:</div>
                 <ul className="exam-list">
                   {assignedTestTypes.map((testType, i) => (
                     <li key={testType.id}>
