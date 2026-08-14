@@ -15,16 +15,23 @@ const PrintTicketsManager = () => {
   const [selectedCourse, setSelectedCourse] = useState<string>('');
   
   const [students, setStudents] = useState<any[]>([]);
-  const [assignedExams, setAssignedExams] = useState<any[]>([]);
+  const [assignedTestTypes, setAssignedTestTypes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [printingStudentIds, setPrintingStudentIds] = useState<number[]>([]);
 
   useEffect(() => {
-    // Fetch courses
-    axios.get(`${API_BASE_URL}/api/manager/courses`)
-      .then(res => setCourses(res.data))
-      .catch(() => toast.error('Lỗi khi tải danh sách khóa học'));
-  }, []);
+    if (selectedDate) {
+      axios.get(`${API_BASE_URL}/api/manager/print-tickets/courses`, { params: { date: selectedDate } })
+        .then(res => setCourses(res.data))
+        .catch(() => toast.error('Lỗi khi tải danh sách khóa học'));
+    } else {
+      setCourses([]);
+    }
+    // Reset selection when date changes
+    setSelectedCourse('');
+    setStudents([]);
+    setAssignedTestTypes([]);
+  }, [selectedDate]);
 
   const handleFetchData = async () => {
     if (!selectedDate || !selectedCourse) {
@@ -38,11 +45,11 @@ const PrintTicketsManager = () => {
         params: { date: selectedDate, courseId: selectedCourse }
       });
       setStudents(res.data.students);
-      setAssignedExams(res.data.assignedExams);
+      setAssignedTestTypes(res.data.assignedTestTypes);
       if (res.data.students.length === 0) {
         toast.error('Không tìm thấy học viên nào');
-      } else if (res.data.assignedExams.length === 0) {
-        toast.error('Khóa thi này không có bài thi nào được phân công trong ngày đã chọn');
+      } else if (res.data.assignedTestTypes.length === 0) {
+        toast.error('Khóa thi này không có trạm thi nào được phân công trong ngày đã chọn');
       } else {
         toast.success(`Đã tải ${res.data.students.length} học viên`);
       }
@@ -54,8 +61,8 @@ const PrintTicketsManager = () => {
   };
 
   const handlePrint = (studentIds: number[]) => {
-    if (assignedExams.length === 0) {
-      toast.error('Không có dữ liệu bài thi, không thể in');
+    if (assignedTestTypes.length === 0) {
+      toast.error('Không có dữ liệu trạm thi, không thể in');
       return;
     }
     setPrintingStudentIds(studentIds);
@@ -73,43 +80,44 @@ const PrintTicketsManager = () => {
           <h2 style={{ fontWeight: 600, margin: 0 }}>In Phiếu Dự Thi</h2>
         </div>
 
-        <div className="card mb-4">
-          <div className="card-body">
-            <div className="grid-cols-2-responsive">
-              <div className="form-group">
-                <label className="form-label">Ngày thi</label>
-                <input 
-                  type="date" 
-                  className="form-control"
-                  value={selectedDate}
-                  onChange={e => setSelectedDate(e.target.value)}
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Khóa thi</label>
-                <Select
-                  options={courses.map(c => ({ value: String(c.id), label: c.name }))}
-                  value={courses.map(c => ({ value: String(c.id), label: c.name })).find(opt => opt.value === selectedCourse)}
-                  onChange={(selected: any) => setSelectedCourse(selected ? selected.value : '')}
-                  placeholder="-- Chọn khóa thi --"
-                  isClearable
-                  styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '38px', boxShadow: 'none' }) }}
-                />
-              </div>
+        <div className="card mb-4" style={{ padding: '1.5rem', maxWidth: '800px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div>
+              <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Ngày thi</label>
+              <input 
+                type="date" 
+                className="form-control"
+                value={selectedDate}
+                onChange={e => setSelectedDate(e.target.value)}
+                style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #d1d5db', width: '100%' }}
+              />
             </div>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
+            <div>
+              <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Khóa thi</label>
+              <Select
+                options={courses.map(c => ({ value: String(c.id), label: c.name }))}
+                value={courses.map(c => ({ value: String(c.id), label: c.name })).find(opt => opt.value === selectedCourse) || null}
+                onChange={(selected: any) => setSelectedCourse(selected ? selected.value : '')}
+                placeholder={courses.length > 0 ? "-- Chọn khóa thi --" : "-- Vui lòng chọn ngày thi trước --"}
+                isClearable
+                isDisabled={!selectedDate || courses.length === 0}
+                styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', minHeight: '42px', boxShadow: 'none' }) }}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '0.5rem' }}>
               <button 
                 className="btn btn-primary"
                 onClick={handleFetchData}
                 disabled={isLoading}
+                style={{ padding: '0.5rem 1.5rem', fontWeight: 500 }}
               >
                 {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
               </button>
               
-              {students.length > 0 && assignedExams.length > 0 && (
+              {students.length > 0 && assignedTestTypes.length > 0 && (
                 <button 
                   className="btn btn-success flex items-center"
-                  style={{ gap: '0.5rem' }}
+                  style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500 }}
                   onClick={() => handlePrint(students.map(s => s.id))}
                 >
                   <Printer size={18} /> In toàn phiếu ({students.length})
@@ -128,7 +136,7 @@ const PrintTicketsManager = () => {
                     <th style={{ width: '60px' }}>STT</th>
                     <th>Họ tên</th>
                     <th>CCCD</th>
-                    <th>Số bài thi</th>
+                    <th>Số trạm thi</th>
                     <th style={{ textAlign: 'center', width: '120px' }}>Thao tác</th>
                   </tr>
                 </thead>
@@ -138,13 +146,13 @@ const PrintTicketsManager = () => {
                       <td>{idx + 1}</td>
                       <td><strong>{student.name}</strong></td>
                       <td>{student.cccd}</td>
-                      <td>{assignedExams.length} bài</td>
+                      <td>{assignedTestTypes.length} trạm</td>
                       <td style={{ textAlign: 'center' }}>
                         <button 
                           className="btn btn-sm btn-primary flex items-center justify-center w-100"
                           style={{ gap: '0.25rem', padding: '0.25rem 0.5rem' }}
                           onClick={() => handlePrint([student.id])}
-                          disabled={assignedExams.length === 0}
+                          disabled={assignedTestTypes.length === 0}
                         >
                           <Printer size={14} /> In phiếu
                         </button>
@@ -181,17 +189,17 @@ const PrintTicketsManager = () => {
               </div>
               
               <div className="ticket-body">
-                <div style={{ marginBottom: '8px' }}>Học viên thực hiện bài thi theo thứ tự sau:</div>
+                <div style={{ marginBottom: '8px' }}>Học viên thực hiện trạm thi theo thứ tự sau:</div>
                 <ul className="exam-list">
-                  {assignedExams.map((exam, i) => (
-                    <li key={exam.id}>
+                  {assignedTestTypes.map((testType, i) => (
+                    <li key={testType.id}>
                       <span style={{ color: '#0047AB', marginRight: '4px' }}>■</span> 
-                      Bài {i + 1}: {exam.name}
+                      Trạm {i + 1}: {testType.name}
                     </li>
                   ))}
                 </ul>
-                <div style={{ marginTop: '8px' }}>
-                  Học viên hoàn thành {assignedExams.length} bài thi, về phòng Hội đồng ký Phiếu kết quả thi.
+                <div style={{ marginTop: '8px', fontWeight: 'bold' }}>
+                  Học viên hoàn thành {assignedTestTypes.length} trạm thi, về phòng Hội đồng ký Phiếu kết quả thi.
                 </div>
               </div>
               
@@ -207,3 +215,4 @@ const PrintTicketsManager = () => {
 };
 
 export default PrintTicketsManager;
+

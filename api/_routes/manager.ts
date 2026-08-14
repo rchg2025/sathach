@@ -2048,18 +2048,53 @@ router.get('/print-tickets/data', async (req, res) => {
       }
     });
 
-    // Deduplicate exams
-    const uniqueExamsMap = new Map();
+    // Deduplicate testTypes
+    const uniqueTestTypesMap = new Map();
     assignments.forEach(a => {
-      if (a.exam) {
-        uniqueExamsMap.set(a.exam.id, a.exam);
+      if (a.testType) {
+        uniqueTestTypesMap.set(a.testType.id, a.testType);
       }
     });
     
-    // Sort exams by id or testTypeId just in case
-    const assignedExams = Array.from(uniqueExamsMap.values()).sort((a, b) => a.id - b.id);
+    // Sort testTypes by id
+    const assignedTestTypes = Array.from(uniqueTestTypesMap.values()).sort((a, b) => a.id - b.id);
 
-    res.json({ students, assignedExams });
+    res.json({ students, assignedTestTypes });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.get('/print-tickets/courses', async (req, res) => {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).json({ error: 'Thiếu ngày thi' });
+    
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+    
+    const assignments = await prisma.testAssignment.findMany({
+      where: {
+        assignmentDate: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
+        courseId: { not: null }
+      },
+      include: {
+        course: true
+      }
+    });
+    
+    const uniqueCoursesMap = new Map();
+    assignments.forEach(a => {
+      if (a.course) {
+        uniqueCoursesMap.set(a.course.id, a.course);
+      }
+    });
+    const courses = Array.from(uniqueCoursesMap.values()).sort((a, b) => (a.name > b.name ? 1 : -1));
+    res.json(courses);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
