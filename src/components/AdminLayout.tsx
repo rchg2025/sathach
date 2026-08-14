@@ -18,7 +18,8 @@ import {
   Calendar,
   History,
   Upload,
-  PieChart
+  PieChart,
+  Printer
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -155,6 +156,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               </Link>
               <Link to="/manager/assignments" className={`sidebar-item ${isActive('/manager/assignments')}`} onClick={closeSidebar}>
                 <Users size={20} /> <span className="sidebar-item-text">Phân công</span>
+              </Link>
+              <Link to="/manager/print-tickets" className={`sidebar-item ${isActive('/manager/print-tickets')}`} onClick={closeSidebar}>
+                <Printer size={20} /> <span className="sidebar-item-text">In phiếu dự thi</span>
               </Link>
               <Link to="/manager/users" className={`sidebar-item ${isActive('/manager/users')}`} onClick={closeSidebar}>
                 <Shield size={20} /> <span className="sidebar-item-text">Quản lý Thành viên</span>

@@ -813,3 +813,99 @@ input:checked + .toggle-slider:before {
     margin-bottom: 0;
   }
 }
+
+/* Print Tickets Styles */
+.print-only {
+  display: none;
+}
+
+@media print {
+  body {
+    background-color: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  
+  .sidebar, .mobile-header, .app-header {
+    display: none !important;
+  }
+  
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background-color: white !important;
+  }
+  
+  .print-only {
+    display: block !important;
+  }
+  
+  .exam-ticket {
+    width: 100%;
+    max-width: 210mm; /* A4 width */
+    margin: 0 auto;
+    page-break-after: always;
+    padding: 40px;
+    font-family: 'Times New Roman', Times, serif;
+    border: 2px solid #000;
+    box-sizing: border-box;
+    color: #000;
+  }
+  
+  .exam-ticket:last-child {
+    page-break-after: auto;
+  }
+
+  .ticket-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .ticket-title-top {
+    font-size: 18px;
+    font-weight: bold;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .ticket-title-main {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+
+  .ticket-date, .ticket-name {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .ticket-qr {
+    text-align: center;
+    margin: 30px 0;
+  }
+
+  .ticket-body {
+    font-size: 18px;
+    margin-bottom: 20px;
+  }
+
+  .exam-list {
+    list-style-type: none;
+    padding-left: 40px;
+    margin: 15px 0;
+  }
+
+  .exam-list li {
+    margin-bottom: 10px;
+  }
+
+  .ticket-footer {
+    font-size: 16px;
+    margin-top: 40px;
+    font-style: italic;
+  }
+}

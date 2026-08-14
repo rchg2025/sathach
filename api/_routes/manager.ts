@@ -2013,4 +2013,57 @@ router.get('/examiner-records', async (req, res) => {
   }
 });
 
+// Print Tickets
+router.get('/print-tickets/data', async (req, res) => {
+  try {
+    const { date, courseId } = req.query;
+    if (!date || !courseId) {
+      return res.status(400).json({ error: 'Thiếu ngày thi hoặc khóa thi' });
+    }
+
+    const cId = Number(courseId);
+
+    // Fetch students in this course
+    const students = await prisma.student.findMany({
+      where: { courseId: cId },
+      orderBy: { name: 'asc' }
+    });
+
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
+
+    // Fetch assignments to get assigned exams
+    const assignments = await prisma.testAssignment.findMany({
+      where: {
+        courseId: cId,
+        assignmentDate: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
+        examId: { not: null }
+      },
+      include: {
+        exam: true,
+        testType: true
+      }
+    });
+
+    // Deduplicate exams
+    const uniqueExamsMap = new Map();
+    assignments.forEach(a => {
+      if (a.exam) {
+        uniqueExamsMap.set(a.exam.id, a.exam);
+      }
+    });
+    
+    // Sort exams by id or testTypeId just in case
+    const assignedExams = Array.from(uniqueExamsMap.values()).sort((a, b) => a.id - b.id);
+
+    res.json({ students, assignedExams });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;
