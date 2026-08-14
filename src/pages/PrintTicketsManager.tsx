@@ -236,6 +236,16 @@ const PrintTicketsManager = () => {
               >
                 {isLoading ? 'Đang tải...' : 'Lọc danh sách'}
               </button>
+
+              {selectedStudentIds.length > 0 && assignedTestTypes.length > 0 && (
+                <button 
+                  className="btn btn-info flex items-center text-white"
+                  style={{ gap: '0.5rem', padding: '0.5rem 1.5rem', fontWeight: 500, height: '42px', backgroundColor: '#0ea5e9', borderColor: '#0ea5e9' }}
+                  onClick={() => handlePrint(selectedStudentIds)}
+                >
+                  <Printer size={18} /> In {selectedStudentIds.length} phiếu chọn
+                </button>
+              )}
               
               {filteredStudents.length > 0 && assignedTestTypes.length > 0 && (
                 <button 
