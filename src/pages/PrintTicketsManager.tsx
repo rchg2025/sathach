@@ -89,8 +89,8 @@ const PrintTicketsManager = () => {
         </div>
 
         <div className="card mb-4" style={{ padding: '1.5rem', maxWidth: '800px' }}>
-          <div className="grid-cols-2-responsive" style={{ gap: '1rem' }}>
-            <div>
+          <div className="row" style={{ rowGap: '1rem' }}>
+            <div className="col-12 col-md-6">
               <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Ngày thi</label>
               <input 
                 type="date" 
@@ -100,7 +100,7 @@ const PrintTicketsManager = () => {
                 style={{ padding: '0.5rem 0.75rem', borderRadius: '6px', border: '1px solid #d1d5db', width: '100%' }}
               />
             </div>
-            <div>
+            <div className="col-12 col-md-6">
               <label className="form-label" style={{ marginBottom: '0.5rem', color: '#6b7280', fontSize: '0.875rem' }}>Khóa thi</label>
               <Select
                 options={courses.map(c => ({ value: String(c.id), label: c.name }))}
