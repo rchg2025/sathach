@@ -2101,4 +2101,48 @@ router.get('/print-tickets/courses', async (req, res) => {
   }
 });
 
+router.post('/print-tickets/update-order', async (req, res) => {
+  try {
+    const { studentIds, testStationOrder } = req.body;
+    if (!Array.isArray(studentIds) || studentIds.length === 0) {
+      return res.status(400).json({ error: 'Thiếu danh sách học viên' });
+    }
+
+    await prisma.student.updateMany({
+      where: { id: { in: studentIds } },
+      data: { testStationOrder: testStationOrder || null }
+    });
+
+    res.json({ message: 'Cập nhật thành công' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+router.post('/print-tickets/import-order', async (req, res) => {
+  try {
+    const { data } = req.body; // Array of { cccd, testStationOrder }
+    if (!Array.isArray(data) || data.length === 0) {
+      return res.status(400).json({ error: 'Dữ liệu không hợp lệ' });
+    }
+
+    let updatedCount = 0;
+    for (const item of data) {
+      if (item.cccd && item.testStationOrder !== undefined) {
+        const result = await prisma.student.updateMany({
+          where: { cccd: String(item.cccd).trim() },
+          data: { testStationOrder: String(item.testStationOrder).trim() || null }
+        });
+        updatedCount += result.count;
+      }
+    }
+
+    res.json({ message: `Cập nhật thành công ${updatedCount} học viên` });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 export default router;

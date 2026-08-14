@@ -54,6 +54,8 @@ model Student {
   licenseExpiryDate String? // Ngày hết hạn
   licenseDuration   String? // Thời gian GPLX
 
+  testStationOrder  String? // Custom test order, comma separated names or IDs
+
   courseName  String? // Tên khóa học (Raw from Excel)
   courseId    Int?
   course      Course?      @relation(fields: [courseId], references: [id])
