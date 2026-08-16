@@ -39,6 +39,8 @@ const ManagerDashboard = () => {
     } else {
       setUser(JSON.parse(userStr));
       fetchStats();
+      const interval = setInterval(fetchStats, 5000);
+      return () => clearInterval(interval);
     }
   }, [navigate]);
 
@@ -146,7 +148,9 @@ const ManagerDashboard = () => {
         <div className="card" style={{ marginBottom: 0, minWidth: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Học viên thi gần đây</h4>
-            <Link to="/manager/testing" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
+            {user?.role !== 'EXAMINER' && user?.role !== 'STATION_MANAGER' && (
+              <Link to="/manager/testing" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
+            )}
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
             <table className="table" style={{ fontSize: '0.875rem' }}>
@@ -197,7 +201,9 @@ const ManagerDashboard = () => {
         <div className="card" style={{ marginBottom: 0, minWidth: 0 }}>
           <div className="flex justify-between items-center mb-4">
             <h4 style={{ margin: 0 }}>Giám khảo hoạt động nhiều nhất</h4>
-            <Link to="/manager/users" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
+            {user?.role !== 'EXAMINER' && user?.role !== 'STATION_MANAGER' && (
+              <Link to="/manager/users" style={{ fontSize: '0.875rem' }}>Xem tất cả &rarr;</Link>
+            )}
           </div>
           <div className="table-responsive" style={{ width: "100%", overflowX: "auto" }}>
             <table className="table" style={{ fontSize: '0.875rem' }}>
