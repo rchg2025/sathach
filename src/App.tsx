@@ -47,14 +47,17 @@ const PublicHeader = () => {
     <div className="app-header">
       <div className="container">
         <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <div style={{ display: 'flex', alignItems: 'center' }} className="header-logo-container">
             {logoUrl && <img src={logoUrl} alt="Logo" width="40" height="40" style={{ height: '40px', width: 'auto', objectFit: 'contain', background: 'white', padding: '2px', borderRadius: '5px' }} />}
-            <h1 style={{ margin: 0 }}>PM thi thực hành lái xe ô tô</h1>
+            <h1 style={{ margin: 0 }} className="app-title">
+              <span className="hide-on-mobile">Phần mềm thi thực hành lái xe ô tô</span>
+              <span className="hide-on-desktop">PM thi thực hành lái xe ô tô</span>
+            </h1>
           </div>
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <Link to="/" style={{ color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none' }}>
-            <Search size={18} /> Tra cứu Điểm
+            <Search size={18} /> <span className="hide-on-mobile">Tra cứu Điểm</span>
           </Link>
           <Link to="/login" style={{ color: 'white', display: 'flex', alignItems: 'center' }} title="Đăng nhập Cán bộ">
             <UserCircle size={24} />

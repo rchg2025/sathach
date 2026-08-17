@@ -930,7 +930,11 @@ input:checked + .toggle-slider:before {
 /* Custom visibility classes for header */
 .hide-on-mobile { display: inline; }
 .hide-on-desktop { display: none; }
+.header-logo-container { gap: 15px; }
+
 @media (max-width: 768px) {
   .hide-on-mobile { display: none !important; }
   .hide-on-desktop { display: inline !important; }
+  .app-title { font-size: 1.1rem !important; white-space: nowrap; }
+  .header-logo-container { gap: 8px !important; }
 }
