@@ -36,8 +36,8 @@ app.get('/api/seo-bot', async (req, res) => {
     }, {});
 
     const ogImage = settingsMap['og_image_url'] || '/logo.jpg';
-    const seoTitle = settingsMap['seo_title'] || 'Hệ thống chấm thi thực hành lái xe';
-    const seoDesc = settingsMap['seo_description'] || 'Hệ thống Quản lý Trung tâm Sát hạch Lái xe';
+    const seoTitle = settingsMap['seo_title'] || 'Phần mềm thi sát hạch lái xe ô tô';
+    const seoDesc = settingsMap['seo_description'] || 'Phần mềm thi sát hạch lái xe ô tô - Hỗ trợ đăng ký, sắp xếp lịch thi và quản lý dữ liệu học viên tiện lợi.';
 
     const html = `
 <!DOCTYPE html>

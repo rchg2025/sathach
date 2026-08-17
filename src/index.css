@@ -926,3 +926,11 @@ input:checked + .toggle-slider:before {
     font-style: italic;
   }
 }
+
+/* Custom visibility classes for header */
+.hide-on-mobile { display: inline; }
+.hide-on-desktop { display: none; }
+@media (max-width: 768px) {
+  .hide-on-mobile { display: none !important; }
+  .hide-on-desktop { display: inline !important; }
+}

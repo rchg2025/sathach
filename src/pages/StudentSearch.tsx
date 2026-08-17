@@ -148,7 +148,10 @@ const StudentSearch = () => {
         {logoUrl && (
           <img src={logoUrl} alt="Logo" width="80" height="80" style={{ height: '80px', margin: '0 auto 1rem auto', display: 'block', borderRadius: '8px', objectFit: 'contain' }} />
         )}
-        <h2>Hệ thống chấm thi thực hành lái xe</h2>
+        <h2>
+          <span className="hide-on-mobile">Phần mềm thi sát hạch lái xe ô tô</span>
+          <span className="hide-on-desktop">PM thi sát hạch lái xe</span>
+        </h2>
         <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp (Real-time)</p>
         
         <form onSubmit={handleSearch} className="mb-4">
