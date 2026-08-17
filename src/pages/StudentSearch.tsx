@@ -152,7 +152,7 @@ const StudentSearch = () => {
           <span className="hide-on-mobile">Phần mềm thi sát hạch lái xe ô tô</span>
           <span className="hide-on-desktop">PM thi sát hạch lái xe</span>
         </h2>
-        <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp (Real-time)</p>
+        <p className="text-muted mb-4">Nhập CCCD để xem điểm thi trực tiếp</p>
         
         <form onSubmit={handleSearch} className="mb-4">
           <div className="flex" style={{ gap: '10px' }}>
