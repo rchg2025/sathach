@@ -31,7 +31,7 @@ const StatisticsManager = () => {
     if (u) {
       const parsedUser = JSON.parse(u);
       setUser(parsedUser);
-      if (parsedUser.role !== 'ADMIN' && parsedUser.role !== 'MANAGER') {
+      if (parsedUser.role !== 'ADMIN' && parsedUser.role !== 'MANAGER' && parsedUser.role !== 'STATION_MANAGER' && parsedUser.role !== 'EXAMINER' && parsedUser.username !== 'quantri') {
         window.location.href = '/manager';
         return;
       }

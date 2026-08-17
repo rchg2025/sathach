@@ -124,9 +124,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
           </Link>
           
           {((user?.role === 'STATION_MANAGER' || user?.username === 'quantri') || (user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri') || (user?.role === 'EXAMINER' || user?.username === 'quantri')) && (
-            <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
-              <Car size={20} /> <span className="sidebar-item-text">Danh sách sát hạch</span>
-            </Link>
+            <>
+              <Link to="/manager/testing" className={`sidebar-item ${isActive('/manager/testing')}`} onClick={closeSidebar}>
+                <Car size={20} /> <span className="sidebar-item-text">Danh sách sát hạch</span>
+              </Link>
+              <Link to="/manager/statistics" className={`sidebar-item ${isActive('/manager/statistics')}`} onClick={closeSidebar}>
+                <PieChart size={20} /> <span className="sidebar-item-text">Thống kê</span>
+              </Link>
+            </>
           )}
           
           {(user?.role === 'EXAMINER' || user?.username === 'quantri') && (
@@ -169,9 +174,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
               <Link to="/manager/reports" className={`sidebar-item ${isActive('/manager/reports')}`} onClick={closeSidebar}>
                 <FileText size={20} /> <span className="sidebar-item-text">Báo cáo</span>
               </Link>
-              <Link to="/manager/statistics" className={`sidebar-item ${isActive('/manager/statistics')}`} onClick={closeSidebar}>
-                <PieChart size={20} /> <span className="sidebar-item-text">Thống kê</span>
-              </Link>
+
               <Link to="/manager/records" className={`sidebar-item ${isActive('/manager/records')}`} onClick={closeSidebar}>
                 <FileText size={20} /> <span className="sidebar-item-text">Biên bản</span>
               </Link>
