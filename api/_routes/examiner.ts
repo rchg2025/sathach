@@ -94,7 +94,11 @@ router.get('/students', async (req, res) => {
           );
 
           if (myAssignment) {
-            if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+            const isRestrictedByVehicle = result.testType.name.toLowerCase().includes('đường trường') || result.testType.name.toLowerCase().includes('chữ chi');
+            if (isRestrictedByVehicle) {
+              const hasVehicle = myAssignment.vehicles && myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+              if (!hasVehicle) continue;
+            } else if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
               const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
               if (!hasVehicle) continue;
             }
@@ -136,7 +140,11 @@ router.get('/students', async (req, res) => {
             );
 
             if (myAssignment) {
-              if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
+              const isRestrictedByVehicle = result.testType.name.toLowerCase().includes('đường trường') || result.testType.name.toLowerCase().includes('chữ chi');
+              if (isRestrictedByVehicle) {
+                const hasVehicle = myAssignment.vehicles && myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+                if (!hasVehicle) continue;
+              } else if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
                 const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
                 if (!hasVehicle) continue;
               }
