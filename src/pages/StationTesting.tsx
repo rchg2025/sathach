@@ -516,6 +516,7 @@ const StationTesting = () => {
                   <th style={{ position: 'sticky', left: 0, background: '#f8fafc', zIndex: 2, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}>Họ và Tên</th>
                   <th>CCCD</th>
                   <th>Khóa đào tạo</th>
+                  <th>Số xe</th>
                   <th>Thời gian thực hiện</th>
                   <th>Trạng thái</th>
                   {displayedTestTypes.map((tt: any) => (
@@ -531,6 +532,23 @@ const StationTesting = () => {
                     <td style={{ position: 'sticky', left: 0, background: 'var(--card-bg, white)', zIndex: 1, boxShadow: '2px 0 4px rgba(0,0,0,0.05)' }}><strong>{toTitleCase(s.name)}</strong></td>
                     <td>{s.cccd}</td>
                     <td>{s.courseName || (s.course && s.course.name) || '-'}</td>
+                    <td style={{ fontWeight: 'bold', color: 'var(--primary)' }}>
+                      {(() => {
+                        if (!s.testResults || s.testResults.length === 0) return '-';
+                        let targetTr = s.testResults.find((tr: any) => tr.status === 'IN_PROGRESS');
+                        if (!targetTr) {
+                          const completed = s.testResults.filter((tr: any) => ['FINISHED', 'TRANSFERRED', 'PASSED', 'FAILED'].includes(tr.status));
+                          if (completed.length > 0) {
+                            targetTr = completed.sort((a: any, b: any) => new Date(b.endTime || 0).getTime() - new Date(a.endTime || 0).getTime())[0];
+                          }
+                        }
+                        if (targetTr && targetTr.vehicleId) {
+                           const v = vehicles.find(v => v.id === targetTr.vehicleId);
+                           return v ? v.name : (targetTr.vehicle?.name || targetTr.vehicleId);
+                        }
+                        return '-';
+                      })()}
+                    </td>
                     <td>
                       {(() => {
                         if (!s.testResults || s.testResults.length === 0) return '-';
