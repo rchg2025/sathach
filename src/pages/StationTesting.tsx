@@ -69,6 +69,7 @@ const StationTesting = () => {
             }
           }
           setSearchQuery(value);
+          setCurrentPage(1);
           setIsScannerOpen(false);
           toast.success('Đã quét thành công CCCD!');
         };
@@ -387,6 +388,7 @@ const StationTesting = () => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(1);
   };
 
   const filteredStudents = students.filter(s => {
@@ -486,7 +488,7 @@ const StationTesting = () => {
               </button>
             </div>
             <div style={{ flex: 1, minWidth: '250px', display: 'flex', gap: '0.5rem' }}>
-              <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ flex: 1 }}>
+              <select className="form-control" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setCurrentPage(1); }} style={{ flex: 1 }}>
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="NOT_STARTED">Chưa thi</option>
                 <option value="IN_PROGRESS">Đang thi</option>
@@ -497,7 +499,7 @@ const StationTesting = () => {
                 type="date"
                 className="form-control"
                 value={filterDate}
-                onChange={(e) => setFilterDate(e.target.value)}
+                onChange={(e) => { setFilterDate(e.target.value); setCurrentPage(1); }}
                 style={{ flex: 1 }}
               />
             </div>
