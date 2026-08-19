@@ -1118,16 +1118,8 @@ router.get('/station/students-v2', async (req, res) => {
       take: 500 // Limit to avoid massive payloads for admin
     });
 
-    if (role === 'STATION_MANAGER') {
-      const myTestTypeIds = assignments.map(a => a.testTypeId);
-      students = students.filter(s => {
-        return s.testResults.some(tr => 
-          myTestTypeIds.includes(tr.testTypeId) && 
-          tr.status !== 'ABSENT' && 
-          tr.status !== 'PENDING'
-        );
-      });
-    }
+    // Removed restrictive filter for STATION_MANAGER so they can see the full list of students in their assigned course
+    // (They just won't be able to start the test until confirmed by admin/manager)
 
     res.json({ students, assignments });
   } catch (error) {
