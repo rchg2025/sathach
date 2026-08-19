@@ -27,7 +27,8 @@ router.get('/students', async (req, res) => {
       include: { 
         vehicles: {
           where: { isActive: true }
-        } 
+        },
+        course: true
       }
     });
     
@@ -88,20 +89,26 @@ router.get('/students', async (req, res) => {
         const uncompletedExams = allActiveExams.filter(exam => !completedExamIds.includes(exam.id));
         
         if (uncompletedExams.length > 0) {
-          const myAssignment = assignments.find(a => 
+          const matchingAssignments = assignments.filter(a => 
             a.examinerId === examinerId && 
-            a.testTypeId === result.testTypeId
+            a.testTypeId === result.testTypeId &&
+            (!a.courseId || a.courseId === result.student.courseId || (a.course && a.course.name === result.student.courseName))
           );
 
-          if (myAssignment) {
+          if (matchingAssignments.length > 0) {
             const isRestrictedByVehicle = result.testType.name.toLowerCase().includes('đường trường') || result.testType.name.toLowerCase().includes('chữ chi');
             if (isRestrictedByVehicle) {
-              const hasVehicle = myAssignment.vehicles && myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+              const hasVehicle = matchingAssignments.some(a => a.vehicles && a.vehicles.some((v: any) => v.id === result.vehicleId));
               if (!hasVehicle) continue;
-            } else if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
-              const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
-              if (!hasVehicle) continue;
+            } else {
+              const allHaveVehicles = matchingAssignments.every(a => a.vehicles && a.vehicles.length > 0);
+              if (allHaveVehicles) {
+                const hasVehicle = matchingAssignments.some(a => a.vehicles.some((v: any) => v.id === result.vehicleId));
+                if (!hasVehicle) continue;
+              }
             }
+            
+            const myAssignment = matchingAssignments[0];
 
             const inProgressExamIds = result.progress.filter((p: any) => p.status === 'IN_PROGRESS').map((p: any) => p.examId);
             const anyInProgress = uncompletedExams.some(e => inProgressExamIds.includes(e.id));
@@ -134,20 +141,26 @@ router.get('/students', async (req, res) => {
           const isAssignedToMe = firstUncompletedExam.assignments.some(a => a.examinerId === examinerId);
           
           if (isAssignedToMe) {
-            const myAssignment = assignments.find(a => 
+            const matchingAssignments = assignments.filter(a => 
               a.examinerId === examinerId && 
-              (a.examId === firstUncompletedExam.id || (a.testTypeId === firstUncompletedExam.testTypeId && !a.examId))
+              (a.examId === firstUncompletedExam.id || (a.testTypeId === firstUncompletedExam.testTypeId && !a.examId)) &&
+              (!a.courseId || a.courseId === result.student.courseId || (a.course && a.course.name === result.student.courseName))
             );
 
-            if (myAssignment) {
+            if (matchingAssignments.length > 0) {
               const isRestrictedByVehicle = result.testType.name.toLowerCase().includes('đường trường') || result.testType.name.toLowerCase().includes('chữ chi');
               if (isRestrictedByVehicle) {
-                const hasVehicle = myAssignment.vehicles && myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
+                const hasVehicle = matchingAssignments.some(a => a.vehicles && a.vehicles.some((v: any) => v.id === result.vehicleId));
                 if (!hasVehicle) continue;
-              } else if (myAssignment.vehicles && myAssignment.vehicles.length > 0) {
-                const hasVehicle = myAssignment.vehicles.some((v: any) => v.id === result.vehicleId);
-                if (!hasVehicle) continue;
+              } else {
+                const allHaveVehicles = matchingAssignments.every(a => a.vehicles && a.vehicles.length > 0);
+                if (allHaveVehicles) {
+                  const hasVehicle = matchingAssignments.some(a => a.vehicles.some((v: any) => v.id === result.vehicleId));
+                  if (!hasVehicle) continue;
+                }
               }
+              
+              const myAssignment = matchingAssignments[0];
 
               // Check if any of my assigned exams are currently IN_PROGRESS
               const inProgressExam = allStudentActiveExams.find(e => 
