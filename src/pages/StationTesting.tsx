@@ -386,23 +386,18 @@ const StationTesting = () => {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    // Detect QR code scan from CCCD which uses '|' character separator
-    // Example: 093088000220|363597757|Nguyễn Văn Luyến|20081988|Nam|...
-    if (value.includes('|')) {
-      const parts = value.split('|');
-      if (parts[0] && parts[0].length === 12) {
-        value = parts[0];
-      }
-    }
-    setSearchQuery(value);
+    setSearchQuery(e.target.value);
   };
 
   const filteredStudents = students.filter(s => {
     let match = true;
     if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
+      let q = searchQuery.toLowerCase().trim();
+      // Handle CCCD QR code scan format
+      if (q.includes('|')) {
+        q = q.split('|')[0].trim();
+      }
+      match = (s.name?.toLowerCase().includes(q) || s.cccd?.toLowerCase().includes(q) || s.registrationCode?.toLowerCase().includes(q));
     }
     if (match && filterStatus !== 'ALL') {
       const st = getStudentStatusText(s);
