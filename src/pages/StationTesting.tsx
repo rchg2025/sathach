@@ -30,6 +30,7 @@ const StationTesting = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -40,14 +41,14 @@ const StationTesting = () => {
     if (u) {
       const parsedUser = JSON.parse(u);
       setUser(parsedUser);
-      fetchData(parsedUser);
+      fetchData(parsedUser, filterDate);
 
       const interval = setInterval(() => {
-        fetchData(parsedUser);
+        fetchData(parsedUser, filterDate);
       }, 15000); // 15 seconds polling for near real-time updates
       return () => clearInterval(interval);
     }
-  }, []);
+  }, [filterDate]);
 
   useEffect(() => {
     let html5QrCode: Html5Qrcode | null = null;
@@ -109,10 +110,10 @@ const StationTesting = () => {
     }
   }, [isScannerOpen]);
 
-  const fetchData = async (currentUser: any) => {
+  const fetchData = async (currentUser: any, date: string) => {
     try {
       const [studentsRes, vehiclesRes, testTypesRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}`),
+        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${date}`),
         axios.get(`${API_BASE_URL}/api/manager/vehicle-types`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`)
       ]);
@@ -489,14 +490,21 @@ const StationTesting = () => {
                 <Scan size={20} />
               </button>
             </div>
-            <div style={{ flex: 1, minWidth: '250px' }}>
-              <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
+            <div style={{ flex: 1, minWidth: '250px', display: 'flex', gap: '0.5rem' }}>
+              <select className="form-control" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} style={{ flex: 1 }}>
                 <option value="ALL">Tất cả trạng thái</option>
                 <option value="NOT_STARTED">Chưa thi</option>
                 <option value="IN_PROGRESS">Đang thi</option>
                 <option value="TRANSFERRED">Đã chuyển điểm</option>
                 <option value="COMPLETED">Hoàn thành bài thi</option>
               </select>
+              <input 
+                type="date"
+                className="form-control"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                style={{ flex: 1 }}
+              />
             </div>
           </div>
           <div style={{ overflowX: 'auto' }}>
