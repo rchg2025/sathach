@@ -629,7 +629,7 @@ const StationTesting = () => {
                           
                           const readyToStartAssignments = myAssignments.filter(a => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-                            return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED'].includes(tr.status);
+                            return tr && tr.status === 'CONFIRMED';
                           });
 
                           const isManagerOrAdmin = user?.role === 'MANAGER' || user?.role === 'ADMIN' || user?.username === 'quantri';
