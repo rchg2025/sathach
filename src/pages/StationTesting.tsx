@@ -5,7 +5,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
-import { toTitleCase } from '../utils/stringUtils';
+import { toTitleCase, removeAccents } from '../utils/stringUtils';
 import { Pagination } from '../components/Pagination';
 import { API_BASE_URL } from '../config';
 
@@ -394,12 +394,18 @@ const StationTesting = () => {
   const filteredStudents = students.filter(s => {
     let match = true;
     if (searchQuery) {
-      let q = searchQuery.toLowerCase().trim();
-      // Handle CCCD QR code scan format
+      let q = searchQuery.trim();
       if (q.includes('|')) {
         q = q.split('|')[0].trim();
       }
-      match = (s.name?.toLowerCase().includes(q) || s.cccd?.toLowerCase().includes(q) || s.registrationCode?.toLowerCase().includes(q));
+      q = q.toLowerCase();
+      const qNoAccent = removeAccents(q);
+      
+      const sName = s.name ? removeAccents(s.name.toLowerCase()) : '';
+      const sCccd = s.cccd ? String(s.cccd).toLowerCase() : '';
+      const sReg = s.registrationCode ? String(s.registrationCode).toLowerCase() : '';
+      
+      match = (sName.includes(qNoAccent) || sCccd.includes(q) || sReg.includes(q));
     }
     if (match && filterStatus !== 'ALL') {
       const st = getStudentStatusText(s);
