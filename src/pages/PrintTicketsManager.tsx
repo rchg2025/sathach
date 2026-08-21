@@ -198,7 +198,7 @@ const PrintTicketsManager = () => {
         const hasPassed = student.testResults.some((tr: any) => {
           if (tr.testTypeId !== testType.id) return false;
           const isPassedStatus = tr.status === 'PASSED';
-          const isPassedScore = ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore >= (testType.passingScore || 80);
+          const isPassedScore = ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore >= (testType.passingScore ?? 80);
           return isPassedStatus || isPassedScore;
         });
         return !hasPassed;

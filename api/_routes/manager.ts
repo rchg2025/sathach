@@ -2031,6 +2031,9 @@ router.get('/print-tickets/data', async (req, res) => {
           { RetakeSession: { some: { targetCourseId: cId } } }
         ]
       },
+      include: {
+        testResults: true
+      },
       orderBy: { name: 'asc' }
     });
 

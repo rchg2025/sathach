@@ -84,7 +84,7 @@ const TestTypeManager = () => {
     setName(testType.name);
     setDescription(testType.description || '');
     setMaxScore(testType.maxScore || 100);
-    setPassingScore(testType.passingScore || 80);
+    setPassingScore(testType.passingScore ?? 80);
     setActiveTab('add');
   };
 
@@ -120,7 +120,7 @@ const TestTypeManager = () => {
       'Tên loại sát hạch': t.name,
       'Mô tả': t.description || '',
       'Điểm tối đa': t.maxScore || 100,
-      'Điểm đạt': t.passingScore || 80,
+      'Điểm đạt': t.passingScore ?? 80,
       'Ngày tạo': formatDateDisplay(t.createdAt)
     }));
     
@@ -184,7 +184,7 @@ const TestTypeManager = () => {
                   <td><strong>{type.name}</strong></td>
                   <td>{type.description || '-'}</td>
                   <td><span className="badge badge-info">{type.maxScore || 100}</span></td>
-                  <td><span className="badge badge-success">{type.passingScore || 80}</span></td>
+                  <td><span className="badge badge-success">{type.passingScore ?? 80}</span></td>
                   <td className="sticky-col-right">
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(type)}><Edit size={16} /></button>

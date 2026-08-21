@@ -625,7 +625,7 @@ const StatisticsManager = () => {
                             </div>
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: score >= (tr.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)' }}>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: score >= (tr.testType?.passingScore ?? 80) ? 'var(--success)' : 'var(--danger)' }}>
                               {score} điểm
                             </div>
                           </div>

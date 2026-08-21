@@ -313,7 +313,7 @@ const ExaminerDashboard = () => {
                 <>
                   <h1 style={{ 
                     fontSize: '4rem', 
-                    color: currentScore >= (selectedStudent.testType?.passingScore || 80) ? 'var(--success)' : 'var(--danger)',
+                    color: currentScore >= (selectedStudent.testType?.passingScore ?? 80) ? 'var(--success)' : 'var(--danger)',
                     margin: '1rem 0'
                   }}>
                     {currentScore}

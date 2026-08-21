@@ -141,7 +141,7 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore ?? 80);
       return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
     
@@ -235,7 +235,7 @@ const StationTesting = () => {
     
     const unconfirmedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore ?? 80);
       return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
 
@@ -280,7 +280,7 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore ?? 80);
       return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
 
@@ -435,7 +435,7 @@ const StationTesting = () => {
       
       const unconfirmedAssignments = myAssignments.filter(a => {
         const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-        const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+        const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore ?? 80);
         return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
       });
       if (unconfirmedAssignments.length > 0) return 3; // "Xác nhận thi" button
@@ -602,7 +602,7 @@ const StationTesting = () => {
                           }
                           if (tr.status === 'ABSENT') return <span className="text-muted">Vắng</span>;
                           if (['PENDING', 'CONFIRMED', 'Chưa thi', 'IN_PROGRESS'].includes(tr.status)) return '-';
-                          return <span style={{ color: (tr.status === 'FAILED' || tr.totalScore < (tt.passingScore || 80)) ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
+                          return <span style={{ color: (tr.status === 'FAILED' || tr.totalScore < (tt.passingScore ?? 80)) ? 'var(--danger)' : 'inherit' }}>{tr.totalScore}</span>;
                         })()}
                       </td>
                     ))}
@@ -634,7 +634,7 @@ const StationTesting = () => {
 
                           const unconfirmedAssignments = myAssignments.filter(a => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-                            const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+                            const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore ?? 80);
                             return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
                           });
                           
