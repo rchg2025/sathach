@@ -182,16 +182,28 @@ const PrintTicketsManager = () => {
   };
 
   const getStudentTestOrder = (student: any) => {
-    if (!student.testStationOrder) return assignedTestTypes;
-    const customOrderNames = student.testStationOrder.split(',').map((s: string) => s.trim());
-    const customTypes: any[] = [];
-    customOrderNames.forEach((name: string) => {
-      const found = assignedTestTypes.find(t => t.name.toLowerCase() === name.toLowerCase());
-      if (found) customTypes.push(found);
-    });
-    // Fallback if parsing fails or misses some tests
-    if (customTypes.length === 0) return assignedTestTypes;
-    return customTypes;
+    let orderTypes = assignedTestTypes;
+    if (student.testStationOrder) {
+      const customOrderNames = student.testStationOrder.split(',').map((s: string) => s.trim());
+      const customTypes: any[] = [];
+      customOrderNames.forEach((name: string) => {
+        const found = assignedTestTypes.find(t => t.name.toLowerCase() === name.toLowerCase());
+        if (found) customTypes.push(found);
+      });
+      if (customTypes.length > 0) orderTypes = customTypes;
+    }
+
+    if (student.testResults && student.testResults.length > 0) {
+      orderTypes = orderTypes.filter(testType => {
+        const tr = student.testResults.find((t: any) => t.testTypeId === testType.id);
+        if (tr && tr.status === 'PASSED') {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    return orderTypes;
   };
 
   const isAllCurrentPageSelected = paginatedStudents.length > 0 && paginatedStudents.every(s => selectedStudentIds.includes(s.id));
