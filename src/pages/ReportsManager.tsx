@@ -101,7 +101,7 @@ const ReportsManager = () => {
       if (!tr) {
         const pastPassed = pastTrs.filter(t => 
           t.testTypeId === tt.id && 
-          ['TRANSFERRED', 'FINISHED'].includes(t.status) && 
+          ['TRANSFERRED', 'FINISHED', 'PASSED'].includes(t.status) && 
           t.totalScore >= (tt.passingScore ?? 80) &&
           t.status !== 'FAILED'
         ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -121,7 +121,7 @@ const ReportsManager = () => {
           completedCount++;
         } else if (tr.status === 'IN_PROGRESS') {
           scoreVal = 'Đang thi';
-        } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
+        } else if (['TRANSFERRED', 'FINISHED', 'PASSED', 'FAILED'].includes(tr.status)) {
           scoreVal = tr.totalScore;
           completedCount++;
           const passingScore = tt.passingScore ?? 80;
