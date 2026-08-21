@@ -141,7 +141,8 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
     
     if (unstartedAssignments.length === 0) {
@@ -234,7 +235,8 @@ const StationTesting = () => {
     
     const unconfirmedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
 
     if (unconfirmedAssignments.length === 0) return toast.error('Không tìm thấy bài thi cần xác nhận');
@@ -278,7 +280,8 @@ const StationTesting = () => {
     
     const unstartedAssignments = studentAssignments.filter(a => {
       const tr = student.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-      return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status);
+      const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+      return !tr || ['Chưa thi', 'PENDING', 'CONFIRMED', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
     });
 
     if (unstartedAssignments.length === 0) return toast.error('Không tìm thấy bài thi chưa bắt đầu');
@@ -432,7 +435,8 @@ const StationTesting = () => {
       
       const unconfirmedAssignments = myAssignments.filter(a => {
         const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-        return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status);
+        const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+        return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
       });
       if (unconfirmedAssignments.length > 0) return 3; // "Xác nhận thi" button
 
@@ -630,7 +634,8 @@ const StationTesting = () => {
 
                           const unconfirmedAssignments = myAssignments.filter(a => {
                             const tr = s.testResults?.find((t: any) => t.testTypeId === a.testType?.id);
-                            return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status);
+                            const isFailedByScore = tr && ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore < (a.testType?.passingScore || 80);
+                            return !tr || ['Chưa thi', 'PENDING', 'FAILED', 'ABSENT'].includes(tr.status) || isFailedByScore;
                           });
                           
                           const readyToStartAssignments = myAssignments.filter(a => {
