@@ -195,11 +195,13 @@ const PrintTicketsManager = () => {
 
     if (student.testResults && student.testResults.length > 0) {
       orderTypes = orderTypes.filter(testType => {
-        const tr = student.testResults.find((t: any) => t.testTypeId === testType.id);
-        if (tr && tr.status === 'PASSED') {
-          return false;
-        }
-        return true;
+        const hasPassed = student.testResults.some((tr: any) => {
+          if (tr.testTypeId !== testType.id) return false;
+          const isPassedStatus = tr.status === 'PASSED';
+          const isPassedScore = ['FINISHED', 'TRANSFERRED'].includes(tr.status) && tr.totalScore >= (testType.passingScore || 80);
+          return isPassedStatus || isPassedScore;
+        });
+        return !hasPassed;
       });
     }
 
