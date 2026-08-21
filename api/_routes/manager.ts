@@ -2023,9 +2023,14 @@ router.get('/print-tickets/data', async (req, res) => {
 
     const cId = Number(courseId);
 
-    // Fetch students in this course
+    // Fetch students in this course or retaking in this course
     const students = await prisma.student.findMany({
-      where: { courseId: cId },
+      where: {
+        OR: [
+          { courseId: cId },
+          { RetakeSession: { some: { targetCourseId: cId } } }
+        ]
+      },
       orderBy: { name: 'asc' }
     });
 
