@@ -1084,8 +1084,16 @@ router.get('/station/students-v2', async (req, res) => {
       }
     } else if (role === 'EXAMINER') {
       // Examiner sees students they have graded
+      let progressWhere: any = { examinerId: Number(userId) };
+      if (targetDateMidnight && nextDateMidnight) {
+        progressWhere.createdAt = {
+          gte: targetDateMidnight,
+          lt: nextDateMidnight
+        };
+      }
+
       const examProgresses = await prisma.examProgress.findMany({
-        where: { examinerId: Number(userId) },
+        where: progressWhere,
         include: { testResult: true }
       });
       const studentIds = [...new Set(examProgresses.map(ep => ep.testResult.studentId))];
