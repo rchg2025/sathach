@@ -614,6 +614,8 @@ router.delete('/users/:id', async (req, res) => {
       await prisma.examProgress.deleteMany({ where: { examinerId: id } });
       await prisma.testResult.updateMany({ where: { stationManagerId: id }, data: { stationManagerId: null } });
       await prisma.systemLog.deleteMany({ where: { userId: id } });
+      await prisma.trainingRegistration.deleteMany({ where: { userId: id } });
+      await prisma.student.updateMany({ where: { teacherId: id }, data: { teacherId: null } });
       await prisma.user.delete({ where: { id } });
       res.json({ success: true, message: 'Đã xoá người dùng và các dữ liệu liên quan.' });
     } else {
