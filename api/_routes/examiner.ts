@@ -60,8 +60,24 @@ router.get('/students', async (req, res) => {
       return a.name.localeCompare(b.name);
     });
 
+    // Fetch all assignments for these test types to determine active exams
+    const globalAssignments = await prisma.testAssignment.findMany({
+      where: {
+        testTypeId: { in: testTypeIds },
+        OR: [
+          { assignmentDate: null },
+          { assignmentDate: { gte: todayUtcMidnight } }
+        ]
+      }
+    });
+
     // We only care about exams that have at least one assignment (i.e. someone is grading them)
-    const activeExams = allExams.filter(exam => exam.assignments.length > 0);
+    // or if the testType itself is assigned (examId = null)
+    const activeExams = allExams.filter(exam => {
+      return globalAssignments.some(a => 
+        (a.examId === exam.id) || (a.testTypeId === exam.testTypeId && !a.examId)
+      );
+    });
 
     // Fetch all students who are "IN_PROGRESS" for these testTypes
     const testResults = await prisma.testResult.findMany({
@@ -98,12 +114,17 @@ router.get('/students', async (req, res) => {
           if (matchingAssignments.length > 0) {
             const isRestrictedByVehicle = result.testType.name.toLowerCase().includes('đường trường') || result.testType.name.toLowerCase().includes('chữ chi');
             if (isRestrictedByVehicle) {
-              const hasVehicle = matchingAssignments.some(a => a.vehicles && a.vehicles.some((v: any) => v.id === result.vehicleId));
-              if (!hasVehicle) continue;
+              // If ANY of the assignments for this examiner have specific vehicles, we must match one of them.
+              // If NONE of the assignments have specific vehicles, then the examiner is allowed for all vehicles.
+              const anyAssignmentHasVehicles = matchingAssignments.some(a => a.vehicles && a.vehicles.length > 0);
+              if (anyAssignmentHasVehicles) {
+                const hasVehicle = matchingAssignments.some(a => a.vehicles && a.vehicles.some((v: any) => v.id === result.vehicleId));
+                if (!hasVehicle) continue;
+              }
             } else {
               const allHaveVehicles = matchingAssignments.every(a => a.vehicles && a.vehicles.length > 0);
               if (allHaveVehicles) {
-                const hasVehicle = matchingAssignments.some(a => a.vehicles.some((v: any) => v.id === result.vehicleId));
+                const hasVehicle = matchingAssignments.some(a => a.vehicles && a.vehicles.some((v: any) => v.id === result.vehicleId));
                 if (!hasVehicle) continue;
               }
             }
