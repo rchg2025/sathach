@@ -74,9 +74,7 @@ router.get('/students', async (req, res) => {
     // We only care about exams that have at least one assignment (i.e. someone is grading them)
     // or if the testType itself is assigned (examId = null)
     const activeExams = allExams.filter(exam => {
-      return globalAssignments.some(a => 
-        (a.examId === exam.id) || (a.testTypeId === exam.testTypeId && !a.examId)
-      );
+      return globalAssignments.some(a => a.examId === exam.id);
     });
 
     // Fetch all students who are "IN_PROGRESS" for these testTypes
