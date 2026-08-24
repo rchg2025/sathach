@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, LabelList } from 'recharts';
 import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle, Download, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
@@ -10,6 +10,21 @@ import { getLocalDateString } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#6b7280'];
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: '10px', borderRadius: '4px', maxWidth: '300px' }}>
+        <p style={{ fontWeight: 'bold', margin: '0 0 5px 0', color: 'var(--primary)' }}>{label}</p>
+        <p style={{ margin: '0 0 3px 0' }}><span style={{ color: '#6b7280' }}>Trạm:</span> {data.testTypeName}</p>
+        <p style={{ margin: '0 0 5px 0' }}><span style={{ color: '#6b7280' }}>Bài thi:</span> {data.examName}</p>
+        <p style={{ margin: 0, color: '#f59e0b', fontWeight: 'bold' }}>Số lượng lỗi: {data.count}</p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const StatisticsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -195,26 +210,31 @@ const StatisticsManager = () => {
   ].filter(item => item.value > 0);
 
   const commonErrors = useMemo(() => {
-    const errorCounts: Record<string, number> = {};
+    const errorMap: Record<number, any> = {};
     courseFilteredStudents.forEach(s => {
       s.testResults?.forEach((tr: any) => {
         if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
         tr.scores?.forEach((score: any) => {
           if (score.criterion) {
             if (filterExam !== 'ALL' && String(score.criterion.examId) !== filterExam) return;
-            let criterionName = score.criterion.name;
-            if (score.criterion.exam?.name) {
-              criterionName = `[${score.criterion.exam.name}] ${criterionName}`;
+            const crit = score.criterion;
+            if (!errorMap[crit.id]) {
+               errorMap[crit.id] = {
+                 id: crit.id,
+                 name: crit.name,
+                 examName: crit.exam?.name || 'Không xác định',
+                 testTypeName: tr.testType?.name || 'Không xác định',
+                 count: 0
+               };
             }
-            errorCounts[criterionName] = (errorCounts[criterionName] || 0) + score.timesDeducted;
+            errorMap[crit.id].count += score.timesDeducted;
           }
         });
       });
     });
 
-    return Object.entries(errorCounts)
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
+    return Object.values(errorMap)
+      .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 10);
   }, [courseFilteredStudents, filterTestType, filterExam]);
 
@@ -476,12 +496,14 @@ const StatisticsManager = () => {
           {commonErrors.length > 0 ? (
             <div style={{ height: 400 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={commonErrors} layout="vertical" margin={{ left: 280 }}>
+                <BarChart data={commonErrors} layout="vertical" margin={{ left: 150, right: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={280} />
-                  <Tooltip />
-                  <Bar dataKey="count" name="Số lần vi phạm" fill="#f59e0b" />
+                  <YAxis dataKey="name" type="category" width={150} />
+                  <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
+                  <Bar dataKey="count" name="Số lần vi phạm" fill="#f59e0b">
+                    <LabelList dataKey="count" position="right" fill="#6b7280" style={{ fontWeight: 'bold' }} />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
