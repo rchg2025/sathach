@@ -84,7 +84,7 @@ router.get('/students', async (req, res) => {
         status: 'IN_PROGRESS' 
       },
       include: {
-        student: { include: { testResults: true, course: true } },
+        student: { include: { testResults: true, course: true, RetakeSession: true } },
         progress: true,
         vehicle: true,
         testType: true
@@ -106,7 +106,11 @@ router.get('/students', async (req, res) => {
           const matchingAssignments = assignments.filter(a => 
             a.examinerId === examinerId && 
             a.testTypeId === result.testTypeId &&
-            (!a.courseId || a.courseId === result.student.courseId || (a.course && a.course.name === result.student.courseName))
+            (!a.courseId || 
+             a.courseId === result.student.courseId || 
+             (a.course && a.course.name === result.student.courseName) ||
+             result.student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
+            )
           );
 
           if (matchingAssignments.length > 0) {
@@ -163,7 +167,11 @@ router.get('/students', async (req, res) => {
             const matchingAssignments = assignments.filter(a => 
               a.examinerId === examinerId && 
               (a.examId === firstUncompletedExam.id || (a.testTypeId === firstUncompletedExam.testTypeId && !a.examId)) &&
-              (!a.courseId || a.courseId === result.student.courseId || (a.course && a.course.name === result.student.courseName))
+              (!a.courseId || 
+               a.courseId === result.student.courseId || 
+               (a.course && a.course.name === result.student.courseName) ||
+               result.student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
+              )
             );
 
             if (matchingAssignments.length > 0) {
