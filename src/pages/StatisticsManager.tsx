@@ -92,15 +92,15 @@ const StatisticsManager = () => {
   const processedStudents = useMemo(() => {
     return students.map(student => {
       const allTrs = student.testResults || [];
-      const todayTrs: any[] = [];
+      const targetTrs: any[] = [];
       const pastTrs: any[] = [];
       
       allTrs.forEach((t: any) => {
         const tDateObj = new Date(t.createdAt);
         const tDateStr = new Date(tDateObj.getTime() + 7*3600*1000).toISOString().split('T')[0];
-        if (tDateStr === filterDate) {
-          todayTrs.push(t);
-        } else {
+        if (!filterDate || tDateStr === filterDate) {
+          targetTrs.push(t);
+        } else if (filterDate && tDateStr < filterDate) {
           pastTrs.push(t);
         }
       });
@@ -110,8 +110,14 @@ const StatisticsManager = () => {
       let completedCount = 0;
       
       activeTestTypes.forEach((tt: any) => {
-        let tr = todayTrs.find((t: any) => t.testTypeId === tt.id);
-        if (!tr) {
+        // Find latest test result for this test type in targetTrs
+        const typeTargetTrs = targetTrs.filter((t: any) => t.testTypeId === tt.id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        
+        let tr = typeTargetTrs.length > 0 ? typeTargetTrs[0] : undefined;
+
+        // If no test in target dates, check if they passed in the past
+        if (!tr && filterDate) {
           const pastPassed = pastTrs.filter(t => 
             t.testTypeId === tt.id && 
             ['TRANSFERRED', 'FINISHED'].includes(t.status) && 
@@ -204,7 +210,15 @@ const StatisticsManager = () => {
           const ttName = tr.testType.name;
           if (!stats[ttName]) stats[ttName] = { totalStudents: 0, studentsWithErrors: 0 };
           stats[ttName].totalStudents++;
-          if (tr.scores && tr.scores.length > 0) {
+          
+          let hasError = false;
+          if (tr.scores) {
+            tr.scores.forEach((score: any) => {
+              const deducted = (score.timesDeducted || 1) * (score.criterion?.pointsToDeduct || 0);
+              if (deducted > 0) hasError = true;
+            });
+          }
+          if (hasError) {
             stats[ttName].studentsWithErrors++;
           }
         }
@@ -236,9 +250,10 @@ const StatisticsManager = () => {
       s.testResults?.forEach((tr: any) => {
         if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
         tr.scores?.forEach((score: any) => {
-          if (score.points < 0 && score.criterion) {
+          const deducted = (score.timesDeducted || 1) * (score.criterion?.pointsToDeduct || 0);
+          if (deducted > 0 && score.criterion) {
             if (filterExam === 'ALL' || String(score.criterion.examId) === filterExam) {
-              errorCount++;
+              errorCount += (score.timesDeducted || 1);
             }
           }
         });
@@ -281,10 +296,12 @@ const StatisticsManager = () => {
       s.testResults?.forEach((tr: any) => {
         if (filterTestType !== 'ALL' && String(tr.testTypeId) !== filterTestType) return;
         tr.scores?.forEach((score: any) => {
-          if (score.points < 0 && score.criterion) {
+          const deducted = (score.timesDeducted || 1) * (score.criterion?.pointsToDeduct || 0);
+          if (deducted > 0 && score.criterion) {
             if (filterExam === 'ALL' || String(score.criterion.examId) === filterExam) {
-              errorCount++;
-              errorDetails.push(score.criterion.name);
+              const count = score.timesDeducted || 1;
+              errorCount += count;
+              errorDetails.push(score.criterion.name + (count > 1 ? ` (x${count})` : ''));
             }
           }
         });
