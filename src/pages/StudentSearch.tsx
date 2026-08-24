@@ -8,8 +8,14 @@ const StudentSearch = () => {
   const [error, setError] = useState('');
   const [isPolling, setIsPolling] = useState(false);
   const [logoUrl, setLogoUrl] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   
   const pollingRef = useRef<any>(null);
+
+  const formatCCCD = (val: string) => {
+    if (!val || val.length < 7) return val;
+    return val.substring(0, 4) + '*'.repeat(val.length - 7) + val.substring(val.length - 3);
+  };
 
   useEffect(() => {
     // Fetch dynamic logo
@@ -94,7 +100,23 @@ const StudentSearch = () => {
 
   const displayResults = useMemo(() => {
     if (!student?.testResults) return [];
-    return student.testResults;
+    
+    const latestMap = new Map();
+    student.testResults.forEach((tr: any) => {
+      if (!latestMap.has(tr.testTypeId)) {
+        latestMap.set(tr.testTypeId, tr);
+      } else {
+        const existing = latestMap.get(tr.testTypeId);
+        if (new Date(tr.createdAt) > new Date(existing.createdAt)) {
+          latestMap.set(tr.testTypeId, tr);
+        }
+      }
+    });
+    
+    // Sort the results chronologically or based on testType name, but preserving order is usually fine
+    return Array.from(latestMap.values()).sort((a: any, b: any) => {
+       return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
   }, [student]);
 
   const overallResult = useMemo(() => {
@@ -160,7 +182,9 @@ const StudentSearch = () => {
               type="text" 
               className="form-control" 
               placeholder="Nhập số CCCD của bạn..." 
-              value={cccd}
+              value={(!isFocused && student) ? formatCCCD(cccd) : cccd}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               onChange={e => setCccd(e.target.value)}
               required
               style={{ flex: 1 }}
@@ -176,7 +200,7 @@ const StudentSearch = () => {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-secondary)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
               <div>
                 <h4 style={{ margin: '0 0 0.5rem 0' }}>{student.name}</h4>
-                <p style={{ margin: 0, color: 'var(--text-muted)' }}>CCCD: {student.cccd}</p>
+                <p style={{ margin: 0, color: 'var(--text-muted)' }}>CCCD: {formatCCCD(student.cccd)}</p>
               </div>
             </div>
 
