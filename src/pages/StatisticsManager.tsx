@@ -26,6 +26,38 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const CustomYAxisTick = (props: any) => {
+  const { x, y, payload } = props;
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <foreignObject x={-260} y={-24} width={250} height={48}>
+        <div style={{
+          width: '250px',
+          height: '48px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end', // Right align to sit flush with axis
+          fontSize: '12px',
+          lineHeight: '1.3',
+          color: '#666',
+          textAlign: 'right',
+          paddingRight: '10px',
+          boxSizing: 'border-box'
+        }}>
+          <span style={{ 
+            display: '-webkit-box', 
+            WebkitLineClamp: 3, 
+            WebkitBoxOrient: 'vertical', 
+            overflow: 'hidden' 
+          }}>
+            {payload.value}
+          </span>
+        </div>
+      </foreignObject>
+    </g>
+  );
+};
+
 const StatisticsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -494,12 +526,12 @@ const StatisticsManager = () => {
         <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Top 10 lỗi vi phạm phổ biến nhất</h3>
           {commonErrors.length > 0 ? (
-            <div style={{ height: 400 }}>
+            <div style={{ height: 550 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={commonErrors} layout="vertical" margin={{ left: 150, right: 40 }}>
+                <BarChart data={commonErrors} layout="vertical" margin={{ left: 260, right: 40 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={150} />
+                  <YAxis dataKey="name" type="category" width={260} tick={<CustomYAxisTick />} />
                   <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
                   <Bar dataKey="count" name="Số lần vi phạm" fill="#f59e0b">
                     <LabelList dataKey="count" position="right" fill="#6b7280" style={{ fontWeight: 'bold' }} />
