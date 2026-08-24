@@ -44,14 +44,19 @@ const StatisticsManager = () => {
   const fetchData = async (currentUser: any, date: string, courseId: string) => {
     try {
       const queryDate = date ? date : 'ALL';
-      const [studentsRes, coursesRes, testTypesRes, teachersRes] = await Promise.all([
+      const [studentsRes, coursesRes, testTypesRes, teachersRes, allAssignmentsRes] = await Promise.all([
         axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${queryDate}&courseId=${courseId}`),
         axios.get(`${API_BASE_URL}/api/manager/courses`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`),
-        axios.get(`${API_BASE_URL}/api/manager/users?role=TEACHER`)
+        axios.get(`${API_BASE_URL}/api/manager/users?role=TEACHER`),
+        axios.get(`${API_BASE_URL}/api/manager/assignments`)
       ]);
       setStudents(studentsRes.data.students || []);
-      setAssignments(studentsRes.data.assignments || []);
+      
+      const backendAssignments = studentsRes.data.assignments || [];
+      // Use allAssignmentsRes if backendAssignments is empty (e.g., for EXAMINER role)
+      setAssignments(backendAssignments.length > 0 ? backendAssignments : allAssignmentsRes.data || []);
+      
       setCourses(coursesRes.data || []);
       setTestTypes(testTypesRes.data || []);
       setTeachers(teachersRes.data || []);
