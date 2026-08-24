@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
+import { formatDateTimeDisplay } from "../utils/dateUtils";
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
@@ -561,7 +562,7 @@ const TrainingRegistration = () => {
                             {(openTime || closeTime) && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280', paddingLeft: '1.5rem', borderLeft: '1px solid #e5e7eb' }}>
                                 <span style={{fontWeight: 'normal'}}>
-                                  Đăng ký: {openTime ? openTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + openTime.toLocaleDateString() : '...'} - {closeTime ? closeTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) + ' ' + closeTime.toLocaleDateString() : '...'}
+                                  Đăng ký: {openTime ? formatDateTimeDisplay(openTime) : '...'} - {closeTime ? formatDateTimeDisplay(closeTime) : '...'}
                                 </span>
                               </div>
                             )}

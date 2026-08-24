@@ -79,7 +79,7 @@ const ReportsManager = () => {
     allTrs.forEach((t: any) => {
       // simplified comparison, filterDate is YYYY-MM-DD
       const tDateObj = new Date(t.createdAt);
-      const tDateStr = new Date(tDateObj.getTime() + 7*3600*1000).toISOString().split('T')[0];
+      const tDateStr = getLocalDateString(tDateObj);
       if (tDateStr === filterDate) {
         todayTrs.push(t);
       } else {

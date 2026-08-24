@@ -1,3 +1,5 @@
+import { getLocalDateString } from "../utils/dateUtils";
+
 import { formatDateDisplay } from '../utils/dateUtils';
 import { Pagination } from '../components/Pagination';
 import React, { useEffect, useState, useRef } from 'react';
@@ -90,10 +92,10 @@ const VehicleTypeManager = () => {
     setSeats(v.seats?.toString() || '');
     setBrand(v.brand || '');
     setOwner(v.owner || '');
-    setContractStart(v.contractStart ? v.contractStart.split('T')[0] : '');
-    setContractEnd(v.contractEnd ? v.contractEnd.split('T')[0] : '');
+    setContractStart(v.contractStart ? getLocalDateString(v.contractStart) : '');
+    setContractEnd(v.contractEnd ? getLocalDateString(v.contractEnd) : '');
     setManufacturingYear(v.manufacturingYear?.toString() || '');
-    setInspectionExpiry(v.inspectionExpiry ? v.inspectionExpiry.split('T')[0] : '');
+    setInspectionExpiry(v.inspectionExpiry ? getLocalDateString(v.inspectionExpiry) : '');
     setActiveTab('add');
   };
 

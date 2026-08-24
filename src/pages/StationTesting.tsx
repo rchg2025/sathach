@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 import Select from 'react-select';
 import AdminLayout from '../components/AdminLayout';
 import { toTitleCase, removeAccents } from '../utils/stringUtils';
+import { getLocalDateString, formatTimeDisplay } from '../utils/dateUtils';
 import { Pagination } from '../components/Pagination';
 import { API_BASE_URL } from '../config';
 
@@ -30,7 +31,7 @@ const StationTesting = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('ALL');
-  const [filterDate, setFilterDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState(() => getLocalDateString());
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -350,7 +351,7 @@ const StationTesting = () => {
       if (inProgress.stationManager) {
         line1 += ` - Bắt đầu bởi ${inProgress.stationManager.name}`;
       }
-      let line2 = inProgress.startTime ? `Lúc: ${new Date(inProgress.startTime).toLocaleTimeString()}` : '';
+      let line2 = inProgress.startTime ? `Lúc: ${formatTimeDisplay(inProgress.startTime)}` : '';
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
           <span>{line1}</span>
@@ -367,8 +368,8 @@ const StationTesting = () => {
         line1 += ` - Trưởng trạm: ${finished.stationManager.name}`;
       }
       let line2 = '';
-      if (finished.startTime) line2 += `Bắt đầu: ${new Date(finished.startTime).toLocaleTimeString()}`;
-      if (finished.endTime) line2 += ` - Kết thúc: ${new Date(finished.endTime).toLocaleTimeString()}`;
+      if (finished.startTime) line2 += `Bắt đầu: ${formatTimeDisplay(finished.startTime)}`;
+      if (finished.endTime) line2 += ` - Kết thúc: ${formatTimeDisplay(finished.endTime)}`;
       return (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', lineHeight: '1.4', textAlign: 'left', whiteSpace: 'nowrap' }}>
           <span>{line1}</span>

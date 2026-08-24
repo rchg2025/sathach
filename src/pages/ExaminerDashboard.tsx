@@ -1,3 +1,5 @@
+import { formatTimeDisplay } from "../utils/dateUtils";
+
 import { formatDateDisplay } from '../utils/dateUtils';
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
@@ -240,7 +242,7 @@ const ExaminerDashboard = () => {
                 
                 let statusInfo = <span className="text-muted">Đang chờ chấm...</span>;
                 if (s.currentProgress && s.currentProgress.status === 'IN_PROGRESS') {
-                  const startTimeStr = s.currentProgress.startTime ? new Date(s.currentProgress.startTime).toLocaleTimeString() : '';
+                  const startTimeStr = s.currentProgress.startTime ? formatTimeDisplay(s.currentProgress.startTime) : '';
                   statusInfo = (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', lineHeight: '1.2' }}>
                       <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>Đang chấm</span>

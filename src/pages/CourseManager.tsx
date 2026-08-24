@@ -3,7 +3,8 @@ import { Pagination } from '../components/Pagination';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-// import AdminLayout from '../components/AdminLayout';
+// import { getLocalDateString } from "../utils/dateUtils";
+import { getLocalDateString } from "../utils/dateUtils";
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
 import { removeAccents } from '../utils/stringUtils';
@@ -76,8 +77,8 @@ const CourseManager = () => {
     setEditingId(course.id);
     setName(course.name);
     setDescription(course.description || '');
-    setStartDate(course.startDate ? course.startDate.split('T')[0] : '');
-    setEndDate(course.endDate ? course.endDate.split('T')[0] : '');
+    setStartDate(course.startDate ? getLocalDateString(course.startDate) : '');
+    setEndDate(course.endDate ? getLocalDateString(course.endDate) : '');
     setActiveTab('add');
   };
 

@@ -7,6 +7,7 @@ import { Edit, Trash2, Calendar, MapPin, Clock, Car } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import * as XLSX from 'xlsx';
+import { getLocalDateString } from "../utils/dateUtils";
 import AdminLayout from '../components/AdminLayout';
 import Flatpickr from 'react-flatpickr';
 import 'flatpickr/dist/themes/light.css';
@@ -140,7 +141,7 @@ const TrainingSessionManager = () => {
     setTrainingGroundId(s.trainingGroundId.toString());
     setTrainingShiftId(s.trainingShiftId.toString());
     setVehicles(s.vehicles || '');
-    setDate(s.date ? new Date(s.date).toISOString().split('T')[0] : '');
+    setDate(s.date ? getLocalDateString(s.date) : '');
     setStartTime(s.startTime || '');
     setEndTime(s.endTime || '');
     
@@ -193,7 +194,7 @@ const TrainingSessionManager = () => {
 
   const filteredSessions = sessions.filter((s: any) => {
     const keyword = removeAccents(searchKeyword);
-    const dateStr = s.date ? new Date(s.date).toISOString().split('T')[0] : '';
+    const dateStr = s.date ? getLocalDateString(s.date) : '';
     
     // Tab filtering
     if (activeTab === 'active' && dateStr < todayStr) return false;
@@ -337,7 +338,7 @@ const TrainingSessionManager = () => {
                       {s.registrations && s.registrations.length > 0 ? (
                         <button 
                           onClick={() => {
-                            const date = s.date ? s.date.split('T')[0] : '';
+                            const date = s.date ? getLocalDateString(s.date) : '';
                             const groundId = s.trainingGroundId || '';
                             navigate(`/training-registration?view=LIST&date=${date}&groundId=${groundId}`);
                           }}
@@ -374,7 +375,7 @@ const TrainingSessionManager = () => {
                         const now = new Date();
                         const openTime = s.registrationStartTime ? new Date(s.registrationStartTime) : null;
                         const closeTime = s.registrationEndTime ? new Date(s.registrationEndTime) : null;
-                        const dateStr = s.date ? s.date.split('T')[0] : '';
+                        const dateStr = s.date ? getLocalDateString(s.date) : '';
                         const todayStr = new Date().toLocaleDateString('en-CA');
                         const isPast = dateStr !== '' && dateStr < todayStr;
                         

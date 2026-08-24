@@ -97,7 +97,7 @@ const StatisticsManager = () => {
       
       allTrs.forEach((t: any) => {
         const tDateObj = new Date(t.createdAt);
-        const tDateStr = new Date(tDateObj.getTime() + 7*3600*1000).toISOString().split('T')[0];
+        const tDateStr = getLocalDateString(tDateObj);
         if (!filterDate || tDateStr === filterDate) {
           targetTrs.push(t);
         } else if (filterDate && tDateStr < filterDate) {

@@ -1,4 +1,4 @@
-import { formatDateDisplay } from '../utils/dateUtils';
+import { formatDateDisplay, formatTimeDisplay } from '../utils/dateUtils';
 import React from 'react';
 
 interface PrintRecordTemplateProps {
@@ -94,7 +94,7 @@ const PrintRecordTemplate: React.FC<PrintRecordTemplateProps> = ({ records, prin
 
         const formatDate = (date: Date | null) => {
           if (!date) return '...';
-          return date.toLocaleTimeString('vi-VN', { hour12: false }) + ' ' + formatDateDisplay(date);
+          return formatTimeDisplay(date) + ' ' + formatDateDisplay(date);
         };
 
         const calcTotalTime = (start: Date | null, end: Date | null) => {
