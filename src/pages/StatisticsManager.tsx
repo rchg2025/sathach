@@ -105,11 +105,19 @@ const StatisticsManager = () => {
         }
       });
 
+      const studentAssignments = assignments.filter((a: any) => 
+        a.courseId === student.courseId || 
+        (a.course && a.course.name === student.courseName) ||
+        student.RetakeSession?.some((rs: any) => rs.targetCourseId === a.courseId)
+      );
+      const studentTestTypeIds = new Set(studentAssignments.map((a: any) => a.testTypeId));
+      const studentActiveTestTypes = activeTestTypes.filter((tt: any) => studentTestTypeIds.has(tt.id));
+
       let isFail = false;
       let isAbsent = false;
       let completedCount = 0;
       
-      activeTestTypes.forEach((tt: any) => {
+      studentActiveTestTypes.forEach((tt: any) => {
         // Find latest test result for this test type in targetTrs
         const typeTargetTrs = targetTrs.filter((t: any) => t.testTypeId === tt.id)
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -120,7 +128,7 @@ const StatisticsManager = () => {
         if (!tr && filterDate) {
           const pastPassed = pastTrs.filter(t => 
             t.testTypeId === tt.id && 
-            ['TRANSFERRED', 'FINISHED'].includes(t.status) && 
+            ['TRANSFERRED', 'FINISHED', 'PASSED'].includes(t.status) && 
             t.totalScore >= (tt.passingScore ?? 80) &&
             t.status !== 'FAILED'
           ).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -131,7 +139,7 @@ const StatisticsManager = () => {
           if (tr.status === 'ABSENT') {
             isAbsent = true;
             completedCount++;
-          } else if (['TRANSFERRED', 'FINISHED'].includes(tr.status)) {
+          } else if (['TRANSFERRED', 'FINISHED', 'PASSED'].includes(tr.status)) {
             completedCount++;
             const passingScore = tt.passingScore ?? 80;
             if (tr.totalScore < passingScore) isFail = true;
@@ -141,9 +149,10 @@ const StatisticsManager = () => {
       });
 
       let finalStatus = '';
-      if (isAbsent) finalStatus = 'VẮNG';
+      if (studentActiveTestTypes.length === 0) finalStatus = 'CHƯA HOÀN THÀNH';
+      else if (isAbsent) finalStatus = 'VẮNG';
       else if (isFail) finalStatus = 'RỚT';
-      else if (activeTestTypes.length > 0 && completedCount >= activeTestTypes.length) finalStatus = 'ĐẬU';
+      else if (completedCount >= studentActiveTestTypes.length) finalStatus = 'ĐẬU';
       else finalStatus = 'CHƯA HOÀN THÀNH';
 
       return { ...student, finalStatus };
