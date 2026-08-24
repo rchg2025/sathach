@@ -202,7 +202,10 @@ const StatisticsManager = () => {
         tr.scores?.forEach((score: any) => {
           if (score.criterion) {
             if (filterExam !== 'ALL' && String(score.criterion.examId) !== filterExam) return;
-            const criterionName = score.criterion.name;
+            let criterionName = score.criterion.name;
+            if (score.criterion.exam?.name) {
+              criterionName = `[${score.criterion.exam.name}] ${criterionName}`;
+            }
             errorCounts[criterionName] = (errorCounts[criterionName] || 0) + score.timesDeducted;
           }
         });
@@ -473,10 +476,10 @@ const StatisticsManager = () => {
           {commonErrors.length > 0 ? (
             <div style={{ height: 400 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={commonErrors} layout="vertical" margin={{ left: 150 }}>
+                <BarChart data={commonErrors} layout="vertical" margin={{ left: 280 }}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={150} />
+                  <YAxis dataKey="name" type="category" width={280} />
                   <Tooltip />
                   <Bar dataKey="count" name="Số lần vi phạm" fill="#f59e0b" />
                 </BarChart>
