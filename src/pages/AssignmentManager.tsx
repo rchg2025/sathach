@@ -21,6 +21,7 @@ const AssignmentManager = () => {
   const [exams, setExams] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
   const [vehicles, setVehicles] = useState<any[]>([]);
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
 
   // Form states
   const [roleType, setRoleType] = useState<'STATION_MANAGER' | 'EXAMINER'>('STATION_MANAGER');
@@ -218,6 +219,34 @@ const AssignmentManager = () => {
       toast.error(err.response?.data?.error || 'Lỗi khi xóa');
     } finally {
       setDeleteModal({ isOpen: false, id: null });
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedIds(paginatedAssignments.map((a: any) => a.id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id: number) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!window.confirm(`Bạn có chắc chắn muốn xoá ${selectedIds.length} phân công đã chọn?`)) return;
+    
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/assignments/bulk-delete`, { ids: selectedIds });
+      toast.success(`Đã xoá ${selectedIds.length} phân công!`);
+      setSelectedIds([]);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Lỗi khi xóa phân công');
     }
   };
 
@@ -522,6 +551,15 @@ const AssignmentManager = () => {
                 </div>
               </div>
             </div>
+            {selectedIds.length > 0 && (
+              <button 
+                className="btn btn-danger flex items-center justify-center btn-export" 
+                style={{ gap: '0.5rem', height: 'fit-content', flexShrink: 0, padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} 
+                onClick={handleBulkDelete}
+              >
+                <Trash2 size={16} /> Xoá đã chọn ({selectedIds.length})
+              </button>
+            )}
             <button className="btn btn-success flex items-center justify-center btn-export" style={{ gap: '0.5rem', height: 'fit-content', flexShrink: 0, padding: '0.5rem 0.75rem', fontSize: '0.85rem' }} onClick={exportToExcel}>
               <Download size={16} /> Xuất Excel
             </button>
@@ -532,6 +570,17 @@ const AssignmentManager = () => {
           <table className="table">
             <thead>
               <tr>
+                <th style={{ width: '40px', textAlign: 'center' }}>
+                  <input 
+                    type="checkbox" 
+                    onChange={handleSelectAll}
+                    checked={
+                      paginatedAssignments.length > 0 && 
+                      selectedIds.length > 0 &&
+                      paginatedAssignments.every((a: any) => selectedIds.includes(a.id))
+                    }
+                  />
+                </th>
                 <th style={{ width: '60px' }}>STT</th>
                 <th>Họ tên</th>
                 <th>Vai trò</th>
@@ -546,6 +595,13 @@ const AssignmentManager = () => {
             <tbody>
               {paginatedAssignments.length > 0 ? paginatedAssignments.map((a: any, idx: number) => (
                 <tr key={a.id}>
+                  <td style={{ textAlign: 'center' }}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.includes(a.id)}
+                      onChange={() => handleSelectRow(a.id)}
+                    />
+                  </td>
                   <td>{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                   <td><strong>{a.examiner?.name || 'N/A'}</strong></td>
                   <td>
@@ -579,7 +635,7 @@ const AssignmentManager = () => {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={8} className="text-center text-muted" style={{ padding: '2rem' }}>
+                  <td colSpan={10} className="text-center text-muted" style={{ padding: '2rem' }}>
                     Chưa có dữ liệu phân công phù hợp
                   </td>
                 </tr>

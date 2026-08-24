@@ -551,6 +551,22 @@ router.delete('/assignments/:id', async (req, res) => {
   }
 });
 
+router.post('/assignments/bulk-delete', async (req, res) => {
+  const { ids } = req.body;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ error: 'Missing or invalid ids array' });
+  }
+  try {
+    const result = await prisma.testAssignment.deleteMany({
+      where: { id: { in: ids } }
+    });
+    res.json({ success: true, message: `Đã xoá ${result.count} phân công` });
+  } catch (error: any) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // Users Management
 router.get('/users', async (req, res) => {
