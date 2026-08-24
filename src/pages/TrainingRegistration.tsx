@@ -658,7 +658,19 @@ const TrainingRegistration = () => {
                 {myRegistrations.map(reg => {
                   const now = new Date();
                   const closeTime = reg.trainingSession?.registrationEndTime ? new Date(reg.trainingSession.registrationEndTime) : null;
-                  const isClosed = closeTime && now > closeTime;
+                  
+                  let isClosed = false;
+                  if (closeTime) {
+                    isClosed = now > closeTime;
+                  } else if (reg.trainingSession?.date) {
+                    const sessionDate = new Date(reg.trainingSession.date);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    sessionDate.setHours(0, 0, 0, 0);
+                    if (sessionDate.getTime() < today.getTime()) {
+                      isClosed = true;
+                    }
+                  }
 
                   return (
                   <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
