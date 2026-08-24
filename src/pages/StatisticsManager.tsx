@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid, LabelList } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { Users, CheckCircle, XCircle, UserX, TrendingUp, AlertTriangle, Download, Eye, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import AdminLayout from '../components/AdminLayout';
@@ -10,53 +10,6 @@ import { getLocalDateString } from '../utils/dateUtils';
 import toast from 'react-hot-toast';
 
 const COLORS = ['#10b981', '#ef4444', '#f59e0b', '#6b7280'];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div style={{ backgroundColor: '#fff', border: '1px solid #ccc', padding: '10px', borderRadius: '4px', maxWidth: '300px' }}>
-        <p style={{ fontWeight: 'bold', margin: '0 0 5px 0', color: 'var(--primary)' }}>{label}</p>
-        <p style={{ margin: '0 0 3px 0' }}><span style={{ color: '#6b7280' }}>Trạm:</span> {data.testTypeName}</p>
-        <p style={{ margin: '0 0 5px 0' }}><span style={{ color: '#6b7280' }}>Bài thi:</span> {data.examName}</p>
-        <p style={{ margin: 0, color: '#f59e0b', fontWeight: 'bold' }}>Số lượng lỗi: {data.count}</p>
-      </div>
-    );
-  }
-  return null;
-};
-
-const CustomYAxisTick = (props: any) => {
-  const { x, y, payload } = props;
-  return (
-    <g transform={`translate(${x},${y})`}>
-      <foreignObject x={-260} y={-24} width={250} height={48}>
-        <div style={{
-          width: '250px',
-          height: '48px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'flex-end', // Right align to sit flush with axis
-          fontSize: '12px',
-          lineHeight: '1.3',
-          color: '#666',
-          textAlign: 'right',
-          paddingRight: '10px',
-          boxSizing: 'border-box'
-        }}>
-          <span style={{ 
-            display: '-webkit-box', 
-            WebkitLineClamp: 3, 
-            WebkitBoxOrient: 'vertical', 
-            overflow: 'hidden' 
-          }}>
-            {payload.value}
-          </span>
-        </div>
-      </foreignObject>
-    </g>
-  );
-};
 
 const StatisticsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -526,18 +479,30 @@ const StatisticsManager = () => {
         <div className="card" style={{ padding: '1.5rem', marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Top 10 lỗi vi phạm phổ biến nhất</h3>
           {commonErrors.length > 0 ? (
-            <div style={{ height: 550 }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={commonErrors} layout="vertical" margin={{ left: 260, right: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis type="number" />
-                  <YAxis dataKey="name" type="category" width={260} tick={<CustomYAxisTick />} />
-                  <Tooltip content={<CustomTooltip />} cursor={{fill: 'transparent'}} />
-                  <Bar dataKey="count" name="Số lần vi phạm" fill="#f59e0b">
-                    <LabelList dataKey="count" position="right" fill="#6b7280" style={{ fontWeight: 'bold' }} />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {commonErrors.map((error, index) => {
+                 const maxCount = commonErrors[0].count; // Since it's sorted, index 0 is max
+                 const percent = (error.count / maxCount) * 100;
+                 return (
+                   <div key={error.id}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem', gap: '1rem' }}>
+                       <span style={{ fontSize: '0.95rem', fontWeight: 500, color: '#374151', lineHeight: '1.4' }}>
+                         {index + 1}. {error.name}
+                       </span>
+                       <span style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#f59e0b', flexShrink: 0 }}>
+                         {error.count}
+                       </span>
+                     </div>
+                     <div style={{ width: '100%', height: '14px', backgroundColor: '#f3f4f6', borderRadius: '8px', overflow: 'hidden' }}>
+                       <div style={{ width: `${percent}%`, height: '100%', backgroundColor: '#f59e0b', borderRadius: '8px', transition: 'width 0.5s ease-out' }} />
+                     </div>
+                     <div style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '0.35rem', display: 'flex', gap: '1rem' }}>
+                       <span>Trạm: {error.testTypeName}</span>
+                       <span>Bài thi: {error.examName}</span>
+                     </div>
+                   </div>
+                 );
+              })}
             </div>
           ) : (
             <p className="text-muted text-center" style={{ padding: '2rem' }}>Chưa có dữ liệu lỗi vi phạm trong khoảng thời gian này.</p>
