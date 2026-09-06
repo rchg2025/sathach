@@ -882,7 +882,14 @@ router.post('/students/bulk', async (req, res) => {
     let skipped = 0;
     for (const s of students) {
       if (!s.cccd || !s.name) continue;
-      const existing = await prisma.student.findUnique({ where: { cccd: String(s.cccd) } });
+      let cccdStr = String(s.cccd).trim();
+      // Smart padding: CCCD has 12 digits, often starts with 0. CMT has 9 digits.
+      // If it's 10 or 11 digits, it's definitely a CCCD that lost its leading zero(s) in Excel.
+      if (/^\d+$/.test(cccdStr) && cccdStr.length >= 10 && cccdStr.length < 12) {
+        cccdStr = cccdStr.padStart(12, '0');
+      }
+      
+      let existing = await prisma.student.findUnique({ where: { cccd: cccdStr } });
       const courseId = s.courseId ? Number(s.courseId) : null;
       let teacherId = null;
       if (s.teacherUsername) {
@@ -1506,19 +1513,27 @@ router.post('/scores/import', async (req, res) => {
 
   for (const row of scores) {
     try {
-      const { cccd, courseName, testTypeName, remainingScore, errorsText, status } = row;
+      let { cccd, courseName, testTypeName, remainingScore, errorsText, status } = row;
       
       if (!cccd || !courseName || !testTypeName) {
         logs.push({ status: 'error', message: 'Thiếu CCCD, Khóa đào tạo hoặc Trạm thi', row });
         continue;
       }
-
-      // Check student & course
-      const student = await prisma.student.findFirst({
-        where: { cccd }
+      
+      let cccdStr = String(cccd).trim();
+      
+      // Smart padding for CCCD (12 digits). If 10-11 digits, it lost leading zeros in Excel.
+      if (/^\d+$/.test(cccdStr) && cccdStr.length >= 10 && cccdStr.length < 12) {
+         cccdStr = cccdStr.padStart(12, '0');
+      }
+      
+      // Check student
+      let student = await prisma.student.findFirst({
+        where: { cccd: cccdStr }
       });
+
       if (!student) {
-        logs.push({ status: 'error', message: `CCCD ${cccd} không tồn tại`, row });
+        logs.push({ status: 'error', message: `CCCD ${String(cccd).trim()} không tồn tại`, row });
         continue;
       }
       
