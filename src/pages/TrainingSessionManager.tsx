@@ -52,6 +52,7 @@ const TrainingSessionManager = () => {
   const [trainingShiftId, setTrainingShiftId] = useState('');
   const [vehicles, setVehicles] = useState('');
   const [date, setDate] = useState('');
+  const [examDate, setExamDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [regStartDate, setRegStartDate] = useState('');
@@ -104,6 +105,7 @@ const TrainingSessionManager = () => {
         trainingShiftId, 
         vehicles, 
         date, 
+        examDate: examDate ? new Date(examDate).toISOString() : null,
         startTime, 
         endTime, 
         registrationStartTime: (regStartDate && regStartTime) ? new Date(`${regStartDate}T${regStartTime}`).toISOString() : null,
@@ -129,6 +131,7 @@ const TrainingSessionManager = () => {
     setTrainingShiftId('');
     setVehicles('');
     setDate('');
+    setExamDate('');
     setStartTime('');
     setEndTime('');
     setRegStartDate(''); setRegStartTime('');
@@ -142,6 +145,7 @@ const TrainingSessionManager = () => {
     setTrainingShiftId(s.trainingShiftId.toString());
     setVehicles(s.vehicles || '');
     setDate(s.date ? getLocalDateString(s.date) : '');
+    setExamDate(s.examDate ? getLocalDateString(s.examDate) : '');
     setStartTime(s.startTime || '');
     setEndTime(s.endTime || '');
     
@@ -219,6 +223,7 @@ const TrainingSessionManager = () => {
       'Danh sách xe': s.vehicles || '',
       'Giáo viên đã ĐK': s.registrations ? s.registrations.map((r: any) => `${r.vehicle}: ${r.user?.name || r.user?.email}`).join(', ') : '',
       'Ngày thực hiện': s.date ? formatDateDisplay(s.date) : '',
+      'Ngày thi sát hạch': s.examDate ? formatDateDisplay(s.examDate) : '',
       'Thời gian': s.startTime && s.endTime ? `${s.startTime} - ${s.endTime}` : ''
     }));
     
@@ -290,6 +295,7 @@ const TrainingSessionManager = () => {
                 <tr>
                   <th style={{ width: '60px' }}>STT</th>
                   <th>Ngày thực hiện</th>
+                  <th>Ngày sát hạch</th>
                   <th>Sân tập</th>
                   <th>Ca tập</th>
                   <th>Danh sách Xe</th>
@@ -312,6 +318,16 @@ const TrainingSessionManager = () => {
                           <Clock size={14} className="text-muted" />
                           <span>{s.startTime || '?'} - {s.endTime || '?'}</span>
                         </div>
+                      )}
+                    </td>
+                    <td>
+                      {s.examDate ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <Calendar size={16} className="text-primary" />
+                          <span style={{ fontWeight: 500 }}>{formatDateDisplay(s.examDate)}</span>
+                        </div>
+                      ) : (
+                        <span className="text-muted" style={{ fontSize: '0.85rem' }}>-</span>
                       )}
                     </td>
                     <td>
@@ -436,7 +452,7 @@ const TrainingSessionManager = () => {
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={6} className="text-center text-muted" style={{ padding: '2rem' }}>
+                    <td colSpan={9} className="text-center text-muted" style={{ padding: '2rem' }}>
                       Chưa có Đợt tập xe nào phù hợp.
                     </td>
                   </tr>
@@ -529,7 +545,7 @@ const TrainingSessionManager = () => {
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-              <div className="form-group" style={{ flex: '2 1 300px' }}>
+              <div className="form-group" style={{ flex: '2 1 280px' }}>
                 <label>Danh sách Xe (cách nhau bằng dấu phẩy)</label>
                 <input 
                   type="text" 
@@ -540,7 +556,7 @@ const TrainingSessionManager = () => {
                   required 
                 />
               </div>
-              <div className="form-group" style={{ flex: '1 1 200px' }}>
+              <div className="form-group" style={{ flex: '1 1 180px' }}>
                 <label>Ngày thực hiện</label>
                 <input 
                   type="date" 
@@ -548,6 +564,15 @@ const TrainingSessionManager = () => {
                   value={date} 
                   onChange={e => setDate(e.target.value)} 
                   required 
+                />
+              </div>
+              <div className="form-group" style={{ flex: '1 1 180px' }}>
+                <label>Ngày thi sát hạch (Tuỳ chọn)</label>
+                <input 
+                  type="date" 
+                  className="form-control" 
+                  value={examDate} 
+                  onChange={e => setExamDate(e.target.value)} 
                 />
               </div>
             </div>

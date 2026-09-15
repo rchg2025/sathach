@@ -246,6 +246,7 @@ model TrainingSession {
   trainingShift         TrainingShift          @relation(fields: [trainingShiftId], references: [id])
   vehicles              String         
   date                  DateTime
+  examDate              DateTime?
   startTime             String?
   endTime               String?
   registrationStartTime DateTime?

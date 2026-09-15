@@ -88,6 +88,34 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: msg });
     }
 
+    // 2.2. Kiểm tra giới hạn: Nếu đợt tập có Ngày thi sát hạch, mỗi tài khoản chỉ được đăng ký tối đa 2 lần cho các đợt có cùng Ngày sát hạch
+    if (session.examDate) {
+      const startOfExamDay = new Date(session.examDate);
+      startOfExamDay.setHours(0, 0, 0, 0);
+      const endOfExamDay = new Date(session.examDate);
+      endOfExamDay.setHours(23, 59, 59, 999);
+
+      const countSameExamDate = await prisma.trainingRegistration.count({
+        where: {
+          userId: Number(userId),
+          trainingSession: {
+            examDate: {
+              gte: startOfExamDay,
+              lte: endOfExamDay
+            }
+          }
+        }
+      });
+
+      if (countSameExamDate >= 2) {
+        const formattedExamDate = new Date(session.examDate).toLocaleDateString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+        const msg = isAdminAction
+          ? `Tài khoản này đã đăng ký đủ 2 lần cho các đợt tập có cùng Ngày thi sát hạch (${formattedExamDate}). Tối đa chỉ được 2 lần!`
+          : `Bạn đã đăng ký tối đa 2 lần cho các đợt tập có cùng Ngày thi sát hạch (${formattedExamDate})!`;
+        return res.status(400).json({ error: msg });
+      }
+    }
+
     // 3. Kiểm tra xem xe này có trong danh sách xe của session không
     const vehiclesArr = session.vehicles.split(',').map((v: string) => v.trim()).filter((v: string) => v);
     if (!vehiclesArr.includes(vehicle)) {
@@ -127,6 +155,14 @@ router.delete('/:id', async (req, res) => {
     
     if (reg.userId !== Number(userId) && !isAdmin) {
       return res.status(403).json({ error: 'Không có quyền hủy' });
+    }
+
+    // Kiểm tra giới hạn 10 phút sau khi đăng ký (chỉ áp dụng cho người dùng thông thường, admin vẫn có thể hủy)
+    if (!isAdmin) {
+      const diffMinutes = (Date.now() - new Date(reg.createdAt).getTime()) / (1000 * 60);
+      if (diffMinutes > 10) {
+        return res.status(400).json({ error: 'Đã quá 10 phút kể từ thời điểm đăng ký, không thể hủy xe!' });
+      }
     }
     
     await prisma.trainingRegistration.delete({ where: { id } });

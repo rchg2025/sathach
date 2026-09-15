@@ -20,7 +20,7 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-  const { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime, registrationStartTime, registrationEndTime } = req.body;
+  const { trainingGroundId, trainingShiftId, vehicles, date, examDate, startTime, endTime, registrationStartTime, registrationEndTime } = req.body;
   try {
     const session = await prisma.trainingSession.create({
       data: { 
@@ -28,6 +28,7 @@ router.post('/', async (req, res) => {
         trainingShiftId: Number(trainingShiftId), 
         vehicles, 
         date: new Date(date),
+        examDate: examDate ? new Date(examDate) : null,
         startTime,
         endTime,
         registrationStartTime: registrationStartTime ? new Date(registrationStartTime) : null,
@@ -40,7 +41,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { trainingGroundId, trainingShiftId, vehicles, date, startTime, endTime, registrationStartTime, registrationEndTime } = req.body;
+  const { trainingGroundId, trainingShiftId, vehicles, date, examDate, startTime, endTime, registrationStartTime, registrationEndTime } = req.body;
   try {
     const session = await prisma.trainingSession.update({
       where: { id: Number(id) },
@@ -49,6 +50,7 @@ router.put('/:id', async (req, res) => {
         trainingShiftId: Number(trainingShiftId), 
         vehicles, 
         date: new Date(date),
+        examDate: examDate ? new Date(examDate) : null,
         startTime,
         endTime,
         registrationStartTime: registrationStartTime ? new Date(registrationStartTime) : null,

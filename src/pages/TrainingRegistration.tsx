@@ -549,6 +549,13 @@ const TrainingRegistration = () => {
                               <span>{formatDateDisplay(session.date)}</span>
                             </div>
                             
+                            {session.examDate && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '3px 10px', borderRadius: '6px', fontSize: '0.85rem' }}>
+                                <Calendar size={15} />
+                                <span>Ngày SH: <strong>{formatDateDisplay(session.examDate)}</strong></span>
+                              </div>
+                            )}
+
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <MapPin size={18} className="text-primary" />
                               <span>{session.trainingGround?.name || 'Chưa xác định'}</span>
@@ -679,6 +686,11 @@ const TrainingRegistration = () => {
                     }
                   }
 
+                  const regTime = reg.createdAt ? new Date(reg.createdAt) : null;
+                  const diffMinutes = regTime ? (now.getTime() - regTime.getTime()) / (1000 * 60) : 999;
+                  const isOver10Min = diffMinutes > 10;
+                  const canCancel = !isClosed && !isOver10Min;
+
                   return (
                   <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', flex: 1 }}>
@@ -688,6 +700,11 @@ const TrainingRegistration = () => {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                           <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
                         </div>
+                        {reg.trainingSession?.examDate && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#0369a1' }}>
+                            <Calendar size={14} /> Ngày SH: <strong>{formatDateDisplay(reg.trainingSession.examDate)}</strong>
+                          </div>
+                        )}
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                           <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
                         </div>
@@ -699,19 +716,27 @@ const TrainingRegistration = () => {
                             </span>
                           )}
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#374151' }}>
+                          <Clock size={14} className="text-primary" />
+                          <span>ĐK lúc: <strong>{formatDateTimeDisplay(reg.createdAt)}</strong></span>
+                        </div>
                       </div>
                     </div>
                     
-                    <div style={{ marginLeft: '0.5rem' }}>
-                      {!isClosed && (
+                    <div style={{ marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      {canCancel ? (
                         <button 
                           onClick={() => handleCancelRegistration(reg.id)}
                           className="action-btn"
                           style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
-                          title="Hủy đăng ký"
+                          title="Hủy đăng ký (Chỉ được hủy trong vòng 10 phút kể từ lúc đăng ký)"
                         >
                           <XCircle size={16} />
                         </button>
+                      ) : (
+                        isOver10Min && !isClosed && (
+                          <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>Quá 10p</span>
+                        )
                       )}
                     </div>
                   </div>
