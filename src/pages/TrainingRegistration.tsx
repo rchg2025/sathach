@@ -151,10 +151,17 @@ const TrainingRegistration = () => {
   }, []);
 
   const handleRegister = (sessionId: number, vehicle: string) => {
+    const targetSession = sessions.find(s => s.id === sessionId);
+    const alreadyRegistered = targetSession?.registrations?.some((r: any) => r.userId === user.id);
+    if (alreadyRegistered) {
+      toast.error('Bạn đã đăng ký xe trong ca tập này rồi. Mỗi tài khoản chỉ được đăng ký tối đa 1 xe trên cùng 1 ca!');
+      return;
+    }
+
     setConfirmDialog({
       isOpen: true,
       title: 'Xác nhận đăng ký',
-      message: `Bạn có chắc chắn muốn đăng ký ${vehicle} không?\nLưu ý: Mỗi tài khoản chỉ được đăng ký 1 xe trong cùng một ngày.`,
+      message: `Bạn có chắc chắn muốn đăng ký ${vehicle} không?\nLưu ý: Mỗi tài khoản chỉ được đăng ký 1 xe trên cùng một ca tập.`,
       onConfirm: async () => {
         setConfirmDialog(prev => ({ ...prev, isOpen: false }));
         try {

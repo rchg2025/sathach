@@ -57,7 +57,7 @@ router.post('/register', async (req, res) => {
       }
     }
 
-    // 2. Kiểm tra giới hạn 1 xe/ngày
+    // 2. Kiểm tra giới hạn: Mỗi tài khoản chỉ được đăng ký tối đa 1 xe trên cùng 1 ca tập
     const startOfDay = new Date(session.date);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(session.date);
@@ -66,17 +66,26 @@ router.post('/register', async (req, res) => {
     const existingRegistration = await prisma.trainingRegistration.findFirst({
       where: {
         userId: Number(userId),
-        trainingSession: {
-          date: {
-            gte: startOfDay,
-            lte: endOfDay
+        OR: [
+          { trainingSessionId: Number(trainingSessionId) },
+          {
+            trainingSession: {
+              trainingShiftId: session.trainingShiftId,
+              date: {
+                gte: startOfDay,
+                lte: endOfDay
+              }
+            }
           }
-        }
+        ]
       }
     });
 
     if (existingRegistration) {
-      return res.status(400).json({ error: 'Bạn đã đăng ký 1 xe trong ngày này rồi. Mỗi tài khoản chỉ được đăng ký tối đa 1 xe mỗi ngày!' });
+      const msg = isAdminAction
+        ? 'Tài khoản này đã đăng ký xe trong ca tập này rồi. Mỗi tài khoản chỉ được đăng ký tối đa 1 xe trên cùng 1 ca!'
+        : 'Bạn đã đăng ký xe trong ca tập này rồi. Mỗi tài khoản chỉ được đăng ký tối đa 1 xe trên cùng 1 ca!';
+      return res.status(400).json({ error: msg });
     }
 
     // 3. Kiểm tra xem xe này có trong danh sách xe của session không
