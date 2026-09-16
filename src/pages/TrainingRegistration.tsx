@@ -74,6 +74,9 @@ const TrainingRegistration = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Tab for Xe đã đăng ký (UPCOMING: Đợt sắp thi sát hạch, PAST: Đợt đã sát hạch)
+  const [regTab, setRegTab] = useState<'UPCOMING' | 'PAST'>('UPCOMING');
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filterFromDate, filterToDate, filterUserId, filterGround, viewMode]);
@@ -116,6 +119,35 @@ const TrainingRegistration = () => {
         const sessionDate = new Date(session.date);
         sessionDate.setHours(0, 0, 0, 0);
         return sessionDate.getTime() >= today.getTime();
+      });
+
+      // Sắp xếp các ca đã đóng (hết suất hoặc hết giờ) xuống dưới cùng
+      const now = new Date();
+      upcomingSessions.sort((a: any, b: any) => {
+        const closeTimeA = a.registrationEndTime ? new Date(a.registrationEndTime) : null;
+        const closeTimeB = b.registrationEndTime ? new Date(b.registrationEndTime) : null;
+
+        const vehiclesA = (a.vehicles || '').split(',').map((v: string) => v.trim()).filter(Boolean);
+        const regsA = a.registrations || [];
+        const isFullA = vehiclesA.length > 0 && vehiclesA.every((v: string) => regsA.some((r: any) => r.vehicle === v));
+        const isTimeExpiredA = closeTimeA ? now > closeTimeA : false;
+        const isClosedA = isTimeExpiredA || isFullA;
+
+        const vehiclesB = (b.vehicles || '').split(',').map((v: string) => v.trim()).filter(Boolean);
+        const regsB = b.registrations || [];
+        const isFullB = vehiclesB.length > 0 && vehiclesB.every((v: string) => regsB.some((r: any) => r.vehicle === v));
+        const isTimeExpiredB = closeTimeB ? now > closeTimeB : false;
+        const isClosedB = isTimeExpiredB || isFullB;
+
+        if (isClosedA !== isClosedB) {
+          return isClosedA ? 1 : -1;
+        }
+
+        // Cùng trạng thái thì sắp xếp theo ngày tập tăng dần
+        const dateA = new Date(a.date).getTime();
+        const dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateA - dateB;
+        return (a.id || 0) - (b.id || 0);
       });
 
       setSessions(upcomingSessions);
@@ -792,9 +824,9 @@ const TrainingRegistration = () => {
                       <div key={session.id} className="bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
                         <div style={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
                           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', color: '#1f2937', fontWeight: 500 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <Calendar size={18} className="text-primary" />
-                              <span>{formatDateDisplay(session.date)}</span>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '6px', fontSize: '0.9rem', border: '1px solid #fde68a' }}>
+                              <Calendar size={18} className="text-amber-700" />
+                              <span>Ngày đăng ký tập: <strong style={{ color: '#b45309' }}>{formatDateDisplay(session.date)}</strong></span>
                             </div>
                             
                             {session.examDate && (
@@ -932,97 +964,198 @@ const TrainingRegistration = () => {
         {/* Right side: My registrations */}
         <div className="md:col-span-1">
           <div className="card sticky top-4">
-            <h3 className="mb-4 flex items-center gap-2">
-              <CheckCircle size={20} className="text-success" />
-              Xe đã đăng ký
-            </h3>
-            
-            {myRegistrations.length === 0 ? (
-              <p className="text-sm text-muted">Bạn chưa đăng ký xe nào.</p>
-            ) : (
-              <div className="registered-vehicle-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {myRegistrations.map(reg => {
-                  const now = new Date();
-                  const closeTime = reg.trainingSession?.registrationEndTime ? new Date(reg.trainingSession.registrationEndTime) : null;
-                  
-                  let isClosed = false;
-                  if (closeTime) {
-                    isClosed = now > closeTime;
-                  } else if (reg.trainingSession?.date) {
-                    const sessionDate = new Date(reg.trainingSession.date);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    sessionDate.setHours(0, 0, 0, 0);
-                    if (sessionDate.getTime() < today.getTime()) {
-                      isClosed = true;
-                    }
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <h3 className="flex items-center gap-2 m-0 text-base font-semibold">
+                <CheckCircle size={20} className="text-success" />
+                Xe đã đăng ký
+              </h3>
+              {(() => {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const currentTabRegs = myRegistrations.filter((r: any) => {
+                  const examDate = r.trainingSession?.examDate ? new Date(r.trainingSession.examDate) : null;
+                  if (examDate) examDate.setHours(0, 0, 0, 0);
+                  if (regTab === 'UPCOMING') {
+                    return !examDate || examDate.getTime() >= today.getTime();
+                  } else {
+                    return examDate && examDate.getTime() < today.getTime();
                   }
+                });
 
-                  const regTime = reg.createdAt ? new Date(reg.createdAt) : null;
-                  const diffMinutes = regTime ? (now.getTime() - regTime.getTime()) / (1000 * 60) : 999;
-                  const isOver10Min = diffMinutes > 10;
-                  const canCancel = !isClosed && !isOver10Min;
+                if (currentTabRegs.length === 0) return null;
 
-                  return (
-                  <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', flex: 1 }}>
-                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)', minWidth: '60px' }}>{reg.vehicle}</span>
-                      
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                          <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
-                        </div>
-                        {reg.trainingSession?.examDate && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#0369a1' }}>
-                            <Calendar size={14} /> Ngày SH: <strong>{formatDateDisplay(reg.trainingSession.examDate)}</strong>
+                return (
+                  <button
+                    onClick={() => {
+                      const toPrint = currentTabRegs.slice(0, 2).map((r: any) => ({
+                        ...r,
+                        user,
+                        session: r.trainingSession
+                      }));
+                      handlePrintTickets(toPrint);
+                    }}
+                    className="btn btn-outline-primary"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.375rem',
+                      padding: '0.35rem 0.65rem',
+                      fontSize: '0.8rem',
+                      borderRadius: '6px'
+                    }}
+                    title="In tối đa 2 phiếu đăng ký trên 1 lần in"
+                  >
+                    <Printer size={15} /> In phiếu đăng ký
+                  </button>
+                );
+              })()}
+            </div>
+
+            {/* Tabs for Xe đã đăng ký */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              <button
+                onClick={() => setRegTab('UPCOMING')}
+                style={{
+                  flex: 1,
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: regTab === 'UPCOMING' ? 'var(--primary)' : '#f1f5f9',
+                  color: regTab === 'UPCOMING' ? '#ffffff' : '#64748b',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Đợt sắp thi sát hạch
+              </button>
+              <button
+                onClick={() => setRegTab('PAST')}
+                style={{
+                  flex: 1,
+                  padding: '6px 10px',
+                  borderRadius: '6px',
+                  fontSize: '0.825rem',
+                  fontWeight: 600,
+                  border: 'none',
+                  cursor: 'pointer',
+                  backgroundColor: regTab === 'PAST' ? 'var(--primary)' : '#f1f5f9',
+                  color: regTab === 'PAST' ? '#ffffff' : '#64748b',
+                  transition: 'all 0.2s'
+                }}
+              >
+                Đợt đã sát hạch
+              </button>
+            </div>
+
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const filteredList = myRegistrations.filter((r: any) => {
+                const examDate = r.trainingSession?.examDate ? new Date(r.trainingSession.examDate) : null;
+                if (examDate) examDate.setHours(0, 0, 0, 0);
+                if (regTab === 'UPCOMING') {
+                  return !examDate || examDate.getTime() >= today.getTime();
+                } else {
+                  return examDate && examDate.getTime() < today.getTime();
+                }
+              });
+
+              if (filteredList.length === 0) {
+                return (
+                  <p className="text-sm text-muted">
+                    {regTab === 'UPCOMING'
+                      ? 'Không có xe nào thuộc đợt sắp thi sát hạch.'
+                      : 'Không có xe nào thuộc đợt đã qua sát hạch.'}
+                  </p>
+                );
+              }
+
+              return (
+                <div className="registered-vehicle-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {filteredList.map(reg => {
+                    const now = new Date();
+                    const closeTime = reg.trainingSession?.registrationEndTime ? new Date(reg.trainingSession.registrationEndTime) : null;
+                    
+                    let isClosed = false;
+                    if (closeTime) {
+                      isClosed = now > closeTime;
+                    } else if (reg.trainingSession?.date) {
+                      const sessionDate = new Date(reg.trainingSession.date);
+                      sessionDate.setHours(0, 0, 0, 0);
+                      if (sessionDate.getTime() < today.getTime()) {
+                        isClosed = true;
+                      }
+                    }
+
+                    const regTime = reg.createdAt ? new Date(reg.createdAt) : null;
+                    const diffMinutes = regTime ? (now.getTime() - regTime.getTime()) / (1000 * 60) : 999;
+                    const isOver10Min = diffMinutes > 10;
+                    const canCancel = !isClosed && !isOver10Min;
+
+                    return (
+                      <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', alignItems: 'center', flex: 1 }}>
+                          <span style={{ fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--primary)', minWidth: '60px' }}>{reg.vehicle}</span>
+                          
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                              <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
+                            </div>
+                            {reg.trainingSession?.examDate && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#0369a1' }}>
+                                <Calendar size={14} /> Ngày SH: <strong>{formatDateDisplay(reg.trainingSession.examDate)}</strong>
+                              </div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                              <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+                              <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
+                              {(reg.trainingSession?.startTime || reg.trainingSession?.endTime) && (
+                                <span style={{ marginLeft: '4px' }}>
+                                  ({reg.trainingSession?.startTime || '?'} - {reg.trainingSession?.endTime || '?'})
+                                </span>
+                              )}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#374151' }}>
+                              <Clock size={14} className="text-primary" />
+                              <span>ĐK lúc: <strong>{formatDateTimeDisplay(reg.createdAt)}</strong></span>
+                            </div>
                           </div>
-                        )}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                          <MapPin size={14} /> {reg.trainingSession?.trainingGround?.name}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                          <Clock size={14} /> {reg.trainingSession?.trainingShift?.name}
-                          {(reg.trainingSession?.startTime || reg.trainingSession?.endTime) && (
-                            <span style={{ marginLeft: '4px' }}>
-                              ({reg.trainingSession?.startTime || '?'} - {reg.trainingSession?.endTime || '?'})
-                            </span>
+                        
+                        <div style={{ marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <button 
+                            onClick={() => handlePrintTickets([{ ...reg, user, session: reg.trainingSession }])}
+                            className="action-btn text-primary"
+                            style={{ backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
+                            title="In phiếu đăng ký"
+                          >
+                            <Printer size={16} />
+                          </button>
+                          {canCancel ? (
+                            <button 
+                              onClick={() => handleCancelRegistration(reg.id)}
+                              className="action-btn"
+                              style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
+                              title="Hủy đăng ký (Chỉ được hủy trong vòng 10 phút kể từ lúc đăng ký)"
+                            >
+                              <XCircle size={16} />
+                            </button>
+                          ) : (
+                            isOver10Min && !isClosed && (
+                              <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>Quá 10p</span>
+                            )
                           )}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#374151' }}>
-                          <Clock size={14} className="text-primary" />
-                          <span>ĐK lúc: <strong>{formatDateTimeDisplay(reg.createdAt)}</strong></span>
-                        </div>
                       </div>
-                    </div>
-                    
-                    <div style={{ marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      <button 
-                        onClick={() => handlePrintTickets([{ ...reg, user, session: reg.trainingSession }])}
-                        className="action-btn text-primary"
-                        style={{ backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
-                        title="In phiếu đăng ký"
-                      >
-                        <Printer size={16} />
-                      </button>
-                      {canCancel ? (
-                        <button 
-                          onClick={() => handleCancelRegistration(reg.id)}
-                          className="action-btn"
-                          style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
-                          title="Hủy đăng ký (Chỉ được hủy trong vòng 10 phút kể từ lúc đăng ký)"
-                        >
-                          <XCircle size={16} />
-                        </button>
-                      ) : (
-                        isOver10Min && !isClosed && (
-                          <span style={{ fontSize: '0.75rem', color: '#9ca3af', fontStyle: 'italic' }}>Quá 10p</span>
-                        )
-                      )}
-                    </div>
-                  </div>
-                )})}
-              </div>
-            )}
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

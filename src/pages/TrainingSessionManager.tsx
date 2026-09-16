@@ -394,12 +394,23 @@ const TrainingSessionManager = () => {
                         const dateStr = s.date ? getLocalDateString(s.date) : '';
                         const todayStr = new Date().toLocaleDateString('en-CA');
                         const isPast = dateStr !== '' && dateStr < todayStr;
-                        
+                        const vehicles = (s.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
+                        const regs = s.registrations || [];
+                        const isFull = vehicles.length > 0 && vehicles.every((v: string) => regs.some((r: any) => r.vehicle === v));
+
                         let isOpen = true;
                         let isUpcoming = false;
-                        if (openTime && now < openTime) { isOpen = false; isUpcoming = true; }
-                        else if (closeTime && now > closeTime) { isOpen = false; }
-                        if (isPast) { isOpen = false; isUpcoming = false; }
+                        let isFullClosed = false;
+                        if (openTime && now < openTime) { 
+                          isOpen = false; 
+                          isUpcoming = true; 
+                        } else if (closeTime && now > closeTime) { 
+                          isOpen = false; 
+                        } else if (isFull) {
+                          isOpen = false;
+                          isFullClosed = true;
+                        }
+                        if (isPast) { isOpen = false; isUpcoming = false; isFullClosed = false; }
                         
                         return (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -430,14 +441,14 @@ const TrainingSessionManager = () => {
                                   });
                                 }}
                               />
-                              <span style={{ position: 'absolute', cursor: isPast ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isOpen ? '#4ade80' : (isPast ? '#ef4444' : (isUpcoming ? '#fbbf24' : '#ccc')), transition: '.4s', borderRadius: '34px' }}
+                              <span style={{ position: 'absolute', cursor: isPast ? 'not-allowed' : 'pointer', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: isOpen ? '#4ade80' : (isPast ? '#ef4444' : (isUpcoming ? '#fbbf24' : (isFullClosed ? '#f87171' : '#ccc'))), transition: '.4s', borderRadius: '34px' }}
                                 className="slider round"
                               >
                                 <span style={{ position: 'absolute', content: '""', height: '16px', width: '16px', left: '3px', bottom: '3px', backgroundColor: 'white', transition: '.4s', borderRadius: '50%', transform: isOpen ? 'translateX(18px)' : 'translateX(0)' }}></span>
                               </span>
                             </label>
-                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isPast ? '#ef4444' : (isOpen ? '#16a34a' : (isUpcoming ? '#d97706' : '#6b7280')) }}>
-                              {isPast ? 'Đã khoá' : (isOpen ? 'Đang mở' : (isUpcoming ? 'Sắp mở' : 'Đã đóng'))}
+                            <span style={{ fontSize: '0.85rem', fontWeight: 500, color: isPast ? '#ef4444' : (isOpen ? '#16a34a' : (isUpcoming ? '#d97706' : (isFullClosed ? '#dc2626' : '#6b7280'))) }}>
+                              {isPast ? 'Đã khoá' : (isOpen ? 'Đang mở' : (isUpcoming ? 'Sắp mở' : (isFullClosed ? 'Đóng (Hết suất)' : 'Đã đóng')))}
                             </span>
                           </div>
                         );
