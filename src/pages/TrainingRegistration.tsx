@@ -6,7 +6,8 @@ import { formatDateTimeDisplay } from "../utils/dateUtils";
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw, User } from 'lucide-react';
+import { removeAccents } from '../utils/stringUtils';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import { useLocation } from 'react-router-dom';
@@ -564,21 +565,47 @@ const TrainingRegistration = () => {
                 />
               </div>
 
-              <div style={{ flex: '1 1 200px', minWidth: '180px', position: 'relative' }}>
-                <User size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <select
-                  className="form-control"
-                  style={{ paddingLeft: '32px' }}
-                  value={filterUserId}
-                  onChange={(e) => setFilterUserId(e.target.value)}
-                >
-                  <option value="">Tất cả người dùng</option>
-                  {userOptions.map((u: any) => (
-                    <option key={u.id} value={u.id}>
-                      {u.name || u.username} {u.phone ? `(${u.phone})` : ''}
-                    </option>
-                  ))}
-                </select>
+              <div style={{ flex: '1 1 240px', minWidth: '220px' }}>
+                <Select
+                  options={[
+                    { value: '', label: 'Tất cả người dùng' },
+                    ...userOptions.map((u: any) => ({
+                      value: String(u.id),
+                      label: `${u.name || u.username} ${u.phone ? `(${u.phone})` : ''}`.trim()
+                    }))
+                  ]}
+                  value={
+                    filterUserId
+                      ? {
+                          value: String(filterUserId),
+                          label: (() => {
+                            const u = userOptions.find((o: any) => String(o.id) === String(filterUserId));
+                            return u ? `${u.name || u.username} ${u.phone ? `(${u.phone})` : ''}`.trim() : 'Người dùng đã chọn';
+                          })()
+                        }
+                      : { value: '', label: 'Tất cả người dùng' }
+                  }
+                  onChange={(val: any) => setFilterUserId(val?.value || '')}
+                  placeholder="Tìm người dùng..."
+                  isClearable
+                  filterOption={(candidate, input) => {
+                    if (!input) return true;
+                    return removeAccents(candidate.label).includes(removeAccents(input));
+                  }}
+                  styles={{
+                    control: (base) => ({
+                      ...base,
+                      minHeight: '38px',
+                      borderRadius: '6px',
+                      borderColor: '#cbd5e1',
+                      fontSize: '0.9rem'
+                    }),
+                    menu: (base) => ({
+                      ...base,
+                      zIndex: 9999
+                    })
+                  }}
+                />
               </div>
 
               <div style={{ width: '180px', position: 'relative' }}>
