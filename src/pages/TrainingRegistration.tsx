@@ -7,7 +7,7 @@ import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
 import { removeAccents } from '../utils/stringUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import { useLocation } from 'react-router-dom';
@@ -761,22 +761,33 @@ const TrainingRegistration = () => {
                     const now = new Date();
                     const openTime = session.registrationStartTime ? new Date(session.registrationStartTime) : null;
                     const closeTime = session.registrationEndTime ? new Date(session.registrationEndTime) : null;
-                    
-                    let status = 'OPEN';
-                    let statusText: React.ReactNode = 'Đang mở đăng ký';
-                    if (openTime && now < openTime) {
-                      status = 'UPCOMING';
-                      statusText = <CountdownTimer targetDate={openTime} />;
-                    } else if (closeTime && now > closeTime) {
-                      status = 'CLOSED';
-                      statusText = 'Đã đóng đăng ký';
-                    }
 
                     const vehicles = (session.vehicles || '').split(',').map((v: string) => v.trim()).filter((v: string) => v);
                     const registrations = session.registrations || [];
 
                     if (vehicles.length === 0) return null;
 
+                    const isFull = vehicles.length > 0 && vehicles.every((v: string) => registrations.some((r: any) => r.vehicle === v));
+                    const isTimeExpired = closeTime ? now > closeTime : false;
+                    const isUpcoming = openTime ? now < openTime : false;
+
+                    let status = 'OPEN';
+                    let statusText: React.ReactNode = 'Đang mở đăng ký';
+                    let reasonMessage = '';
+
+                    if (isUpcoming) {
+                      status = 'UPCOMING';
+                      statusText = <CountdownTimer targetDate={openTime!} />;
+                    } else if (isTimeExpired) {
+                      status = 'CLOSED';
+                      statusText = 'Đóng đăng ký';
+                      reasonMessage = 'Đóng do hết thời gian đăng ký, nếu người dùng chưa đăng ký vui lòng liên hệ bộ phận quản lý để được phân bổ xe.';
+                    } else if (isFull) {
+                      status = 'CLOSED';
+                      statusText = 'Đóng đăng ký';
+                      reasonMessage = 'Đóng đăng ký do hết suất đăng ký.';
+                    }
+                    
                     return (
                       <div key={session.id} className="bg-white rounded-xl shadow-sm border overflow-hidden transition-all hover:shadow-md">
                         <div style={{ backgroundColor: 'rgba(249, 250, 251, 0.8)', padding: '1rem', borderBottom: '1px solid #e5e7eb', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
@@ -831,11 +842,35 @@ const TrainingRegistration = () => {
                                 <Map size={16} /> Xem bản đồ
                               </a>
                             )}
-                            <span className="vehicle-card-badge m-0" style={{ backgroundColor: status === 'OPEN' ? '#e6f4ea' : status === 'UPCOMING' ? '#fef7e0' : '#f1f3f4', color: status === 'OPEN' ? '#137333' : status === 'UPCOMING' ? '#b06000' : '#3c4043', padding: '6px 12px', fontSize: '13px', borderRadius: '6px' }}>
+                            <span className="vehicle-card-badge m-0" style={{ 
+                              backgroundColor: status === 'OPEN' ? '#e6f4ea' : status === 'UPCOMING' ? '#fef7e0' : '#fee2e2', 
+                              color: status === 'OPEN' ? '#137333' : status === 'UPCOMING' ? '#b06000' : '#dc2626', 
+                              padding: '6px 12px', 
+                              fontSize: '13px', 
+                              fontWeight: 600,
+                              borderRadius: '6px' 
+                            }}>
                               {statusText}
                             </span>
                           </div>
                         </div>
+
+                        {reasonMessage && (
+                          <div style={{
+                            backgroundColor: isTimeExpired ? '#fffbeb' : '#fef2f2',
+                            borderBottom: '1px solid ' + (isTimeExpired ? '#fde68a' : '#fecaca'),
+                            color: isTimeExpired ? '#92400e' : '#b91c1c',
+                            padding: '0.625rem 1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            fontSize: '0.875rem',
+                            fontWeight: 500
+                          }}>
+                            <Info size={16} className="shrink-0" />
+                            <span>{reasonMessage}</span>
+                          </div>
+                        )}
 
                         <div className="p-5">
                           <div className="vehicle-grid">
