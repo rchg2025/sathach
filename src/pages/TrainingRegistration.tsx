@@ -403,7 +403,7 @@ const TrainingRegistration = () => {
             max-height: 89mm !important;
             box-sizing: border-box !important;
             border: 1.5px solid #000 !important;
-            padding: 8px 12px !important;
+            padding: 12px 16px !important;
             font-family: 'Times New Roman', Times, serif !important;
             color: #000 !important;
             background: #fff !important;
@@ -411,7 +411,7 @@ const TrainingRegistration = () => {
             break-inside: avoid !important;
             display: flex !important;
             flex-direction: column !important;
-            justify-content: flex-start !important;
+            justify-content: space-between !important;
           }
           .training-ticket-card:nth-child(2n) {
             margin-right: 0 !important;
@@ -1211,51 +1211,55 @@ const TrainingRegistration = () => {
         {printingRegistrations.map((reg: any) => (
           <div className="training-ticket-card" key={reg.id}>
             {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '4px' }}>
-              <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.2px', lineHeight: '1.2' }}>
-                PHÒNG QUẢN LÝ ĐÀO TẠO
+            <div>
+              <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: '1.2' }}>
+                  PHÒNG QUẢN LÝ ĐÀO TẠO
+                </div>
+                <div style={{ display: 'inline-block', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1px solid #000', paddingBottom: '1px', marginTop: '2px', lineHeight: '1.2' }}>
+                  TRUNG TÂM ĐÀO TẠO LÁI XE
+                </div>
               </div>
-              <div style={{ display: 'inline-block', fontSize: '11.5px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1px solid #000', paddingBottom: '1px', marginTop: '1px', lineHeight: '1.2' }}>
-                TRUNG TÂM ĐÀO TẠO LÁI XE
+
+              {/* Title */}
+              <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '15px', textTransform: 'uppercase', margin: '10px 0 12px', letterSpacing: '0.5px' }}>
+                PHIẾU ĐĂNG KÝ TẬP XE
+              </div>
+
+              {/* Info Table / Details */}
+              <div style={{ fontSize: '13px', lineHeight: '1.7' }}>
+                <div style={{ display: 'flex', marginBottom: '4px' }}>
+                  <span style={{ width: '90px', minWidth: '90px' }}>Họ tên:</span>
+                  <span style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '13.5px' }}>
+                    {reg.user?.name || reg.user?.username || ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', marginBottom: '4px' }}>
+                  <span style={{ width: '90px', minWidth: '90px' }}>Sân tập:</span>
+                  <span>{reg.session?.trainingGround?.name || ''}</span>
+                </div>
+                <div style={{ display: 'flex', marginBottom: '4px' }}>
+                  <span style={{ width: '90px', minWidth: '90px' }}>Ngày tập:</span>
+                  <span style={{ fontWeight: '500' }}>{formatDateDisplay(reg.session?.date)}</span>
+                </div>
+                <div style={{ display: 'flex', marginBottom: '4px' }}>
+                  <span style={{ width: '90px', minWidth: '90px' }}>Ca tập:</span>
+                  <span>
+                    {reg.session?.trainingShift?.name || ''}
+                    {(reg.session?.startTime || reg.session?.endTime) ? ` (${reg.session?.startTime || '?'} - ${reg.session?.endTime || '?'})` : ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', marginBottom: '4px' }}>
+                  <span style={{ width: '90px', minWidth: '90px' }}>Xe đăng ký:</span>
+                  <span style={{ fontWeight: 'bold', fontSize: '14px' }}>{reg.vehicle}</span>
+                </div>
               </div>
             </div>
 
-            {/* Title */}
-            <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14.5px', textTransform: 'uppercase', margin: '5px 0 7px', letterSpacing: '0.3px' }}>
-              PHIẾU ĐĂNG KÝ TẬP XE
-            </div>
-
-            {/* Info Table / Details */}
-            <div style={{ fontSize: '12px', lineHeight: '1.4', flex: 1 }}>
-              <div style={{ display: 'flex', marginBottom: '3px' }}>
-                <span style={{ width: '85px', minWidth: '85px' }}>Họ tên:</span>
-                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12.5px' }}>
-                  {reg.user?.name || reg.user?.username || ''}
-                </span>
-              </div>
-              <div style={{ display: 'flex', marginBottom: '3px' }}>
-                <span style={{ width: '85px', minWidth: '85px' }}>Sân tập:</span>
-                <span>{reg.session?.trainingGround?.name || ''}</span>
-              </div>
-              <div style={{ display: 'flex', marginBottom: '3px' }}>
-                <span style={{ width: '85px', minWidth: '85px' }}>Ngày tập:</span>
-                <span>{formatDateDisplay(reg.session?.date)}</span>
-              </div>
-              <div style={{ display: 'flex', marginBottom: '3px' }}>
-                <span style={{ width: '85px', minWidth: '85px' }}>Ca tập:</span>
-                <span>
-                  {reg.session?.trainingShift?.name || ''}
-                  {(reg.session?.startTime || reg.session?.endTime) ? ` (${reg.session?.startTime || '?'} - ${reg.session?.endTime || '?'})` : ''}
-                </span>
-              </div>
-              <div style={{ display: 'flex', marginBottom: '3px' }}>
-                <span style={{ width: '85px', minWidth: '85px' }}>Xe đăng ký:</span>
-                <span style={{ fontWeight: 'bold' }}>{reg.vehicle}</span>
-              </div>
-              <div style={{ marginTop: '5px', fontSize: '11px' }}>
-                <span>Thời gian xác nhận đăng ký: </span>
-                <span>{formatRegistrationTime(reg.createdAt)}</span>
-              </div>
+            {/* Footer timestamp */}
+            <div style={{ borderTop: '1px dashed #666', paddingTop: '6px', marginTop: '6px', fontSize: '11px', color: '#111' }}>
+              <span>Thời gian xác nhận đăng ký: </span>
+              <strong>{formatRegistrationTime(reg.createdAt)}</strong>
             </div>
           </div>
         ))}
