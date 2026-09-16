@@ -71,7 +71,7 @@ const TrainingRegistration = () => {
   const [printingRegistrations, setPrintingRegistrations] = useState<any[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
   useEffect(() => {
     setCurrentPage(1);
@@ -330,7 +330,77 @@ const TrainingRegistration = () => {
 
   return (
     <AdminLayout user={user}>
-      <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 6mm 5mm;
+          }
+          html, body, #root, .admin-layout, .main-content {
+            background: white !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+          }
+          .no-print,
+          aside,
+          nav,
+          header,
+          .mobile-header,
+          .app-header,
+          .admin-layout > aside,
+          .admin-sidebar {
+            display: none !important;
+          }
+          .training-print-area {
+            display: flex !important;
+            flex-wrap: wrap !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+          }
+          .training-ticket-card {
+            width: 48.5% !important;
+            margin-right: 2% !important;
+            margin-bottom: 4mm !important;
+            height: 89mm !important;
+            max-height: 89mm !important;
+            box-sizing: border-box !important;
+            border: 1.5px solid #000 !important;
+            padding: 8px 12px !important;
+            font-family: 'Times New Roman', Times, serif !important;
+            color: #000 !important;
+            background: #fff !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: flex-start !important;
+          }
+          .training-ticket-card:nth-child(2n) {
+            margin-right: 0 !important;
+          }
+          .training-ticket-card:nth-child(6n) {
+            page-break-after: always !important;
+            break-after: page !important;
+            margin-bottom: 0 !important;
+          }
+          .training-ticket-card:last-child {
+            page-break-after: auto !important;
+            break-after: auto !important;
+          }
+        }
+        @media screen {
+          .training-print-area {
+            display: none !important;
+          }
+        }
+      `}</style>
+      <div className="no-print">
+        <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
         <div>
           <h2 style={{ margin: 0 }}>Đăng ký tập xe</h2>
           <p className="text-muted" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
@@ -592,7 +662,9 @@ const TrainingRegistration = () => {
                     </td>
                   </tr>
                 ) : (
-                  filteredRegistrations.map((reg: any) => (
+                  filteredRegistrations
+                    .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                    .map((reg: any) => (
                     <tr key={reg.id}>
                       <td className="font-medium">{formatDateDisplay(reg.session.date)}</td>
                       <td>{reg.session.trainingShift?.name}</td>
@@ -937,54 +1009,55 @@ const TrainingRegistration = () => {
           </div>
         </div>
       )}
+      </div>
 
-      {/* Print Only Area for Training Registration Tickets (4 tickets per A4) */}
+      {/* Print Only Area for Training Registration Tickets (6 tickets per A4 - 2x3) */}
       <div className="training-print-area">
         {printingRegistrations.map((reg: any) => (
           <div className="training-ticket-card" key={reg.id}>
             {/* Header */}
-            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: '1.4' }}>
+            <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.2px', lineHeight: '1.2' }}>
                 PHÒNG QUẢN LÝ ĐÀO TẠO
               </div>
-              <div style={{ display: 'inline-block', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1.5px solid #000', paddingBottom: '2px', marginTop: '2px', lineHeight: '1.3' }}>
+              <div style={{ display: 'inline-block', fontSize: '11.5px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1px solid #000', paddingBottom: '1px', marginTop: '1px', lineHeight: '1.2' }}>
                 TRUNG TÂM ĐÀO TẠO LÁI XE
               </div>
             </div>
 
             {/* Title */}
-            <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '19px', textTransform: 'uppercase', margin: '14px 0 16px', letterSpacing: '0.5px' }}>
+            <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '14.5px', textTransform: 'uppercase', margin: '5px 0 7px', letterSpacing: '0.3px' }}>
               PHIẾU ĐĂNG KÝ TẬP XE
             </div>
 
             {/* Info Table / Details */}
-            <div style={{ fontSize: '14px', lineHeight: '1.8', flex: 1 }}>
-              <div style={{ display: 'flex', marginBottom: '6px' }}>
-                <span style={{ width: '105px', minWidth: '105px' }}>Họ tên:</span>
-                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '15px' }}>
+            <div style={{ fontSize: '12px', lineHeight: '1.4', flex: 1 }}>
+              <div style={{ display: 'flex', marginBottom: '3px' }}>
+                <span style={{ width: '85px', minWidth: '85px' }}>Họ tên:</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '12.5px' }}>
                   {reg.user?.name || reg.user?.username || ''}
                 </span>
               </div>
-              <div style={{ display: 'flex', marginBottom: '6px' }}>
-                <span style={{ width: '105px', minWidth: '105px' }}>Sân tập:</span>
+              <div style={{ display: 'flex', marginBottom: '3px' }}>
+                <span style={{ width: '85px', minWidth: '85px' }}>Sân tập:</span>
                 <span>{reg.session?.trainingGround?.name || ''}</span>
               </div>
-              <div style={{ display: 'flex', marginBottom: '6px' }}>
-                <span style={{ width: '105px', minWidth: '105px' }}>Ngày tập:</span>
+              <div style={{ display: 'flex', marginBottom: '3px' }}>
+                <span style={{ width: '85px', minWidth: '85px' }}>Ngày tập:</span>
                 <span>{formatDateDisplay(reg.session?.date)}</span>
               </div>
-              <div style={{ display: 'flex', marginBottom: '6px' }}>
-                <span style={{ width: '105px', minWidth: '105px' }}>Ca tập:</span>
+              <div style={{ display: 'flex', marginBottom: '3px' }}>
+                <span style={{ width: '85px', minWidth: '85px' }}>Ca tập:</span>
                 <span>
                   {reg.session?.trainingShift?.name || ''}
                   {(reg.session?.startTime || reg.session?.endTime) ? ` (${reg.session?.startTime || '?'} - ${reg.session?.endTime || '?'})` : ''}
                 </span>
               </div>
-              <div style={{ display: 'flex', marginBottom: '6px' }}>
-                <span style={{ width: '105px', minWidth: '105px' }}>Xe đăng ký:</span>
+              <div style={{ display: 'flex', marginBottom: '3px' }}>
+                <span style={{ width: '85px', minWidth: '85px' }}>Xe đăng ký:</span>
                 <span style={{ fontWeight: 'bold' }}>{reg.vehicle}</span>
               </div>
-              <div style={{ marginTop: '12px', fontSize: '13.5px' }}>
+              <div style={{ marginTop: '5px', fontSize: '11px' }}>
                 <span>Thời gian xác nhận đăng ký: </span>
                 <span>{formatRegistrationTime(reg.createdAt)}</span>
               </div>
