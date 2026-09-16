@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_BASE_URL } from '../config';
-import { formatDateTimeDisplay } from "../utils/dateUtils";
+import { formatDateTimeDisplay, formatDateDisplay, formatDateWithDayOfWeek } from "../utils/dateUtils";
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
-import { formatDateDisplay } from '../utils/dateUtils';
 import { removeAccents } from '../utils/stringUtils';
 import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw, Info } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -849,13 +848,13 @@ const TrainingRegistration = () => {
                           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1.5rem', color: '#1f2937', fontWeight: 500 }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: '#fef3c7', color: '#92400e', padding: '4px 12px', borderRadius: '6px', fontSize: '0.9rem', border: '1px solid #fde68a' }}>
                               <Calendar size={18} className="text-amber-700" />
-                              <span>Ngày đăng ký tập: <strong style={{ color: '#b45309' }}>{formatDateDisplay(session.date)}</strong></span>
+                              <span>Ngày đăng ký tập: <strong style={{ color: '#b45309' }}>{formatDateWithDayOfWeek(session.date)}</strong></span>
                             </div>
                             
                             {session.examDate && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', backgroundColor: '#e0f2fe', color: '#0369a1', padding: '3px 10px', borderRadius: '6px', fontSize: '0.85rem' }}>
                                 <Calendar size={15} />
-                                <span>Ngày SH: <strong>{formatDateDisplay(session.examDate)}</strong></span>
+                                <span>Ngày SH: <strong>{formatDateWithDayOfWeek(session.examDate)}</strong></span>
                               </div>
                             )}
 
@@ -1124,11 +1123,11 @@ const TrainingRegistration = () => {
                           
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
-                              <Calendar size={14} /> {formatDateDisplay(reg.trainingSession?.date)}
+                              <Calendar size={14} /> {formatDateWithDayOfWeek(reg.trainingSession?.date)}
                             </div>
                             {reg.trainingSession?.examDate && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem', color: '#0369a1' }}>
-                                <Calendar size={14} /> Ngày SH: <strong>{formatDateDisplay(reg.trainingSession.examDate)}</strong>
+                                <Calendar size={14} /> Ngày SH: <strong>{formatDateWithDayOfWeek(reg.trainingSession.examDate)}</strong>
                               </div>
                             )}
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
