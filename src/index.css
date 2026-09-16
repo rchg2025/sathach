@@ -938,3 +938,55 @@ input:checked + .toggle-slider:before {
   .app-title { font-size: 1.1rem !important; white-space: nowrap; }
   .header-logo-container { gap: 8px !important; }
 }
+
+/* Print styles for Training Registration Tickets (4 tickets per A4 page) */
+@media screen {
+  .training-print-area {
+    display: none !important;
+  }
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm 6mm;
+  }
+  .training-print-area {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .training-ticket-card {
+    width: 48.5% !important;
+    margin-right: 2% !important;
+    margin-bottom: 6mm !important;
+    height: 133mm !important;
+    max-height: 133mm !important;
+    box-sizing: border-box !important;
+    border: 1.5px solid #000 !important;
+    padding: 16px 18px !important;
+    font-family: 'Times New Roman', Times, serif !important;
+    color: #000 !important;
+    background: #fff !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+  }
+  .training-ticket-card:nth-child(2n) {
+    margin-right: 0 !important;
+  }
+  .training-ticket-card:nth-child(4n) {
+    page-break-after: always !important;
+    break-after: page !important;
+    margin-bottom: 0 !important;
+  }
+  .training-ticket-card:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+}

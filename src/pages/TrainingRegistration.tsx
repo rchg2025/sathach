@@ -6,7 +6,7 @@ import { formatDateTimeDisplay } from "../utils/dateUtils";
 import AdminLayout from '../components/AdminLayout';
 import ConfirmModal from '../components/ConfirmModal';
 import { formatDateDisplay } from '../utils/dateUtils';
-import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Clock, CheckCircle, XCircle, Car, Map, List, Grid, Download, Search, Filter, ClipboardList, Edit, Trash2, Printer, RotateCcw, User } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Select from 'react-select';
 import { useLocation } from 'react-router-dom';
@@ -51,7 +51,6 @@ const CountdownTimer = ({ targetDate }: { targetDate: Date }) => {
 const TrainingRegistration = () => {
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
-  const initialDate = queryParams.get('date') || new Date().toLocaleDateString('en-CA');
   const initialGround = queryParams.get('groundId') || '';
   const initialViewMode = (queryParams.get('view') as 'GRID' | 'LIST' | 'ALLOCATE') || 'GRID';
 
@@ -64,15 +63,19 @@ const TrainingRegistration = () => {
   const [viewMode, setViewMode] = useState<'GRID' | 'LIST' | 'ALLOCATE'>(initialViewMode);
   const [editModal, setEditModal] = useState<any>({ isOpen: false, reg: null, newVehicle: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterDate, setFilterDate] = useState(initialDate);
+  const [filterFromDate, setFilterFromDate] = useState(queryParams.get('fromDate') || queryParams.get('date') || '');
+  const [filterToDate, setFilterToDate] = useState(queryParams.get('toDate') || queryParams.get('date') || '');
+  const [filterUserId, setFilterUserId] = useState(queryParams.get('userId') || '');
   const [filterGround, setFilterGround] = useState(initialGround);
+
+  const [printingRegistrations, setPrintingRegistrations] = useState<any[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, filterDate, filterGround, viewMode]);
+  }, [searchTerm, filterFromDate, filterToDate, filterUserId, filterGround, viewMode]);
 
   // Allocation state
   const [users, setUsers] = useState<any[]>([]);
@@ -136,7 +139,7 @@ const TrainingRegistration = () => {
   };
 
   useEffect(() => {
-    if (viewMode === 'ALLOCATE' && users.length === 0) {
+    if ((viewMode === 'ALLOCATE' || viewMode === 'LIST') && users.length === 0) {
       fetchUsers();
     }
   }, [viewMode]);
@@ -218,6 +221,31 @@ const TrainingRegistration = () => {
     });
   };
 
+  const formatRegistrationTime = (dateInput: any) => {
+    if (!dateInput) return '';
+    const d = new Date(dateInput);
+    if (isNaN(d.getTime())) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const hours = pad(d.getHours());
+    const minutes = pad(d.getMinutes());
+    const seconds = pad(d.getSeconds());
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    return `${hours}:${minutes}:${seconds} ${day}/${month}/${year}`;
+  };
+
+  const handlePrintTickets = (registrationsToPrint: any[]) => {
+    if (!registrationsToPrint || registrationsToPrint.length === 0) {
+      toast.error('Không có dữ liệu đăng ký nào để in');
+      return;
+    }
+    setPrintingRegistrations(registrationsToPrint);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   // Prepare data for Admin LIST view
   const allRegistrations = allSessions.flatMap(session => 
     (session.registrations || []).map((reg: any) => ({
@@ -226,17 +254,60 @@ const TrainingRegistration = () => {
     }))
   );
 
+  const userOptions: any[] = users.length > 0 ? users : Object.values(
+    allRegistrations.reduce((acc: any, r: any) => {
+      if (r.user && !acc[r.user.id]) {
+        acc[r.user.id] = r.user;
+      }
+      return acc;
+    }, {})
+  );
+
   const filteredRegistrations = allRegistrations.filter((reg: any) => {
-    const matchesSearch = reg.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          reg.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          reg.vehicle.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesDate = filterDate ? reg.session.date.startsWith(filterDate) : true;
-    const matchesGround = filterGround ? reg.session.trainingGround?.id.toString() === filterGround : true;
-    return matchesSearch && matchesDate && matchesGround;
+    const userName = (reg.user?.name || '').toLowerCase();
+    const userEmail = (reg.user?.email || '').toLowerCase();
+    const userPhone = (reg.user?.phone || '').toLowerCase();
+    const vehicle = (reg.vehicle || '').toLowerCase();
+    const groundName = (reg.session?.trainingGround?.name || '').toLowerCase();
+    const shiftName = (reg.session?.trainingShift?.name || '').toLowerCase();
+    const searchLower = searchTerm.toLowerCase().trim();
+
+    // 1. Tìm kiếm từ khóa chung (tên, email, sđt, xe, ca, trung tâm)
+    const matchesSearch = !searchLower || 
+                          userName.includes(searchLower) || 
+                          userEmail.includes(searchLower) ||
+                          userPhone.includes(searchLower) ||
+                          vehicle.includes(searchLower) ||
+                          groundName.includes(searchLower) ||
+                          shiftName.includes(searchLower);
+
+    // 2. Bộ lọc tên người dùng / chọn người dùng
+    const matchesUser = !filterUserId || 
+                        reg.userId?.toString() === filterUserId || 
+                        userName.includes(filterUserId.toLowerCase());
+
+    // 3. Khoảng thời gian tập: từ ngày đến ngày
+    let regDateStr = '';
+    if (reg.session?.date) {
+      try {
+        const d = new Date(reg.session.date);
+        const pad = (n: number) => String(n).padStart(2, '0');
+        regDateStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      } catch {
+        regDateStr = (reg.session.date || '').substring(0, 10);
+      }
+    }
+    const matchesFromDate = !filterFromDate || regDateStr >= filterFromDate;
+    const matchesToDate = !filterToDate || regDateStr <= filterToDate;
+
+    // 4. Lọc theo trung tâm
+    const matchesGround = !filterGround || reg.session?.trainingGround?.id?.toString() === filterGround;
+
+    return matchesSearch && matchesUser && matchesFromDate && matchesToDate && matchesGround;
   });
 
   const exportToExcel = () => {
-    const dataToExport = filteredRegistrations.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((reg: any) => ({
+    const dataToExport = filteredRegistrations.map((reg: any) => ({
       'Ngày tập': formatDateDisplay(reg.session.date),
       'Ca tập': reg.session.trainingShift?.name || '',
       'Giờ tập': `${reg.session.startTime || '?'} - ${reg.session.endTime || '?'}`,
@@ -245,7 +316,7 @@ const TrainingRegistration = () => {
       'Họ và tên': reg.user?.name || '',
       'Email': reg.user?.email || '',
       'Số điện thoại': reg.user?.phone || '',
-      'Thời gian đăng ký': new Date(reg.createdAt).toLocaleString()
+      'Thời gian đăng ký': formatRegistrationTime(reg.createdAt)
     }));
 
     const ws = XLSX.utils.json_to_sheet(dataToExport);
@@ -395,40 +466,56 @@ const TrainingRegistration = () => {
           <div style={{ padding: '1.5rem 1.5rem 0' }}>
             <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
               <h3 style={{ margin: 0 }}>Danh sách đăng ký ({filteredRegistrations.length})</h3>
-              <button onClick={exportToExcel} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Download size={16} /> Xuất Excel
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button 
+                  onClick={() => handlePrintTickets(filteredRegistrations)} 
+                  className="btn btn-primary" 
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                  title="In tất cả phiếu đăng ký đang lọc (4 phiếu / trang A4)"
+                >
+                  <Printer size={16} /> In phiếu đăng ký ({filteredRegistrations.length})
+                </button>
+                <button onClick={exportToExcel} className="btn btn-success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Download size={16} /> Xuất Excel
+                </button>
+              </div>
             </div>
 
-            <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: 1, minWidth: '250px', position: 'relative' }}>
-                <Search size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <div style={{ paddingBottom: '1.5rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <div style={{ flex: '1 1 200px', minWidth: '180px', position: 'relative' }}>
+                <Search size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                 <input
                   type="text"
-                  placeholder="Tìm tên, email, tên xe..."
+                  placeholder="Tìm tên, xe, email, sđt..."
                   className="form-control"
-                  style={{ paddingLeft: '35px' }}
+                  style={{ paddingLeft: '32px' }}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              
-              <div style={{ width: '200px', position: 'relative' }}>
-                <Calendar size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input
-                  type="date"
-                  className="form-control"
-                  style={{ paddingLeft: '35px' }}
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                />
-              </div>
-              
-              <div style={{ width: '200px', position: 'relative' }}>
-                <Filter size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+
+              <div style={{ flex: '1 1 200px', minWidth: '180px', position: 'relative' }}>
+                <User size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
                 <select
                   className="form-control"
-                  style={{ paddingLeft: '35px' }}
+                  style={{ paddingLeft: '32px' }}
+                  value={filterUserId}
+                  onChange={(e) => setFilterUserId(e.target.value)}
+                >
+                  <option value="">Tất cả người dùng</option>
+                  {userOptions.map((u: any) => (
+                    <option key={u.id} value={u.id}>
+                      {u.name || u.username} {u.phone ? `(${u.phone})` : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ width: '180px', position: 'relative' }}>
+                <Filter size={16} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <select
+                  className="form-control"
+                  style={{ paddingLeft: '32px' }}
                   value={filterGround}
                   onChange={(e) => setFilterGround(e.target.value)}
                 >
@@ -438,6 +525,47 @@ const TrainingRegistration = () => {
                   ))}
                 </select>
               </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>Từ ngày:</span>
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ width: '145px' }}
+                  value={filterFromDate}
+                  onChange={(e) => setFilterFromDate(e.target.value)}
+                  title="Khoảng thời gian tập: Từ ngày"
+                />
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <span style={{ fontSize: '0.85rem', color: '#64748b', whiteSpace: 'nowrap' }}>Đến ngày:</span>
+                <input
+                  type="date"
+                  className="form-control"
+                  style={{ width: '145px' }}
+                  value={filterToDate}
+                  onChange={(e) => setFilterToDate(e.target.value)}
+                  title="Khoảng thời gian tập: Đến ngày"
+                />
+              </div>
+
+              {(searchTerm || filterUserId || filterGround || filterFromDate || filterToDate) && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', padding: '0.45rem 0.75rem', fontSize: '0.85rem' }}
+                  onClick={() => {
+                    setSearchTerm('');
+                    setFilterUserId('');
+                    setFilterGround('');
+                    setFilterFromDate('');
+                    setFilterToDate('');
+                  }}
+                  title="Xóa bộ lọc"
+                >
+                  <RotateCcw size={14} /> Đặt lại
+                </button>
+              )}
             </div>
           </div>
 
@@ -453,13 +581,13 @@ const TrainingRegistration = () => {
                   <th>Họ và tên</th>
                   <th>Email / SĐT</th>
                   <th>Thời gian ĐK</th>
-                  {isSuperAdmin && <th>Hành động</th>}
+                  <th style={{ textAlign: 'center' }}>Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredRegistrations.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="text-center py-8 text-gray-500">
+                    <td colSpan={9} className="text-center py-8 text-gray-500">
                       Không tìm thấy dữ liệu đăng ký nào phù hợp
                     </td>
                   </tr>
@@ -478,15 +606,25 @@ const TrainingRegistration = () => {
                         <div className="text-sm">{reg.user?.email}</div>
                         <div className="text-xs text-gray-500">{reg.user?.phone}</div>
                       </td>
-                      <td className="text-xs text-gray-500">{new Date(reg.createdAt).toLocaleString()}</td>
-                      {isSuperAdmin && (
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            <button className="action-btn" title="Sửa" onClick={() => setEditModal({ isOpen: true, reg, newVehicle: reg.vehicle })}><Edit size={16} /></button>
-                            <button className="action-btn text-danger" title="Xóa" onClick={() => handleCancelRegistration(reg.id)}><Trash2 size={16} /></button>
-                          </div>
-                        </td>
-                      )}
+                      <td className="text-xs text-gray-500">{formatRegistrationTime(reg.createdAt)}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                          <button 
+                            className="action-btn text-primary" 
+                            title="In phiếu này" 
+                            onClick={() => handlePrintTickets([reg])}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Printer size={16} />
+                          </button>
+                          {isSuperAdmin && (
+                            <>
+                              <button className="action-btn" title="Sửa" onClick={() => setEditModal({ isOpen: true, reg, newVehicle: reg.vehicle })}><Edit size={16} /></button>
+                              <button className="action-btn text-danger" title="Xóa" onClick={() => handleCancelRegistration(reg.id)}><Trash2 size={16} /></button>
+                            </>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -724,6 +862,14 @@ const TrainingRegistration = () => {
                     </div>
                     
                     <div style={{ marginLeft: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button 
+                        onClick={() => handlePrintTickets([{ ...reg, user, session: reg.trainingSession }])}
+                        className="action-btn text-primary"
+                        style={{ backgroundColor: '#e0f2fe', border: '1px solid #bae6fd', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
+                        title="In phiếu đăng ký"
+                      >
+                        <Printer size={16} />
+                      </button>
                       {canCancel ? (
                         <button 
                           onClick={() => handleCancelRegistration(reg.id)}
@@ -791,6 +937,61 @@ const TrainingRegistration = () => {
           </div>
         </div>
       )}
+
+      {/* Print Only Area for Training Registration Tickets (4 tickets per A4) */}
+      <div className="training-print-area">
+        {printingRegistrations.map((reg: any) => (
+          <div className="training-ticket-card" key={reg.id}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.3px', lineHeight: '1.4' }}>
+                PHÒNG QUẢN LÝ ĐÀO TẠO
+              </div>
+              <div style={{ display: 'inline-block', fontSize: '14px', fontWeight: 'bold', textTransform: 'uppercase', borderBottom: '1.5px solid #000', paddingBottom: '2px', marginTop: '2px', lineHeight: '1.3' }}>
+                TRUNG TÂM ĐÀO TẠO LÁI XE
+              </div>
+            </div>
+
+            {/* Title */}
+            <div style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '19px', textTransform: 'uppercase', margin: '14px 0 16px', letterSpacing: '0.5px' }}>
+              PHIẾU ĐĂNG KÝ TẬP XE
+            </div>
+
+            {/* Info Table / Details */}
+            <div style={{ fontSize: '14px', lineHeight: '1.8', flex: 1 }}>
+              <div style={{ display: 'flex', marginBottom: '6px' }}>
+                <span style={{ width: '105px', minWidth: '105px' }}>Họ tên:</span>
+                <span style={{ fontWeight: 'bold', textTransform: 'uppercase', fontSize: '15px' }}>
+                  {reg.user?.name || reg.user?.username || ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', marginBottom: '6px' }}>
+                <span style={{ width: '105px', minWidth: '105px' }}>Sân tập:</span>
+                <span>{reg.session?.trainingGround?.name || ''}</span>
+              </div>
+              <div style={{ display: 'flex', marginBottom: '6px' }}>
+                <span style={{ width: '105px', minWidth: '105px' }}>Ngày tập:</span>
+                <span>{formatDateDisplay(reg.session?.date)}</span>
+              </div>
+              <div style={{ display: 'flex', marginBottom: '6px' }}>
+                <span style={{ width: '105px', minWidth: '105px' }}>Ca tập:</span>
+                <span>
+                  {reg.session?.trainingShift?.name || ''}
+                  {(reg.session?.startTime || reg.session?.endTime) ? ` (${reg.session?.startTime || '?'} - ${reg.session?.endTime || '?'})` : ''}
+                </span>
+              </div>
+              <div style={{ display: 'flex', marginBottom: '6px' }}>
+                <span style={{ width: '105px', minWidth: '105px' }}>Xe đăng ký:</span>
+                <span style={{ fontWeight: 'bold' }}>{reg.vehicle}</span>
+              </div>
+              <div style={{ marginTop: '12px', fontSize: '13.5px' }}>
+                <span>Thời gian xác nhận đăng ký: </span>
+                <span>{formatRegistrationTime(reg.createdAt)}</span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
 
     </AdminLayout>
   );
