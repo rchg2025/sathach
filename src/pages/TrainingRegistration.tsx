@@ -337,6 +337,29 @@ const TrainingRegistration = () => {
     const matchesGround = !filterGround || reg.session?.trainingGround?.id?.toString() === filterGround;
 
     return matchesSearch && matchesUser && matchesFromDate && matchesToDate && matchesGround;
+  }).sort((a: any, b: any) => {
+    // Sắp xếp theo tên giáo viên / người dùng (theo thứ tự bảng chữ cái tiếng Việt)
+    const nameA = (a.user?.name || a.user?.username || '').trim();
+    const nameB = (b.user?.name || b.user?.username || '').trim();
+
+    // Lấy từ cuối cùng (tên chính) để so sánh chuẩn tiếng Việt, nếu trùng thì so sánh cả họ tên
+    const partsA = nameA.split(' ');
+    const partsB = nameB.split(' ');
+    const firstNameA = partsA[partsA.length - 1] || '';
+    const firstNameB = partsB[partsB.length - 1] || '';
+
+    const firstCompare = firstNameA.localeCompare(firstNameB, 'vi', { sensitivity: 'base' });
+    if (firstCompare !== 0) return firstCompare;
+
+    const fullCompare = nameA.localeCompare(nameB, 'vi', { sensitivity: 'base' });
+    if (fullCompare !== 0) return fullCompare;
+
+    // Nếu cùng tên thì sắp theo ngày tập tăng dần
+    const dateA = new Date(a.session?.date || 0).getTime();
+    const dateB = new Date(b.session?.date || 0).getTime();
+    if (dateA !== dateB) return dateA - dateB;
+
+    return (a.id || 0) - (b.id || 0);
   });
 
   const exportToExcel = () => {
