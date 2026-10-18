@@ -101,7 +101,7 @@ const TrainingRegistration = () => {
 
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const isAdmin = user.role === 'ADMIN' || user.role === 'MANAGER';
-  const isSuperAdmin = user.role === 'ADMIN' || user.username === 'quantri';
+  const isSuperAdmin = user.role === 'ADMIN' || user.username === 'quantri' || user.email === 'nguyenluyen@nsg.edu.vn';
 
   const fetchData = async (isAutoRefresh = false) => {
     try {
@@ -1114,7 +1114,7 @@ const TrainingRegistration = () => {
                     const regTime = reg.createdAt ? new Date(reg.createdAt) : null;
                     const diffMinutes = regTime ? (now.getTime() - regTime.getTime()) / (1000 * 60) : 999;
                     const isOver10Min = diffMinutes > 10;
-                    const canCancel = !isClosed && !isOver10Min;
+                    const canCancel = isSuperAdmin || (!isClosed && !isOver10Min);
 
                     return (
                       <div key={reg.id} className="registered-vehicle-card" style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', border: '1px solid var(--border)', borderRadius: '8px', backgroundColor: '#f8f9fa' }}>
@@ -1162,7 +1162,7 @@ const TrainingRegistration = () => {
                               onClick={() => handleCancelRegistration(reg.id)}
                               className="action-btn"
                               style={{ color: 'var(--danger)', backgroundColor: '#fee2e2', border: '1px solid #fecaca', display: 'flex', padding: '0.5rem', borderRadius: '8px' }}
-                              title="Hủy đăng ký (Chỉ được hủy trong vòng 10 phút kể từ lúc đăng ký)"
+                              title={isSuperAdmin ? "Hủy đăng ký (Quyền SuperAdmin)" : "Hủy đăng ký (Chỉ được hủy trong vòng 10 phút kể từ lúc đăng ký)"}
                             >
                               <XCircle size={16} />
                             </button>
