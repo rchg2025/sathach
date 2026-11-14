@@ -316,4 +316,383 @@ router.post('/student-tuition', async (req, res) => {
   }
 });
 
+// Cập nhật hàng loạt (batch update) phân loại xe & lịch học cho học viên
+router.post('/students-tuition-batch', async (req, res) => {
+  try {
+    const { items, courseId } = req.body;
+    if (!items || !Array.isArray(items)) {
+      return res.status(400).json({ error: 'Dữ liệu không hợp lệ (items[])' });
+    }
+
+    // Lấy trước các cấu hình học phí của khóa học (nếu có courseId)
+    let configs: any[] = [];
+    if (courseId) {
+      configs = await prisma.tuitionFeeConfig.findMany({
+        where: { courseId: Number(courseId) }
+      });
+    }
+
+    const updated = [];
+    for (const item of items) {
+      const { studentId, transmissionType, scheduleType } = item;
+      if (!studentId) continue;
+
+      const sId = Number(studentId);
+      const trans = transmissionType || 'MANUAL';
+      const sched = scheduleType || 'WEEKDAY';
+
+      // Tìm config tương ứng
+      const matchedConfig = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+      const tuitionAmount = matchedConfig ? matchedConfig.tuitionAmount : 0;
+      const teacherSharePercent = matchedConfig ? matchedConfig.teacherSharePercent : 0;
+      const teacherEarnedAmount = (tuitionAmount * teacherSharePercent) / 100;
+
+      const record = await prisma.studentTuition.upsert({
+        where: { studentId: sId },
+        create: {
+          studentId: sId,
+          tuitionConfigId: matchedConfig ? matchedConfig.id : null,
+          transmissionType: trans,
+          scheduleType: sched,
+          tuitionAmount,
+          teacherSharePercent,
+          teacherEarnedAmount,
+        },
+        update: {
+          tuitionConfigId: matchedConfig ? matchedConfig.id : null,
+          transmissionType: trans,
+          scheduleType: sched,
+          tuitionAmount,
+          teacherSharePercent,
+          teacherEarnedAmount,
+        }
+      });
+      updated.push(record);
+    }
+
+    res.json({ message: 'Cập nhật phân loại học phí thành công', count: updated.length });
+  } catch (error: any) {
+    console.error('Error batch updating students tuition:', error);
+    res.status(500).json({ error: error.message || 'Lỗi cập nhật học phí học viên' });
+  }
+});
+
+// ==========================================
+// 5. ĐƠN ĐĂNG KÝ TẠM ỨNG (AdvancePaymentRequest)
+// ==========================================
+
+// Lấy danh sách đơn tạm ứng (Kế toán xem tất cả, Giáo viên chỉ xem của mình)
+router.get('/advance-requests', async (req, res) => {
+  try {
+    const { teacherId, courseId, status } = req.query;
+    const where: any = {};
+
+    if (teacherId) where.teacherId = Number(teacherId);
+    if (courseId) where.courseId = Number(courseId);
+    if (status && status !== 'ALL') where.status = String(status);
+
+    const requests = await prisma.advancePaymentRequest.findMany({
+      where,
+      include: {
+        teacher: { select: { id: true, name: true, username: true, phone: true } },
+        course: { select: { id: true, name: true, startDate: true, endDate: true } },
+        deductions: true
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json(requests);
+  } catch (error: any) {
+    console.error('Error fetching advance requests:', error);
+    res.status(500).json({ error: error.message || 'Lỗi lấy danh sách đơn tạm ứng' });
+  }
+});
+
+// Lấy thông tin tóm tắt & tính toán cho Giáo viên trước khi tạo đơn
+router.get('/advance-estimate', async (req, res) => {
+  try {
+    const { teacherId, courseId } = req.query;
+    if (!teacherId || !courseId) {
+      return res.status(400).json({ error: 'Thiếu teacherId hoặc courseId' });
+    }
+
+    const tId = Number(teacherId);
+    const cId = Number(courseId);
+
+    // 1. Lấy danh sách học viên của GV trong khóa
+    const students = await prisma.student.findMany({
+      where: { teacherId: tId, courseId: cId },
+      include: {
+        tuitionInfo: { include: { tuitionConfig: true } }
+      }
+    });
+
+    // 2. Lấy cấu hình biểu giá của khóa để fallback nếu học viên chưa có thông tin
+    const configs = await prisma.tuitionFeeConfig.findMany({ where: { courseId: cId } });
+
+    // 3. Tính toán tổng thù lao
+    let grossEstimatedAmount = 0;
+    const studentBreakdown = students.map(s => {
+      let earned = 0;
+      let tuition = 0;
+      let percent = 0;
+      let trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+      let sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+
+      if (s.tuitionInfo && s.tuitionInfo.teacherEarnedAmount > 0) {
+        earned = s.tuitionInfo.teacherEarnedAmount;
+        tuition = s.tuitionInfo.tuitionAmount;
+        percent = s.tuitionInfo.teacherSharePercent;
+      } else {
+        // Fallback theo biểu giá khóa học
+        const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+        if (cfg) {
+          tuition = cfg.tuitionAmount;
+          percent = cfg.teacherSharePercent;
+          earned = (tuition * percent) / 100;
+        }
+      }
+
+      grossEstimatedAmount += earned;
+
+      return {
+        id: s.id,
+        name: s.name,
+        cccd: s.cccd,
+        transmissionType: trans,
+        scheduleType: sched,
+        tuitionAmount: tuition,
+        teacherSharePercent: percent,
+        earnedAmount: earned
+      };
+    });
+
+    // 4. Lấy quy định tạm ứng
+    let policy = await prisma.advancePolicyConfig.findFirst();
+    const maxPercent = policy?.maxAdvancePercent || 70;
+    const maxTimes = policy?.maxAdvanceTimes || 3;
+
+    // 5. Kiểm tra lịch sử các đơn đã duyệt / đã nộp trong khóa này của GV
+    const existingRequests = await prisma.advancePaymentRequest.findMany({
+      where: {
+        teacherId: tId,
+        courseId: cId,
+        status: { in: ['PENDING', 'APPROVED', 'PAID'] }
+      }
+    });
+
+    const totalPreviouslyRequested = existingRequests.reduce((sum, r) => sum + (r.approvedAmount || r.requestedAmount || 0), 0);
+    const maxAdvanceAllowedTotal = (grossEstimatedAmount * maxPercent) / 100;
+    const remainingAdvanceAllowed = Math.max(0, maxAdvanceAllowedTotal - totalPreviouslyRequested);
+
+    res.json({
+      teacherId: tId,
+      courseId: cId,
+      studentCount: students.length,
+      grossEstimatedAmount,
+      maxAdvancePercent: maxPercent,
+      maxAdvanceTimes: maxTimes,
+      existingRequestCount: existingRequests.length,
+      totalPreviouslyRequested,
+      maxAdvanceAllowedTotal,
+      remainingAdvanceAllowed,
+      students: studentBreakdown,
+      policyGuidelines: policy?.guidelines || ''
+    });
+  } catch (error: any) {
+    console.error('Error estimating advance payment:', error);
+    res.status(500).json({ error: error.message || 'Lỗi tính toán mức tạm ứng' });
+  }
+});
+
+// Tạo đơn đăng ký tạm ứng mới
+router.post('/advance-requests', async (req, res) => {
+  try {
+    const { teacherId, courseId, requestedAmount, reason, deductions } = req.body;
+
+    if (!teacherId || !courseId || !requestedAmount) {
+      return res.status(400).json({ error: 'Vui lòng nhập đầy đủ thông tin đề nghị tạm ứng' });
+    }
+
+    const tId = Number(teacherId);
+    const cId = Number(courseId);
+    const reqAmount = Number(requestedAmount);
+
+    // Tính toán lại hạn mức để đảm bảo an toàn backend
+    const students = await prisma.student.findMany({
+      where: { teacherId: tId, courseId: cId },
+      include: { tuitionInfo: true }
+    });
+
+    const configs = await prisma.tuitionFeeConfig.findMany({ where: { courseId: cId } });
+
+    let grossEstimatedAmount = 0;
+    for (const s of students) {
+      if (s.tuitionInfo && s.tuitionInfo.teacherEarnedAmount > 0) {
+        grossEstimatedAmount += s.tuitionInfo.teacherEarnedAmount;
+      } else {
+        const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+        const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+        const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+        if (cfg) {
+          grossEstimatedAmount += (cfg.tuitionAmount * cfg.teacherSharePercent) / 100;
+        }
+      }
+    }
+
+    const policy = await prisma.advancePolicyConfig.findFirst();
+    const maxPercent = policy?.maxAdvancePercent || 70;
+    const maxTimes = policy?.maxAdvanceTimes || 3;
+
+    // Check số lần
+    const existingRequests = await prisma.advancePaymentRequest.findMany({
+      where: { teacherId: tId, courseId: cId, status: { in: ['PENDING', 'APPROVED', 'PAID'] } }
+    });
+
+    if (existingRequests.length >= maxTimes) {
+      return res.status(400).json({ error: `Bạn đã đạt giới hạn tối đa ${maxTimes} lần tạm ứng cho khóa học này` });
+    }
+
+    const maxAllowedAmount = (grossEstimatedAmount * maxPercent) / 100;
+    const alreadyAdvanced = existingRequests.reduce((sum, r) => sum + (r.approvedAmount || r.requestedAmount || 0), 0);
+    const remainingLimit = Math.max(0, maxAllowedAmount - alreadyAdvanced);
+
+    if (reqAmount > remainingLimit) {
+      return res.status(400).json({ 
+        error: `Số tiền đề nghị (${reqAmount.toLocaleString('vi-VN')} đ) vượt quá hạn mức còn lại được phép tạm ứng (${remainingLimit.toLocaleString('vi-VN')} đ)` 
+      });
+    }
+
+    // Tính tổng các khoản trừ
+    let totalDeductions = 0;
+    const deductionsData: any[] = [];
+    if (deductions && Array.isArray(deductions)) {
+      for (const d of deductions) {
+        const damount = Number(d.amount || 0);
+        totalDeductions += damount;
+        deductionsData.push({
+          deductionCategoryId: d.deductionCategoryId ? Number(d.deductionCategoryId) : null,
+          name: d.name || 'Khoản trừ',
+          amount: damount,
+          note: d.note || null
+        });
+      }
+    }
+
+    // Sinh mã phiếu duy nhất TU-YYYYMM-XXXX
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const count = await prisma.advancePaymentRequest.count();
+    const requestCode = `TU-${yearMonth}-${String(count + 1).padStart(4, '0')}`;
+
+    const newRequest = await prisma.advancePaymentRequest.create({
+      data: {
+        requestCode,
+        teacherId: tId,
+        courseId: cId,
+        studentCount: students.length,
+        grossEstimatedAmount,
+        maxAllowedAmount,
+        totalDeductions,
+        requestedAmount: reqAmount,
+        status: 'PENDING',
+        reason: reason || null,
+        deductions: {
+          create: deductionsData
+        }
+      },
+      include: {
+        deductions: true,
+        teacher: { select: { id: true, name: true } },
+        course: { select: { id: true, name: true } }
+      }
+    });
+
+    res.json({ message: 'Nộp đơn đề nghị tạm ứng thành công', request: newRequest });
+  } catch (error: any) {
+    console.error('Error creating advance request:', error);
+    res.status(500).json({ error: error.message || 'Lỗi nộp đơn tạm ứng' });
+  }
+});
+
+// Kế toán phê duyệt / Từ chối / Chi tiền đơn tạm ứng
+router.post('/advance-requests/:id/action', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { action, approvedAmount, accountantNotes, paymentReference, accountantName } = req.body;
+
+    const request = await prisma.advancePaymentRequest.findUnique({ where: { id } });
+    if (!request) {
+      return res.status(404).json({ error: 'Không tìm thấy phiếu đề nghị tạm ứng' });
+    }
+
+    const now = new Date();
+    let updateData: any = {};
+
+    if (action === 'APPROVE') {
+      updateData = {
+        status: 'APPROVED',
+        approvedAmount: approvedAmount !== undefined ? Number(approvedAmount) : request.requestedAmount,
+        accountantNotes: accountantNotes || request.accountantNotes,
+        approvedBy: accountantName || 'Kế toán',
+        approvedAt: now
+      };
+    } else if (action === 'REJECT') {
+      updateData = {
+        status: 'REJECTED',
+        accountantNotes: accountantNotes || 'Kế toán không phê duyệt đơn này',
+        approvedBy: accountantName || 'Kế toán',
+        approvedAt: now
+      };
+    } else if (action === 'PAY') {
+      updateData = {
+        status: 'PAID',
+        approvedAmount: approvedAmount !== undefined ? Number(approvedAmount) : (request.approvedAmount || request.requestedAmount),
+        paymentReference: paymentReference || null,
+        accountantNotes: accountantNotes || request.accountantNotes,
+        paidAt: now
+      };
+    } else {
+      return res.status(400).json({ error: 'Hành động không hợp lệ (APPROVE | REJECT | PAY)' });
+    }
+
+    const updated = await prisma.advancePaymentRequest.update({
+      where: { id },
+      data: updateData,
+      include: {
+        teacher: { select: { id: true, name: true } },
+        course: { select: { id: true, name: true } },
+        deductions: true
+      }
+    });
+
+    res.json({ message: 'Cập nhật trạng thái phiếu thành công', request: updated });
+  } catch (error: any) {
+    console.error('Error processing advance request action:', error);
+    res.status(500).json({ error: error.message || 'Lỗi xử lý phiếu tạm ứng' });
+  }
+});
+
+// Xóa hoặc Hủy phiếu tạm ứng (chỉ khi đang ở trạng thái PENDING)
+router.delete('/advance-requests/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const request = await prisma.advancePaymentRequest.findUnique({ where: { id } });
+
+    if (!request) {
+      return res.status(404).json({ error: 'Không tìm thấy phiếu' });
+    }
+
+    if (request.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Không thể xóa phiếu đã được xử lý hoặc chi tiền' });
+    }
+
+    await prisma.advancePaymentRequest.delete({ where: { id } });
+    res.json({ message: 'Xóa phiếu đề nghị tạm ứng thành công' });
+  } catch (error: any) {
+    console.error('Error deleting advance request:', error);
+    res.status(500).json({ error: error.message || 'Lỗi xóa phiếu tạm ứng' });
+  }
+});
+
 export default router;

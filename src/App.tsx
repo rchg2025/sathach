@@ -24,6 +24,8 @@ const TrainingSessionManager = lazy(() => import('./pages/TrainingSessionManager
 const TrainingRegistration = lazy(() => import('./pages/TrainingRegistration'));
 const PrintTicketsManager = lazy(() => import('./pages/PrintTicketsManager'));
 const FinanceSettingsManager = lazy(() => import('./pages/FinanceSettingsManager'));
+const TeacherAdvanceRequest = lazy(() => import('./pages/TeacherAdvanceRequest'));
+const AccountantAdvanceApproval = lazy(() => import('./pages/AccountantAdvanceApproval'));
 
 import LoadingFallback from './components/LoadingFallback';
 import './index.css';
@@ -115,6 +117,8 @@ function App() {
           <Route path="/manager/users" element={<UserManager />} />
           <Route path="/manager/settings" element={<SettingsManager />} />
           <Route path="/manager/finance-settings" element={<FinanceSettingsManager />} />
+          <Route path="/manager/advance-approval" element={<AccountantAdvanceApproval />} />
+          <Route path="/teacher/advance-request" element={<TeacherAdvanceRequest />} />
           <Route path="/manager/testing" element={<StationTesting />} />
           <Route path="/manager/system-logs" element={<SystemLogs />} />
           <Route path="/manager/reports" element={<ReportsManager />} />

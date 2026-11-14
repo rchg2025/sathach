@@ -20,7 +20,9 @@ import {
   Upload,
   PieChart,
   Printer,
-  DollarSign
+  DollarSign,
+  CreditCard,
+  CheckSquare
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -184,10 +186,23 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
           <hr style={{ margin: '0.5rem 1rem', borderColor: 'var(--border)' }} />
           
-          {(user?.role === 'ACCOUNTANT' || user?.role === 'ADMIN' || user?.username === 'quantri') && (
-            <Link to="/manager/finance-settings" className={`sidebar-item ${isActive('/manager/finance-settings')}`} onClick={closeSidebar}>
-              <DollarSign size={20} /> <span className="sidebar-item-text">Cấu hình Học phí & Tạm ứng</span>
+          {/* Nhóm chức năng Tạm ứng Giáo viên: Tất cả tài khoản trừ Kế toán */}
+          {user?.role !== 'ACCOUNTANT' && (
+            <Link to="/teacher/advance-request" className={`sidebar-item ${isActive('/teacher/advance-request')}`} onClick={closeSidebar}>
+              <CreditCard size={20} /> <span className="sidebar-item-text">Đăng ký Tạm ứng</span>
             </Link>
+          )}
+
+          {/* Nhóm Kế toán: Duyệt chi & Cấu hình */}
+          {(user?.role === 'ACCOUNTANT' || user?.role === 'ADMIN' || user?.username === 'quantri') && (
+            <>
+              <Link to="/manager/advance-approval" className={`sidebar-item ${isActive('/manager/advance-approval')}`} onClick={closeSidebar}>
+                <CheckSquare size={20} /> <span className="sidebar-item-text">Duyệt chi Tạm ứng</span>
+              </Link>
+              <Link to="/manager/finance-settings" className={`sidebar-item ${isActive('/manager/finance-settings')}`} onClick={closeSidebar}>
+                <DollarSign size={20} /> <span className="sidebar-item-text">Cấu hình Học phí & Tạm ứng</span>
+              </Link>
+            </>
           )}
 
           {((user?.role === 'STATION_MANAGER' || user?.username === 'quantri') || (user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri')) && (
