@@ -753,17 +753,40 @@ export default function FinanceSettingsManager() {
                     <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
                       Áp dụng cho Khóa học:
                     </label>
-                    <select
-                      className="form-control"
-                      value={newRate.courseId}
-                      onChange={(e) => setNewRate({ ...newRate, courseId: e.target.value })}
-                      style={{ minHeight: '40px', width: '100%' }}
-                    >
-                      <option value="">-- Áp dụng cho TẤT CẢ các khóa học --</option>
-                      {courses.map((c) => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                      ))}
-                    </select>
+                    <Select
+                      options={[
+                        { value: '', label: '-- Áp dụng cho TẤT CẢ các khóa học --' },
+                        ...courseOptions
+                      ]}
+                      value={
+                        newRate.courseId
+                          ? courseOptions.find(opt => String(opt.value) === String(newRate.courseId)) || null
+                          : { value: '', label: '-- Áp dụng cho TẤT CẢ các khóa học --' }
+                      }
+                      onChange={(opt: any) => setNewRate({ ...newRate, courseId: opt ? opt.value : '' })}
+                      placeholder="🔍 Tìm & chọn khóa học áp dụng..."
+                      isClearable={false}
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
+                    />
                   </div>
 
                   {/* Tỉ lệ % */}

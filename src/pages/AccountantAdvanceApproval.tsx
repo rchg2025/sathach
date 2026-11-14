@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import Select from 'react-select';
 import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
@@ -165,18 +166,52 @@ export default function AccountantAdvanceApproval() {
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 style={{ flex: 1, minWidth: '220px' }}
               />
-              <select
-                className="form-control"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                style={{ width: 'auto', minWidth: '180px' }}
-              >
-                <option value="ALL">Tất cả trạng thái</option>
-                <option value="PENDING">Chờ duyệt (Mới)</option>
-                <option value="APPROVED">Đã duyệt (Chờ chi)</option>
-                <option value="PAID">Đã chi tiền</option>
-                <option value="REJECTED">Từ chối</option>
-              </select>
+              <div style={{ minWidth: '200px', flex: '0 0 auto' }}>
+                <Select
+                  options={[
+                    { value: 'ALL', label: 'Tất cả trạng thái' },
+                    { value: 'PENDING', label: 'Chờ duyệt (Mới)' },
+                    { value: 'APPROVED', label: 'Đã duyệt (Chờ chi)' },
+                    { value: 'PAID', label: 'Đã chi tiền' },
+                    { value: 'REJECTED', label: 'Từ chối' }
+                  ]}
+                  value={{
+                    value: statusFilter,
+                    label:
+                      statusFilter === 'PENDING'
+                        ? 'Chờ duyệt (Mới)'
+                        : statusFilter === 'APPROVED'
+                        ? 'Đã duyệt (Chờ chi)'
+                        : statusFilter === 'PAID'
+                        ? 'Đã chi tiền'
+                        : statusFilter === 'REJECTED'
+                        ? 'Từ chối'
+                        : 'Tất cả trạng thái'
+                  }}
+                  onChange={(opt: any) => setStatusFilter(opt ? opt.value : 'ALL')}
+                  isSearchable={true}
+                  styles={{
+                    control: (base: any, state: any) => ({
+                      ...base,
+                      minHeight: '40px',
+                      borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                      boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                      borderRadius: 'var(--radius)',
+                      '&:hover': { borderColor: 'var(--primary)' }
+                    }),
+                    singleValue: (base: any) => ({
+                      ...base,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }),
+                    menu: (base: any) => ({
+                      ...base,
+                      zIndex: 9999
+                    })
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
