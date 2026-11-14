@@ -1,7 +1,38 @@
 import { Router } from 'express';
 import prisma from '../_prisma';
 
-const router = Router();
+// Helper xác định tỉ lệ % thù lao của giáo viên:
+// Ưu tiên 1: Cấu hình riêng cho Giáo viên (TeacherRateConfig)
+// Ưu tiên 2: Cấu hình theo Khóa học (TuitionFeeConfig)
+async function getEffectiveTeacherRate(
+  teacherId: number,
+  courseId: number,
+  transmissionType: string,
+  scheduleType: string,
+  courseDefaultPercent: number
+): Promise<number> {
+  // Tìm cấu hình riêng cho GV
+  const specificRate = await prisma.teacherRateConfig.findFirst({
+    where: {
+      teacherId,
+      OR: [
+        { courseId, transmissionType, scheduleType },
+        { courseId, transmissionType: null, scheduleType: null },
+        { courseId: null, transmissionType, scheduleType },
+        { courseId: null, transmissionType: null, scheduleType: null }
+      ]
+    },
+    orderBy: [
+      { courseId: 'desc' }, // Cấu hình có courseId cụ thể ưu tiên hơn
+      { transmissionType: 'desc' }
+    ]
+  });
+
+  if (specificRate && specificRate.ratePercent !== null && specificRate.ratePercent !== undefined) {
+    return specificRate.ratePercent;
+  }
+  return courseDefaultPercent;
+}
 
 // ==========================================
 // 1. BIỂU GIÁ HỌC PHÍ (TuitionFeeConfig)
@@ -432,30 +463,26 @@ router.get('/advance-estimate', async (req, res) => {
 
     // 3. Tính toán tổng thù lao
     let grossEstimatedAmount = 0;
-    const studentBreakdown = students.map(s => {
+    const studentBreakdown = [];
+
+    for (const s of students) {
       let earned = 0;
       let tuition = 0;
       let percent = 0;
       let trans = s.tuitionInfo?.transmissionType || 'MANUAL';
       let sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
 
-      if (s.tuitionInfo && s.tuitionInfo.teacherEarnedAmount > 0) {
-        earned = s.tuitionInfo.teacherEarnedAmount;
-        tuition = s.tuitionInfo.tuitionAmount;
-        percent = s.tuitionInfo.teacherSharePercent;
-      } else {
-        // Fallback theo biểu giá khóa học
-        const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
-        if (cfg) {
-          tuition = cfg.tuitionAmount;
-          percent = cfg.teacherSharePercent;
-          earned = (tuition * percent) / 100;
-        }
-      }
+      const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+      tuition = s.tuitionInfo?.tuitionAmount || (cfg ? cfg.tuitionAmount : 0);
+      const defaultCoursePercent = cfg ? cfg.teacherSharePercent : 0;
+
+      // Ưu tiên tỉ lệ cài riêng cho GV
+      percent = await getEffectiveTeacherRate(tId, cId, trans, sched, s.tuitionInfo?.teacherSharePercent || defaultCoursePercent);
+      earned = (tuition * percent) / 100;
 
       grossEstimatedAmount += earned;
 
-      return {
+      studentBreakdown.push({
         id: s.id,
         name: s.name,
         cccd: s.cccd,
@@ -464,8 +491,8 @@ router.get('/advance-estimate', async (req, res) => {
         tuitionAmount: tuition,
         teacherSharePercent: percent,
         earnedAmount: earned
-      };
-    });
+      });
+    }
 
     // 4. Lấy quy định tạm ứng
     let policy = await prisma.advancePolicyConfig.findFirst();
@@ -528,16 +555,13 @@ router.post('/advance-requests', async (req, res) => {
 
     let grossEstimatedAmount = 0;
     for (const s of students) {
-      if (s.tuitionInfo && s.tuitionInfo.teacherEarnedAmount > 0) {
-        grossEstimatedAmount += s.tuitionInfo.teacherEarnedAmount;
-      } else {
-        const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
-        const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
-        const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
-        if (cfg) {
-          grossEstimatedAmount += (cfg.tuitionAmount * cfg.teacherSharePercent) / 100;
-        }
-      }
+      const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+      const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+      const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+      const tuition = s.tuitionInfo?.tuitionAmount || (cfg ? cfg.tuitionAmount : 0);
+      const defaultCoursePercent = cfg ? cfg.teacherSharePercent : 0;
+      const percent = await getEffectiveTeacherRate(tId, cId, trans, sched, s.tuitionInfo?.teacherSharePercent || defaultCoursePercent);
+      grossEstimatedAmount += (tuition * percent) / 100;
     }
 
     const policy = await prisma.advancePolicyConfig.findFirst();
@@ -692,6 +716,100 @@ router.delete('/advance-requests/:id', async (req, res) => {
   } catch (error: any) {
     console.error('Error deleting advance request:', error);
     res.status(500).json({ error: error.message || 'Lỗi xóa phiếu tạm ứng' });
+  }
+});
+
+// ==========================================
+// 6. CẤU HÌNH TỈ LỆ HƯỞNG THEO GIÁO VIÊN (TeacherRateConfig)
+// ==========================================
+
+// Lấy danh sách tỉ lệ theo giáo viên
+router.get('/teacher-rates', async (req, res) => {
+  try {
+    const { teacherId, courseId } = req.query;
+    const where: any = {};
+    if (teacherId) where.teacherId = Number(teacherId);
+    if (courseId) where.courseId = Number(courseId);
+
+    const rates = await prisma.teacherRateConfig.findMany({
+      where,
+      include: {
+        teacher: { select: { id: true, name: true, username: true } },
+        course: { select: { id: true, name: true } }
+      },
+      orderBy: [{ teacherId: 'asc' }, { id: 'desc' }]
+    });
+
+    res.json(rates);
+  } catch (error: any) {
+    console.error('Error fetching teacher rates:', error);
+    res.status(500).json({ error: error.message || 'Lỗi lấy cấu hình tỉ lệ giáo viên' });
+  }
+});
+
+// Lưu / Cập nhật cấu hình tỉ lệ cho giáo viên
+router.post('/teacher-rates', async (req, res) => {
+  try {
+    const { teacherId, courseId, transmissionType, scheduleType, ratePercent, note } = req.body;
+
+    if (!teacherId || ratePercent === undefined) {
+      return res.status(400).json({ error: 'Thiếu thông tin teacherId hoặc ratePercent' });
+    }
+
+    const tId = Number(teacherId);
+    const cId = courseId ? Number(courseId) : null;
+    const trans = transmissionType || null;
+    const sched = scheduleType || null;
+    const percent = Number(ratePercent);
+
+    // Tìm xem đã tồn tại cấu hình tương ứng chưa
+    const existing = await prisma.teacherRateConfig.findFirst({
+      where: {
+        teacherId: tId,
+        courseId: cId,
+        transmissionType: trans,
+        scheduleType: sched
+      }
+    });
+
+    let result;
+    if (existing) {
+      result = await prisma.teacherRateConfig.update({
+        where: { id: existing.id },
+        data: {
+          ratePercent: percent,
+          note: note !== undefined ? note : undefined
+        }
+      });
+    } else {
+      result = await prisma.teacherRateConfig.create({
+        data: {
+          teacherId: tId,
+          courseId: cId,
+          transmissionType: trans,
+          scheduleType: sched,
+          ratePercent: percent,
+          note: note || null
+        }
+      });
+    }
+
+    res.json({ message: 'Lưu tỉ lệ hưởng cho giáo viên thành công', data: result });
+  } catch (error: any) {
+    console.error('Error saving teacher rate:', error);
+    res.status(500).json({ error: error.message || 'Lỗi lưu cấu hình tỉ lệ giáo viên' });
+  }
+});
+
+// Xóa cấu hình tỉ lệ giáo viên
+router.delete('/teacher-rates/:id', async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await prisma.teacherRateConfig.delete({ where: { id } });
+    res.json({ message: 'Xóa tỉ lệ cấu hình thành công' });
+  } catch (error: any) {
+    console.error('Error deleting teacher rate:', error);
+    res.status(500).json({ error: error.message || 'Lỗi xóa cấu hình' });
   }
 });
 

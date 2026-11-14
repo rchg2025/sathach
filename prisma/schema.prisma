@@ -31,6 +31,7 @@ model User {
   students              Student[]              @relation("StudentTeacher")
   trainingRegistrations TrainingRegistration[]
   advancePaymentRequests AdvancePaymentRequest[]
+  teacherRates          TeacherRateConfig[]
 
   @@index([role])
 }
@@ -91,6 +92,7 @@ model Course {
   retakeSessions RetakeSession[]
   tuitionConfigs TuitionFeeConfig[]
   advanceRequests AdvancePaymentRequest[]
+  teacherRates   TeacherRateConfig[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 }
@@ -417,4 +419,23 @@ model AdvancePaymentDeduction {
   createdAt           DateTime           @default(now())
 
   @@index([requestId])
+}
+
+// Cấu hình tỉ lệ % hưởng thù lao riêng biệt cho từng Giáo viên
+model TeacherRateConfig {
+  id                 Int      @id @default(autoincrement())
+  teacherId          Int
+  teacher            User     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  courseId           Int?     // null nghĩa là áp dụng chung cho mọi khóa của giáo viên này
+  course             Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  transmissionType   String?  // null nghĩa là áp dụng cả số sàn & tự động, hoặc 'AUTO' | 'MANUAL'
+  scheduleType       String?  // null nghĩa là áp dụng cả ngày thường & cuối tuần, hoặc 'WEEKDAY' | 'SUNDAY'
+  ratePercent        Float    @default(0) // Tỉ lệ % được hưởng (VD: 65 = 65%)
+  note               String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([teacherId, courseId, transmissionType, scheduleType])
+  @@index([teacherId])
+  @@index([courseId])
 }

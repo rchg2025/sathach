@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { DollarSign, Trash2, Edit3, Save, RefreshCw } from 'lucide-react';
+import { DollarSign, Trash2, Edit3, Save, RefreshCw, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 
@@ -9,6 +9,13 @@ const API_BASE_URL = '';
 interface Course {
   id: number;
   name: string;
+}
+
+interface UserTeacher {
+  id: number;
+  name: string;
+  username: string;
+  role: string;
 }
 
 interface TuitionFeeConfig {
@@ -42,10 +49,23 @@ interface AdvancePolicyConfig {
   isActive: boolean;
 }
 
+interface TeacherRateConfig {
+  id: number;
+  teacherId: number;
+  teacher: { id: number; name: string; username: string };
+  courseId: number | null;
+  course?: { id: number; name: string } | null;
+  transmissionType: string | null;
+  scheduleType: string | null;
+  ratePercent: number;
+  note?: string;
+}
+
 export default function FinanceSettingsManager() {
   const [user, setUser] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<'tuition' | 'deductions' | 'policy'>('tuition');
+  const [activeTab, setActiveTab] = useState<'tuition' | 'teacher_rates' | 'deductions' | 'policy'>('tuition');
   const [courses, setCourses] = useState<Course[]>([]);
+  const [teachers, setTeachers] = useState<UserTeacher[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null);
 
   // Tuition state
@@ -59,6 +79,19 @@ export default function FinanceSettingsManager() {
     manual_sunday: { tuitionAmount: 0, teacherSharePercent: 0, note: '' },
   });
   const [savingMatrix, setSavingMatrix] = useState(false);
+
+  // Teacher Rates state
+  const [teacherRates, setTeacherRates] = useState<TeacherRateConfig[]>([]);
+  const [loadingTeacherRates, setLoadingTeacherRates] = useState(false);
+  const [newRate, setNewRate] = useState({
+    teacherId: 0,
+    courseId: '' as string | number,
+    transmissionType: '',
+    scheduleType: '',
+    ratePercent: 60,
+    note: ''
+  });
+  const [savingRate, setSavingRate] = useState(false);
 
   // Deduction Categories state
   const [deductions, setDeductions] = useState<DeductionCategory[]>([]);
@@ -78,8 +111,10 @@ export default function FinanceSettingsManager() {
     const u = localStorage.getItem('user');
     if (u) setUser(JSON.parse(u));
     fetchCourses();
+    fetchTeachers();
     fetchDeductions();
     fetchPolicy();
+    fetchTeacherRates();
   }, []);
 
   useEffect(() => {
@@ -98,6 +133,21 @@ export default function FinanceSettingsManager() {
       }
     } catch (err: any) {
       console.error('Lỗi tải danh sách khóa học:', err);
+    }
+  };
+
+  const fetchTeachers = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/users`);
+      // Tất cả tài khoản trừ Kế toán đều có thể là giáo viên
+      const allUsers = res.data || [];
+      const teacherList = allUsers.filter((u: any) => u.role !== 'ACCOUNTANT');
+      setTeachers(teacherList);
+      if (teacherList.length > 0 && !newRate.teacherId) {
+        setNewRate(prev => ({ ...prev, teacherId: teacherList[0].id }));
+      }
+    } catch (e) {
+      console.error('Lỗi tải danh sách giáo viên', e);
     }
   };
 
@@ -185,6 +235,55 @@ export default function FinanceSettingsManager() {
     }
   };
 
+  // Teacher Rates CRUD
+  const fetchTeacherRates = async () => {
+    setLoadingTeacherRates(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/finance/teacher-rates`);
+      setTeacherRates(res.data || []);
+    } catch (e) {
+      console.error('Lỗi tải tỉ lệ giáo viên', e);
+    } finally {
+      setLoadingTeacherRates(false);
+    }
+  };
+
+  const handleSaveTeacherRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRate.teacherId) {
+      toast.error('Vui lòng chọn giáo viên');
+      return;
+    }
+    setSavingRate(true);
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/finance/teacher-rates`, {
+        teacherId: Number(newRate.teacherId),
+        courseId: newRate.courseId ? Number(newRate.courseId) : null,
+        transmissionType: newRate.transmissionType || null,
+        scheduleType: newRate.scheduleType || null,
+        ratePercent: Number(newRate.ratePercent),
+        note: newRate.note
+      });
+      toast.success('Cập nhật tỉ lệ hưởng cho giáo viên thành công!');
+      fetchTeacherRates();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi lưu tỉ lệ giáo viên');
+    } finally {
+      setSavingRate(false);
+    }
+  };
+
+  const handleDeleteTeacherRate = async (id: number) => {
+    if (!confirm('Bạn có chắc muốn xóa tỉ lệ tùy chỉnh này? (Giáo viên sẽ trở về hưởng tỉ lệ mặc định của khóa)')) return;
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/finance/teacher-rates/${id}`);
+      toast.success('Đã xóa tỉ lệ');
+      fetchTeacherRates();
+    } catch (e) {
+      toast.error('Lỗi xóa tỉ lệ');
+    }
+  };
+
   // Deductions CRUD
   const fetchDeductions = async () => {
     try {
@@ -267,13 +366,19 @@ export default function FinanceSettingsManager() {
           <DollarSign size={24} color="var(--primary)" /> Cấu hình Học phí & Hạn mức Tạm ứng
         </h2>
 
-        {/* Tab Navigation - Chuẩn phong cách dự án */}
+        {/* Tab Navigation */}
         <div className="tabs mb-4">
           <div
             className={`tab ${activeTab === 'tuition' ? 'active' : ''}`}
             onClick={() => setActiveTab('tuition')}
           >
-            Biểu giá Học phí & Tỉ lệ hưởng
+            Biểu giá Học phí chung theo Khóa
+          </div>
+          <div
+            className={`tab ${activeTab === 'teacher_rates' ? 'active' : ''}`}
+            onClick={() => setActiveTab('teacher_rates')}
+          >
+            Cài đặt Tỉ lệ % theo từng Giáo viên
           </div>
           <div
             className={`tab ${activeTab === 'deductions' ? 'active' : ''}`}
@@ -343,8 +448,8 @@ export default function FinanceSettingsManager() {
                       <th style={{ width: '140px' }}>Loại xe</th>
                       <th style={{ width: '160px' }}>Lịch học</th>
                       <th>Mức học phí (VNĐ)</th>
-                      <th style={{ width: '120px' }}>Tỉ lệ GV (%)</th>
-                      <th style={{ width: '180px', textAlign: 'right' }}>Thù lao dự kiến / HV</th>
+                      <th style={{ width: '130px' }}>Tỉ lệ mặc định (%)</th>
+                      <th style={{ width: '180px', textAlign: 'right' }}>Thù lao chuẩn / HV</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -566,10 +671,151 @@ export default function FinanceSettingsManager() {
           </div>
         )}
 
-        {/* TAB 2: DANH MỤC CÁC KHOẢN GIẢM TRỪ */}
+        {/* TAB 2: CÀI ĐẶT TỈ LỆ % RIÊNG CHO TỪNG GIÁO VIÊN */}
+        {activeTab === 'teacher_rates' && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+            {/* Form thiết lập tỉ lệ */}
+            <div className="card">
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <UserCheck size={18} color="var(--primary)" /> Thiết lập Tỉ lệ cho Giáo viên
+              </h3>
+
+              <form onSubmit={handleSaveTeacherRate}>
+                <div className="form-group">
+                  <label>Chọn Giáo viên <span style={{ color: 'var(--danger)' }}>*</span>:</label>
+                  <select
+                    className="form-control"
+                    value={newRate.teacherId}
+                    onChange={(e) => setNewRate({ ...newRate, teacherId: Number(e.target.value) })}
+                    required
+                  >
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name} (@{t.username})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Áp dụng cho Khóa học:</label>
+                  <select
+                    className="form-control"
+                    value={newRate.courseId}
+                    onChange={(e) => setNewRate({ ...newRate, courseId: e.target.value })}
+                  >
+                    <option value="">-- Áp dụng cho TẤT CẢ các khóa học --</option>
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                  <small style={{ color: 'var(--text-muted)' }}>Để trống nếu muốn áp dụng mức tỉ lệ này cho mọi khóa của giáo viên</small>
+                </div>
+
+                <div className="form-group">
+                  <label>Tỉ lệ % giáo viên được hưởng <span style={{ color: 'var(--danger)' }}>*</span>:</label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '200px' }}>
+                    <input
+                      type="number"
+                      className="form-control"
+                      min={0}
+                      max={100}
+                      value={newRate.ratePercent}
+                      onChange={(e) => setNewRate({ ...newRate, ratePercent: Number(e.target.value) })}
+                      required
+                      style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
+                    />
+                    <span style={{ fontWeight: 'bold' }}>%</span>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Ghi chú / Quyết định mức thù lao:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="VD: Hợp đồng đặc biệt, GV chính thức bậc 2..."
+                    value={newRate.note}
+                    onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={savingRate}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1rem' }}
+                >
+                  <Save size={16} /> {savingRate ? 'Đang lưu...' : 'Lưu Tỉ Lệ Giáo Viên'}
+                </button>
+              </form>
+            </div>
+
+            {/* Bảng danh sách tỉ lệ riêng */}
+            <div className="card">
+              <div className="flex justify-between items-center mb-3">
+                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
+                  Danh sách Tỉ lệ Giáo viên đã cài đặt ({teacherRates.length})
+                </h3>
+                <button className="btn btn-secondary" onClick={fetchTeacherRates} style={{ padding: '4px 8px' }}>
+                  <RefreshCw size={12} className={loadingTeacherRates ? 'spin' : ''} />
+                </button>
+              </div>
+
+              <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Giáo viên</th>
+                      <th>Khóa học</th>
+                      <th style={{ textAlign: 'center' }}>% Hưởng</th>
+                      <th>Ghi chú</th>
+                      <th style={{ textAlign: 'center', width: '60px' }}>Xóa</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {teacherRates.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                          Chưa có tỉ lệ tùy chỉnh riêng nào. Tất cả GV đang áp dụng tỉ lệ mặc định theo từng khóa học.
+                        </td>
+                      </tr>
+                    ) : (
+                      teacherRates.map((r) => (
+                        <tr key={r.id}>
+                          <td>
+                            <strong>{r.teacher?.name}</strong>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{r.teacher?.username}</div>
+                          </td>
+                          <td>
+                            {r.course ? <span className="badge badge-info">{r.course.name}</span> : <span className="badge badge-primary">Tất cả khóa</span>}
+                          </td>
+                          <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.05rem', color: 'var(--success)' }}>
+                            {r.ratePercent}%
+                          </td>
+                          <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{r.note || '-'}</td>
+                          <td style={{ textAlign: 'center' }}>
+                            <button
+                              className="action-btn btn-delete"
+                              onClick={() => handleDeleteTeacherRate(r.id)}
+                              title="Xóa tỉ lệ"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: DANH MỤC CÁC KHOẢN GIẢM TRỪ */}
         {activeTab === 'deductions' && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-            {/* Form thêm / sửa */}
             <div className="card">
               <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                 {editingDeduction ? 'Chỉnh sửa Khoản giảm trừ' : 'Thêm mới Khoản giảm trừ'}
@@ -637,7 +883,6 @@ export default function FinanceSettingsManager() {
               </form>
             </div>
 
-            {/* Bảng danh sách */}
             <div className="card">
               <div className="flex justify-between items-center mb-3">
                 <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
@@ -702,7 +947,7 @@ export default function FinanceSettingsManager() {
           </div>
         )}
 
-        {/* TAB 3: QUY ĐỊNH & HẠN MỨC TẠM ỨNG */}
+        {/* TAB 4: QUY ĐỊNH & HẠN MỨC TẠM ỨNG */}
         {activeTab === 'policy' && (
           <div className="card" style={{ maxWidth: '750px' }}>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Thiết lập Quy định Tạm ứng</h3>
