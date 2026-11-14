@@ -678,7 +678,16 @@ input:checked + .toggle-slider:before {
 @media (max-width: 768px) { .action-buttons-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; } }
 
 
-/* Training Registration Grid */
+/* Action Buttons Responsive (Desktop shows text, Mobile shows icon only) */
+.btn-action-text {
+  display: inline;
+}
+
+@media (max-width: 768px) {
+  .btn-action-text {
+    display: none;
+  }
+}
 .vehicle-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));

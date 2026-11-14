@@ -241,7 +241,7 @@ export default function AccountantAdvanceApproval() {
                   <th style={{ textAlign: 'right' }}>Duyệt chi</th>
                   <th>Trạng thái</th>
                   <th>Ngày tạo</th>
-                  <th style={{ textAlign: 'center', width: '160px' }}>Thao tác</th>
+                  <th style={{ textAlign: 'center', width: '220px' }}>Thao tác</th>
                 </tr>
               </thead>
               <tbody>
@@ -276,33 +276,36 @@ export default function AccountantAdvanceApproval() {
                         {new Date(req.createdAt).toLocaleDateString('vi-VN')}
                       </td>
                       <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '4px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                           <button
                             className="btn btn-secondary"
-                            style={{ padding: '3px 6px', fontSize: '0.75rem' }}
+                            style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                             onClick={() => handleOpenAction(req, 'VIEW')}
                             title="Xem chi tiết"
                           >
-                            <Eye size={13} />
+                            <Eye size={14} />
+                            <span className="btn-action-text">Xem</span>
                           </button>
 
                           {req.status === 'PENDING' && (
                             <>
                               <button
                                 className="btn btn-primary"
-                                style={{ padding: '3px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 onClick={() => handleOpenAction(req, 'APPROVE')}
                                 title="Duyệt đơn"
                               >
-                                <Check size={13} /> Duyệt
+                                <Check size={14} />
+                                <span className="btn-action-text">Duyệt</span>
                               </button>
                               <button
                                 className="btn btn-danger"
-                                style={{ padding: '3px 6px', fontSize: '0.75rem' }}
+                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                                 onClick={() => handleOpenAction(req, 'REJECT')}
                                 title="Từ chối"
                               >
-                                <X size={13} />
+                                <X size={14} />
+                                <span className="btn-action-text">Từ chối</span>
                               </button>
                             </>
                           )}
@@ -310,11 +313,12 @@ export default function AccountantAdvanceApproval() {
                           {req.status === 'APPROVED' && (
                             <button
                               className="btn btn-success"
-                              style={{ padding: '3px 8px', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '3px' }}
+                              style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
                               onClick={() => handleOpenAction(req, 'PAY')}
                               title="Xác nhận chi tiền"
                             >
-                              <DollarSign size={13} /> Chi tiền
+                              <DollarSign size={14} />
+                              <span className="btn-action-text">Chi tiền</span>
                             </button>
                           )}
                         </div>
