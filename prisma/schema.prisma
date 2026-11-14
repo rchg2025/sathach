@@ -30,6 +30,8 @@ model User {
   logs           SystemLog[]
   students              Student[]              @relation("StudentTeacher")
   trainingRegistrations TrainingRegistration[]
+
+  @@index([role])
 }
 
 model SystemLog {
@@ -38,6 +40,9 @@ model SystemLog {
   user      User     @relation(fields: [userId], references: [id])
   action    String // 'LOGIN' or 'LOGOUT'
   createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Student {
@@ -66,6 +71,10 @@ model Student {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   RetakeSession RetakeSession[]
+
+  @@index([courseId])
+  @@index([courseName])
+  @@index([name])
 }
 
 model Course {
@@ -124,6 +133,8 @@ model Exam {
   progress    ExamProgress[]
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
+
+  @@index([testTypeId])
 }
 
 model Criterion {
@@ -133,6 +144,8 @@ model Criterion {
   examId         Int
   exam           Exam    @relation(fields: [examId], references: [id])
   scores         Score[]
+
+  @@index([examId])
 }
 
 model TestAssignment {
@@ -150,6 +163,11 @@ model TestAssignment {
   showScore      Boolean       @default(true)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @default(now()) @updatedAt
+
+  @@index([examinerId])
+  @@index([courseId])
+  @@index([testTypeId])
+  @@index([assignmentDate])
 }
 
 model TestResult {
@@ -170,6 +188,11 @@ model TestResult {
   progress         ExamProgress[]
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @updatedAt
+
+  @@index([studentId])
+  @@index([testTypeId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Score {
@@ -180,6 +203,9 @@ model Score {
   criterion     Criterion  @relation(fields: [criterionId], references: [id])
   timesDeducted Int        @default(1)
   createdAt     DateTime   @default(now())
+
+  @@index([testResultId])
+  @@index([criterionId])
 }
 
 model Setting {
@@ -203,6 +229,8 @@ model ExamProgress {
   updatedAt    DateTime   @updatedAt
 
   @@unique([testResultId, examId])
+  @@index([examinerId])
+  @@index([status])
 }
 
 model RetakeSession {
@@ -214,6 +242,8 @@ model RetakeSession {
   createdAt      DateTime @default(now())
 
   @@unique([studentId, targetCourseId])
+  @@index([studentId])
+  @@index([targetCourseId])
 }
 
 model TrainingGround {
@@ -254,6 +284,10 @@ model TrainingSession {
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
   registrations         TrainingRegistration[]
+
+  @@index([date])
+  @@index([trainingGroundId])
+  @@index([trainingShiftId])
 }
 
 model TrainingRegistration {
@@ -267,4 +301,5 @@ model TrainingRegistration {
   updatedAt         DateTime        @updatedAt
 
   @@unique([trainingSessionId, vehicle])
+  @@index([userId])
 }

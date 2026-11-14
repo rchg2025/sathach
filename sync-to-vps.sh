@@ -45,6 +45,8 @@ ssh -F /dev/null -i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/
 cd /var/www/sathach
 echo "Generating Prisma Client..."
 npx prisma generate
+echo "Applying database schema changes / indexes..."
+npx prisma db push --skip-generate
 echo "Building Frontend..."
 npm run build
 echo "Restarting sathach.service..."
