@@ -689,7 +689,7 @@ export default function FinanceSettingsManager() {
               </h3>
 
               <form onSubmit={handleSaveTeacherRate}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
                   {/* Dropdown thông minh chọn Giáo viên */}
                   <div className="form-group" style={{ margin: 0 }}>
                     <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
@@ -761,21 +761,21 @@ export default function FinanceSettingsManager() {
                       <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>%</span>
                     </div>
                   </div>
+                </div>
 
-                  {/* Ghi chú */}
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
-                      Ghi chú / Quyết định:
-                    </label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      placeholder="VD: Hợp đồng đặc biệt, GV chính thức..."
-                      value={newRate.note}
-                      onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
-                      style={{ minHeight: '40px', width: '100%' }}
-                    />
-                  </div>
+                {/* Ghi chú / Quyết định - Full màn hình */}
+                <div className="form-group" style={{ margin: '0 0 1.2rem 0', width: '100%' }}>
+                  <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                    Ghi chú / Quyết định:
+                  </label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="VD: Hợp đồng đặc biệt, GV chính thức, áp dụng từ QĐ số..."
+                    value={newRate.note}
+                    onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
+                    style={{ minHeight: '40px', width: '100%' }}
+                  />
                 </div>
 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.2rem' }}>
