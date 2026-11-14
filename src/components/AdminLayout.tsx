@@ -113,7 +113,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             {user?.name || 'Nguyễn Văn Luyện'} 
           </h4>
           <p className="text-muted" style={{ fontSize: '0.875rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-            {(user?.role === 'ADMIN' || user?.username === 'quantri') ? 'Quản trị hệ thống' : (user?.role === 'MANAGER' || user?.username === 'quantri') ? 'Quản lý hệ thống' : (user?.role === 'STATION_MANAGER' || user?.username === 'quantri') ? 'Trưởng trạm' : 'Giám khảo'}
+            {(user?.role === 'ADMIN' || user?.username === 'quantri') ? 'Quản trị hệ thống' : (user?.role === 'MANAGER' || user?.username === 'quantri') ? 'Quản lý hệ thống' : user?.role === 'ACCOUNTANT' ? 'Kế toán' : (user?.role === 'STATION_MANAGER' || user?.username === 'quantri') ? 'Trưởng trạm' : 'Giám khảo'}
             <LogOut size={14} style={{ cursor: 'pointer', color: 'var(--danger)' }} onClick={handleLogout} />
           </p>
         </div>

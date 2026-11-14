@@ -81,10 +81,11 @@ const SystemLogs = () => {
                 { value: 'all', label: 'Tất cả vai trò' },
                 { value: 'ADMIN', label: 'Quản trị viên' },
                 { value: 'MANAGER', label: 'Quản lý' },
+                { value: 'ACCOUNTANT', label: 'Kế toán' },
                 { value: 'STATION_MANAGER', label: 'Trưởng trạm' },
                 { value: 'EXAMINER', label: 'Giám khảo' }
               ]}
-              value={[{ value: 'all', label: 'Tất cả vai trò' }, { value: 'ADMIN', label: 'Quản trị viên' }, { value: 'MANAGER', label: 'Quản lý' }, { value: 'STATION_MANAGER', label: 'Trưởng trạm' }, { value: 'EXAMINER', label: 'Giám khảo' }].find(opt => opt.value === roleFilter)}
+              value={[{ value: 'all', label: 'Tất cả vai trò' }, { value: 'ADMIN', label: 'Quản trị viên' }, { value: 'MANAGER', label: 'Quản lý' }, { value: 'ACCOUNTANT', label: 'Kế toán' }, { value: 'STATION_MANAGER', label: 'Trưởng trạm' }, { value: 'EXAMINER', label: 'Giám khảo' }].find(opt => opt.value === roleFilter)}
               onChange={(selected: any) => setRoleFilter(selected ? selected.value : 'all')}
               placeholder="Lọc Vai trò..."
             />
