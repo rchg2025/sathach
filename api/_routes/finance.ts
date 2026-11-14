@@ -442,7 +442,7 @@ router.get('/advance-requests', async (req, res) => {
 });
 
 // Lấy thông tin tóm tắt & tính toán cho Giáo viên trước khi tạo đơn
-router.get('/advance-estimate', async (req, res) => {
+router.get(['/advance-estimate', '/estimate'], async (req, res) => {
   try {
     const { teacherId, courseId } = req.query;
     if (!teacherId || !courseId) {
