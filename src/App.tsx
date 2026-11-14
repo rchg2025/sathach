@@ -23,6 +23,7 @@ const RetakeManager = lazy(() => import('./pages/RetakeManager'));
 const TrainingSessionManager = lazy(() => import('./pages/TrainingSessionManager'));
 const TrainingRegistration = lazy(() => import('./pages/TrainingRegistration'));
 const PrintTicketsManager = lazy(() => import('./pages/PrintTicketsManager'));
+const FinanceSettingsManager = lazy(() => import('./pages/FinanceSettingsManager'));
 
 import LoadingFallback from './components/LoadingFallback';
 import './index.css';
@@ -113,6 +114,7 @@ function App() {
           <Route path="/manager/retakes" element={<RetakeManager />} />
           <Route path="/manager/users" element={<UserManager />} />
           <Route path="/manager/settings" element={<SettingsManager />} />
+          <Route path="/manager/finance-settings" element={<FinanceSettingsManager />} />
           <Route path="/manager/testing" element={<StationTesting />} />
           <Route path="/manager/system-logs" element={<SystemLogs />} />
           <Route path="/manager/reports" element={<ReportsManager />} />

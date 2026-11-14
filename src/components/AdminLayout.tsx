@@ -19,7 +19,8 @@ import {
   History,
   Upload,
   PieChart,
-  Printer
+  Printer,
+  DollarSign
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -183,6 +184,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
 
           <hr style={{ margin: '0.5rem 1rem', borderColor: 'var(--border)' }} />
           
+          {(user?.role === 'ACCOUNTANT' || user?.role === 'ADMIN' || user?.username === 'quantri') && (
+            <Link to="/manager/finance-settings" className={`sidebar-item ${isActive('/manager/finance-settings')}`} onClick={closeSidebar}>
+              <DollarSign size={20} /> <span className="sidebar-item-text">Cấu hình Học phí & Tạm ứng</span>
+            </Link>
+          )}
+
           {((user?.role === 'STATION_MANAGER' || user?.username === 'quantri') || (user?.role === 'ADMIN' || user?.username === 'quantri') || (user?.role === 'MANAGER' || user?.username === 'quantri')) && (
             <Link to="/manager/system-logs" className={`sidebar-item ${isActive('/manager/system-logs')}`} onClick={closeSidebar}>
               <History size={20} /> <span className="sidebar-item-text">Nhật ký</span>

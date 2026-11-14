@@ -30,6 +30,7 @@ model User {
   logs           SystemLog[]
   students              Student[]              @relation("StudentTeacher")
   trainingRegistrations TrainingRegistration[]
+  advancePaymentRequests AdvancePaymentRequest[]
 
   @@index([role])
 }
@@ -66,6 +67,7 @@ model Student {
   course      Course?      @relation(fields: [courseId], references: [id])
   teacherId   Int?
   teacher     User?        @relation("StudentTeacher", fields: [teacherId], references: [id])
+  tuitionInfo StudentTuition?
   testResults TestResult[]
 
   createdAt     DateTime        @default(now())
@@ -87,6 +89,8 @@ model Course {
   students       Student[]
   assignments    TestAssignment[]
   retakeSessions RetakeSession[]
+  tuitionConfigs TuitionFeeConfig[]
+  advanceRequests AdvancePaymentRequest[]
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 }
@@ -302,4 +306,115 @@ model TrainingRegistration {
 
   @@unique([trainingSessionId, vehicle])
   @@index([userId])
+}
+
+// ==========================================
+// QUẢN LÝ HỌC PHÍ, TẠM ỨNG & THANH TOÁN
+// ==========================================
+
+model TuitionFeeConfig {
+  id                 Int      @id @default(autoincrement())
+  courseId           Int
+  course             Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  transmissionType   String   // 'AUTO' (Số tự động), 'MANUAL' (Số sàn)
+  scheduleType       String   // 'WEEKDAY' (Ngày thường), 'SUNDAY' (Chủ nhật / Cuối tuần)
+  tuitionAmount      Float    @default(0) // Mức học phí (VNĐ)
+  teacherSharePercent Float   @default(0) // Tỉ lệ % giáo viên được hưởng (VD: 60 = 60%)
+  teacherShareAmount  Float?  @default(0) // Hoặc số tiền cố định/học viên (nếu áp dụng tiền mặt)
+  note               String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  studentTuitions    StudentTuition[]
+
+  @@unique([courseId, transmissionType, scheduleType])
+  @@index([courseId])
+}
+
+model StudentTuition {
+  id                 Int              @id @default(autoincrement())
+  studentId          Int              @unique
+  student            Student          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  tuitionConfigId    Int?
+  tuitionConfig      TuitionFeeConfig? @relation(fields: [tuitionConfigId], references: [id], onDelete: SetNull)
+  transmissionType   String           @default("MANUAL") // 'AUTO' | 'MANUAL'
+  scheduleType       String           @default("WEEKDAY") // 'WEEKDAY' | 'SUNDAY'
+  tuitionAmount      Float            @default(0) // Học phí thực tế
+  teacherSharePercent Float           @default(0) // Tỷ lệ hưởng %
+  teacherEarnedAmount Float           @default(0) // Tiền thù lao GV được tính cho HV này
+  isPaid             Boolean          @default(false) // Đã đóng học phí hay chưa
+  paidAmount         Float            @default(0) // Số tiền học viên đã đóng
+  note               String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  @@index([studentId])
+  @@index([tuitionConfigId])
+}
+
+model DeductionCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   // Tên khoản trừ (xăng dầu, thuê xe, thuê sân, phạt...)
+  code        String?  // Mã khoản trừ
+  description String?
+  isDefault   Boolean  @default(false)
+  defaultAmount Float? @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  deductions  AdvancePaymentDeduction[]
+}
+
+model AdvancePolicyConfig {
+  id                     Int      @id @default(autoincrement())
+  maxAdvancePercent      Float    @default(70) // % tạm ứng tối đa cho phép (VD: 70%)
+  maxAdvanceTimes        Int      @default(3)  // Số lần tối đa được tạm ứng trong 1 khóa
+  guidelines             String?  // Hướng dẫn / Quy định chi tiết của kế toán
+  isActive               Boolean  @default(true)
+  updatedAt              DateTime @updatedAt
+}
+
+model AdvancePaymentRequest {
+  id                  Int       @id @default(autoincrement())
+  requestCode         String    @unique // Mã phiếu (VD: TU-202611-001)
+  teacherId           Int
+  teacher             User      @relation(fields: [teacherId], references: [id])
+  courseId            Int
+  course              Course    @relation(fields: [courseId], references: [id])
+  studentCount        Int       @default(0) // Số học viên GV phụ trách trong khóa
+  grossEstimatedAmount Float    @default(0) // Tổng thù lao ước tính từ các học viên
+  maxAllowedAmount    Float     @default(0) // Mức tạm ứng tối đa được phép theo quy định
+  totalDeductions     Float     @default(0) // Tổng các khoản giảm trừ
+  requestedAmount     Float     @default(0) // Số tiền giáo viên đề nghị tạm ứng
+  approvedAmount      Float?    // Số tiền kế toán duyệt thực tế
+  status              String    @default("PENDING") // PENDING (Chờ duyệt), APPROVED (Đã duyệt), REJECTED (Từ chối), PAID (Đã chi tiền)
+  reason              String?   // Lý do tạm ứng / Ghi chú của giáo viên
+  accountantNotes     String?   // Ý kiến phản hồi / ghi chú của kế toán
+  paymentReference    String?   // Mã giao dịch / số UNC ngân hàng
+  approvedBy          String?   // Tên hoặc username kế toán duyệt
+  approvedAt          DateTime?
+  paidAt              DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  deductions          AdvancePaymentDeduction[]
+
+  @@index([teacherId])
+  @@index([courseId])
+  @@index([status])
+}
+
+model AdvancePaymentDeduction {
+  id                  Int                @id @default(autoincrement())
+  requestId           Int
+  request             AdvancePaymentRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  deductionCategoryId Int?
+  deductionCategory   DeductionCategory? @relation(fields: [deductionCategoryId], references: [id], onDelete: SetNull)
+  name                String             // Tên khoản trừ
+  amount              Float              @default(0) // Số tiền trừ
+  note                String?
+  createdAt           DateTime           @default(now())
+
+  @@index([requestId])
 }

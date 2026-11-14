@@ -12,6 +12,7 @@ import trainingGroundsRoutes from './_routes/trainingGrounds';
 import trainingShiftsRoutes from './_routes/trainingShifts';
 import trainingSessionsRoutes from './_routes/trainingSessions';
 import trainingRegistrationsRoutes from './_routes/trainingRegistrations';
+import financeRoutes from './_routes/finance';
 
 const app = expressApp();
 
@@ -21,6 +22,7 @@ app.use(expressApp.urlencoded({ extended: true, limit: '50mb' }));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/manager', managerRoutes);
+app.use('/api/manager/finance', financeRoutes);
 app.use('/api/manager/training-grounds', trainingGroundsRoutes);
 app.use('/api/manager/training-shifts', trainingShiftsRoutes);
 app.use('/api/manager/training-sessions', trainingSessionsRoutes);
