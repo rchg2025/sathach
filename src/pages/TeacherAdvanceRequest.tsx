@@ -94,7 +94,9 @@ export default function TeacherAdvanceRequest() {
   const fetchCourses = async (teacherId: number) => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
-      const courseList = res.data?.courses || res.data || [];
+      const courseList: Course[] = res.data?.courses || res.data || [];
+      // Sắp xếp khóa mới nhất lên trên cùng
+      courseList.sort((a, b) => b.id - a.id);
       setCourses(courseList);
       if (courseList.length > 0) {
         setSelectedCourseId(courseList[0].id);
