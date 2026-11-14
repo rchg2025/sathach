@@ -20,23 +20,26 @@ export default defineConfig({
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
               return 'vendor-react';
             }
-            if (id.includes('exceljs') || id.includes('xlsx')) {
-              return 'vendor-excel';
+            if (id.includes('exceljs')) {
+              return 'vendor-exceljs';
             }
-            if (id.includes('lucide-react')) {
-              return 'vendor-icons';
+            if (id.includes('xlsx')) {
+              return 'vendor-xlsx';
             }
-            if (id.includes('recharts')) {
+            if (id.includes('recharts') || id.includes('d3-')) {
               return 'vendor-charts';
             }
             if (id.includes('html5-qrcode') || id.includes('qrcode')) {
               return 'vendor-qrcode';
+            }
+            if (id.includes('lucide-react')) {
+              return 'vendor-icons';
             }
             return 'vendor-utils';
           }
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1200
   }
 })

@@ -24,6 +24,7 @@ const TrainingSessionManager = lazy(() => import('./pages/TrainingSessionManager
 const TrainingRegistration = lazy(() => import('./pages/TrainingRegistration'));
 const PrintTicketsManager = lazy(() => import('./pages/PrintTicketsManager'));
 
+import LoadingFallback from './components/LoadingFallback';
 import './index.css';
 
 
@@ -96,7 +97,7 @@ function App() {
       <GlobalSEOUpdater />
       <Toaster position="top-right" />
       <PublicHeader />
-      <Suspense fallback={<div className="container mt-4" style={{ textAlign: 'center', padding: '2rem' }}>Đang tải...</div>}>
+      <Suspense fallback={<LoadingFallback message="Đang tải trang..." />}>
         <Routes>
           <Route path="/" element={<StudentSearch />} />
           <Route path="/login" element={<Login />} />
