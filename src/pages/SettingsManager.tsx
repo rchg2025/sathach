@@ -38,7 +38,10 @@ const SettingsManager = () => {
     google_client_id: '',
 
     backup_schedule_enabled: 'false',
+    backup_schedule_cycle: 'daily', // 'daily', 'weekly', 'monthly', 'quarterly'
     backup_schedule_time: '02:00',
+    backup_schedule_day_of_week: '1', // 1: Monday, ..., 0: Sunday
+    backup_schedule_day_of_month: '1', // 1..28
     backup_schedule_type: 'all',
     backup_max_keep: '10',
     backup_last_run: ''
@@ -398,23 +401,80 @@ const SettingsManager = () => {
             <h5 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontSize: '1rem', fontWeight: 600 }}>
               ⏰ Cài đặt Lịch sao lưu tự động & Giới hạn bản lưu
             </h5>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem', alignItems: 'flex-start' }}>
               <div className="form-group" style={{ margin: 0 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Tự động sao lưu định kỳ</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Tự động sao lưu định kỳ</label>
                 <select 
                   className="form-control" 
                   name="backup_schedule_enabled" 
                   value={settings.backup_schedule_enabled} 
                   onChange={handleChange}
-                  style={{ height: '38px', borderRadius: '6px' }}
+                  style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', lineHeight: '1.4' }}
                 >
-                  <option value="false">Tắt (Thủ công)</option>
-                  <option value="true">Bật (Hàng ngày theo lịch)</option>
+                  <option value="false">Tắt (Chỉ sao lưu thủ công)</option>
+                  <option value="true">Bật (Tự động theo lịch hẹn)</option>
                 </select>
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Thời gian sao lưu hàng ngày</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Chu kỳ sao lưu</label>
+                <select 
+                  className="form-control" 
+                  name="backup_schedule_cycle" 
+                  value={settings.backup_schedule_cycle || 'daily'} 
+                  onChange={handleChange}
+                  disabled={settings.backup_schedule_enabled !== 'true'}
+                  style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', lineHeight: '1.4' }}
+                >
+                  <option value="daily">Hàng ngày (Daily)</option>
+                  <option value="weekly">Hàng tuần (Weekly)</option>
+                  <option value="monthly">Hàng tháng (Monthly)</option>
+                  <option value="quarterly">Hàng quý (Quarterly - 3 tháng/lần)</option>
+                </select>
+              </div>
+
+              {settings.backup_schedule_cycle === 'weekly' && (
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Ngày trong tuần</label>
+                  <select 
+                    className="form-control" 
+                    name="backup_schedule_day_of_week" 
+                    value={settings.backup_schedule_day_of_week || '1'} 
+                    onChange={handleChange}
+                    disabled={settings.backup_schedule_enabled !== 'true'}
+                    style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', lineHeight: '1.4' }}
+                  >
+                    <option value="1">Thứ Hai</option>
+                    <option value="2">Thứ Ba</option>
+                    <option value="3">Thứ Tư</option>
+                    <option value="4">Thứ Năm</option>
+                    <option value="5">Thứ Sáu</option>
+                    <option value="6">Thứ Bảy</option>
+                    <option value="0">Chủ Nhật</option>
+                  </select>
+                </div>
+              )}
+
+              {(settings.backup_schedule_cycle === 'monthly' || settings.backup_schedule_cycle === 'quarterly') && (
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Ngày trong tháng</label>
+                  <select 
+                    className="form-control" 
+                    name="backup_schedule_day_of_month" 
+                    value={settings.backup_schedule_day_of_month || '1'} 
+                    onChange={handleChange}
+                    disabled={settings.backup_schedule_enabled !== 'true'}
+                    style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', lineHeight: '1.4' }}
+                  >
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map(d => (
+                      <option key={d} value={String(d)}>Ngày {d}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Giờ thực hiện</label>
                 <input 
                   type="time" 
                   className="form-control" 
@@ -422,28 +482,28 @@ const SettingsManager = () => {
                   value={settings.backup_schedule_time} 
                   onChange={handleChange}
                   disabled={settings.backup_schedule_enabled !== 'true'}
-                  style={{ height: '38px', borderRadius: '6px' }}
+                  style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem' }}
                 />
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Nội dung sao lưu định kỳ</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Nội dung sao lưu</label>
                 <select 
                   className="form-control" 
                   name="backup_schedule_type" 
                   value={settings.backup_schedule_type} 
                   onChange={handleChange}
                   disabled={settings.backup_schedule_enabled !== 'true'}
-                  style={{ height: '38px', borderRadius: '6px' }}
+                  style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem', lineHeight: '1.4' }}
                 >
-                  <option value="all">Cả Database & Code</option>
+                  <option value="all">Toàn bộ (Database & Mã nguồn)</option>
                   <option value="db">Chỉ Database (.sql)</option>
-                  <option value="code">Chỉ Code (.tar.gz)</option>
+                  <option value="code">Chỉ Mã nguồn (.tar.gz)</option>
                 </select>
               </div>
 
               <div className="form-group" style={{ margin: 0 }}>
-                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Số bản mới nhất giữ lại</label>
+                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.4rem', display: 'block' }}>Số bản mới nhất giữ lại</label>
                 <input 
                   type="number" 
                   min="1" 
@@ -453,19 +513,19 @@ const SettingsManager = () => {
                   value={settings.backup_max_keep} 
                   onChange={handleChange}
                   placeholder="10"
-                  style={{ height: '38px', borderRadius: '6px' }}
+                  style={{ minHeight: '44px', height: 'auto', padding: '0.5rem 0.75rem', borderRadius: '6px', fontSize: '0.875rem' }}
                 />
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                {settings.backup_last_run ? `Lần sao lưu tự động gần nhất: ${new Date(settings.backup_last_run).toLocaleString('vi-VN')}` : 'Chưa có lịch sao lưu nào chạy gần đây.'}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.25rem', paddingTop: '0.85rem', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div style={{ fontSize: '0.85rem', color: '#475569' }}>
+                {settings.backup_last_run ? `🕒 Lần sao lưu gần nhất: ${new Date(settings.backup_last_run).toLocaleString('vi-VN')}` : '🕒 Chưa có lịch sao lưu nào chạy gần đây.'}
                 {settings.backup_max_keep && ` • Hệ thống sẽ chỉ giữ lại đúng ${settings.backup_max_keep} bản mới nhất và tự động xóa bản cũ trên Google Drive.`}
               </div>
               <button 
                 className="btn btn-primary" 
-                style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 1rem', fontSize: '0.85rem' }} 
+                style={{ background: '#28a745', borderColor: '#28a745', padding: '0.5rem 1.25rem', fontSize: '0.875rem', fontWeight: 500 }} 
                 onClick={() => handleSave('Lịch sao lưu & Giới hạn')}
               >
                 ✓ Lưu cài đặt lịch

@@ -37,15 +37,40 @@ mainApp.listen(port, () => {
 
       if (settings.backup_schedule_enabled === 'true') {
         const scheduledTime = settings.backup_schedule_time || '02:00';
+        const cycle = settings.backup_schedule_cycle || 'daily';
         const lastRun = settings.backup_last_run ? new Date(settings.backup_last_run) : null;
         let lastRunDate = '';
         if (lastRun && !isNaN(lastRun.getTime())) {
           lastRunDate = lastRun.toLocaleDateString("en-CA", { timeZone: "Asia/Ho_Chi_Minh" });
         }
 
+        // Time of day matches and has not run today yet
         if (vnTimeString === scheduledTime && lastRunDate !== vnDateString) {
-          console.log(`[Auto-Backup] Triggering scheduled backup at ${vnTimeString} (${vnDateString})...`);
-          await axios.get(`http://127.0.0.1:${port}/api/manager/cron/backup`);
+          // Check cycle condition:
+          let shouldRun = false;
+          const vnDateObj = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Ho_Chi_Minh" }));
+          const currentDayOfWeek = String(vnDateObj.getDay()); // 0 = Sunday, 1 = Monday, ...
+          const currentDayOfMonth = String(vnDateObj.getDate());
+          const currentMonth = vnDateObj.getMonth() + 1; // 1..12
+
+          if (cycle === 'daily') {
+            shouldRun = true;
+          } else if (cycle === 'weekly') {
+            const targetDay = settings.backup_schedule_day_of_week || '1';
+            if (currentDayOfWeek === targetDay) shouldRun = true;
+          } else if (cycle === 'monthly') {
+            const targetDay = settings.backup_schedule_day_of_month || '1';
+            if (currentDayOfMonth === targetDay) shouldRun = true;
+          } else if (cycle === 'quarterly') {
+            const targetDay = settings.backup_schedule_day_of_month || '1';
+            const isQuarterStartMonth = [1, 4, 7, 10].includes(currentMonth);
+            if (isQuarterStartMonth && currentDayOfMonth === targetDay) shouldRun = true;
+          }
+
+          if (shouldRun) {
+            console.log(`[Auto-Backup] Triggering ${cycle} backup at ${vnTimeString} (${vnDateString})...`);
+            await axios.get(`http://127.0.0.1:${port}/api/manager/cron/backup`);
+          }
         }
       }
     } catch (err: any) {
