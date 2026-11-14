@@ -127,7 +127,9 @@ export default function FinanceSettingsManager() {
   const fetchCourses = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
-      const courseList = res.data?.courses || res.data || [];
+      const courseList: Course[] = res.data?.courses || res.data || [];
+      // Sắp xếp khóa mới nhất lên trên cùng (id giảm dần hoặc startDate mới nhất)
+      courseList.sort((a, b) => b.id - a.id);
       setCourses(courseList);
       if (courseList.length > 0 && !selectedCourseId) {
         setSelectedCourseId(courseList[0].id);
@@ -367,6 +369,13 @@ export default function FinanceSettingsManager() {
 
   const selectedTeacherOption = teacherOptions.find(opt => opt.value === newRate.teacherId) || null;
 
+  const courseOptions = courses.map((c) => ({
+    value: c.id,
+    label: c.name,
+  }));
+
+  const selectedCourseOption = courseOptions.find(opt => opt.value === selectedCourseId) || null;
+
   return (
     <AdminLayout user={user}>
       <div style={{ width: '100%', maxWidth: '100%' }}>
@@ -406,22 +415,37 @@ export default function FinanceSettingsManager() {
         {activeTab === 'tuition' && (
           <div className="card" style={{ width: '100%' }}>
             <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-              <div style={{ flex: '1 1 300px' }}>
+              <div style={{ flex: '1 1 320px', minWidth: '280px' }}>
                 <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
                   Chọn Khóa học để cấu hình biểu giá:
                 </label>
-                <select
-                  className="form-control"
-                  value={selectedCourseId || ''}
-                  onChange={(e) => setSelectedCourseId(Number(e.target.value))}
-                  style={{ width: '100%' }}
-                >
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  options={courseOptions}
+                  value={selectedCourseOption}
+                  onChange={(opt: any) => opt && setSelectedCourseId(Number(opt.value))}
+                  placeholder="🔍 Tìm kiếm & chọn khóa học..."
+                  isClearable={false}
+                  styles={{
+                    control: (base: any, state: any) => ({
+                      ...base,
+                      minHeight: '40px',
+                      borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                      boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                      borderRadius: 'var(--radius)',
+                      '&:hover': { borderColor: 'var(--primary)' }
+                    }),
+                    singleValue: (base: any) => ({
+                      ...base,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }),
+                    menu: (base: any) => ({
+                      ...base,
+                      zIndex: 9999
+                    })
+                  }}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '0.5rem', alignSelf: 'flex-end', flexWrap: 'wrap' }}>
