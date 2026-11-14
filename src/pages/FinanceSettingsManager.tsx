@@ -351,7 +351,7 @@ export default function FinanceSettingsManager() {
                     {/* Số sàn - Ngày thường */}
                     <tr>
                       <td><span className="badge badge-info">Số sàn (Manual)</span></td>
-                      <td><strong>Ngày thường (T2 - T7)</strong></td>
+                      <td><strong>Ngày thường (Thứ 2 - Thứ 6)</strong></td>
                       <td>
                         <input
                           type="number"
@@ -401,10 +401,10 @@ export default function FinanceSettingsManager() {
                       </td>
                     </tr>
 
-                    {/* Số sàn - Chủ nhật */}
+                    {/* Số sàn - Cuối tuần */}
                     <tr>
                       <td><span className="badge badge-info">Số sàn (Manual)</span></td>
-                      <td><strong style={{ color: 'var(--danger)' }}>Chủ nhật (Cuối tuần)</strong></td>
+                      <td><strong style={{ color: 'var(--danger)' }}>Cuối tuần (Thứ 7 & Chủ nhật)</strong></td>
                       <td>
                         <input
                           type="number"
@@ -457,7 +457,7 @@ export default function FinanceSettingsManager() {
                     {/* Số tự động - Ngày thường */}
                     <tr>
                       <td><span className="badge badge-primary">Số tự động (Auto)</span></td>
-                      <td><strong>Ngày thường (T2 - T7)</strong></td>
+                      <td><strong>Ngày thường (Thứ 2 - Thứ 6)</strong></td>
                       <td>
                         <input
                           type="number"
@@ -507,10 +507,10 @@ export default function FinanceSettingsManager() {
                       </td>
                     </tr>
 
-                    {/* Số tự động - Chủ nhật */}
+                    {/* Số tự động - Cuối tuần */}
                     <tr>
                       <td><span className="badge badge-primary">Số tự động (Auto)</span></td>
-                      <td><strong style={{ color: 'var(--danger)' }}>Chủ nhật (Cuối tuần)</strong></td>
+                      <td><strong style={{ color: 'var(--danger)' }}>Cuối tuần (Thứ 7 & Chủ nhật)</strong></td>
                       <td>
                         <input
                           type="number"

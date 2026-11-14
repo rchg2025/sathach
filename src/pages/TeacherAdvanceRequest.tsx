@@ -467,7 +467,7 @@ export default function TeacherAdvanceRequest() {
                               {st.transmissionType === 'AUTO' ? 'Số tự động' : 'Số sàn'}
                             </span>
                             <span className="badge" style={{ background: '#f1f5f9', color: '#334155' }}>
-                              {st.scheduleType === 'SUNDAY' ? 'Chủ nhật' : 'Ngày thường'}
+                              {st.scheduleType === 'SUNDAY' ? 'Cuối tuần (T7, CN)' : 'Ngày thường (T2 - T6)'}
                             </span>
                           </td>
                           <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)} đ</td>
