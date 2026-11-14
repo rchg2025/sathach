@@ -211,3 +211,99 @@ export async function getDriveFileStream(fileId: string): Promise<{ stream: any,
     mimeType: metadata.data.mimeType || 'image/jpeg',
   };
 }
+
+async function getDriveClient() {
+  const settings = await prisma.setting.findMany({
+    where: {
+      key: {
+        in: ['drive_client_email', 'drive_private_key', 'drive_folder_id']
+      }
+    }
+  });
+
+  const config = settings.reduce((acc: any, s) => {
+    acc[s.key] = s.value;
+    return acc;
+  }, {});
+
+  const clientEmail = config.drive_client_email;
+  const privateKey = config.drive_private_key;
+  const folderId = config.drive_folder_id;
+
+  if (!clientEmail || !privateKey || !folderId) {
+    throw new Error('Google Drive configuration is missing in Settings');
+  }
+
+  const formattedPrivateKey = formatPrivateKey(privateKey);
+
+  const auth = new google.auth.GoogleAuth({
+    credentials: {
+      client_email: clientEmail,
+      private_key: formattedPrivateKey,
+    },
+    scopes: ['https://www.googleapis.com/auth/drive'],
+  });
+
+  const drive = google.drive({ version: 'v3', auth });
+  const backupFolderId = await getOrCreateFolder(drive, folderId, 'Backups');
+
+  return { drive, backupFolderId };
+}
+
+export async function uploadBackupToDrive(filePath: string, fileName: string, mimeType: string) {
+  const { drive, backupFolderId } = await getDriveClient();
+  const fs = await import('fs');
+
+  const fileMetadata = {
+    name: fileName,
+    parents: [backupFolderId],
+  };
+
+  const media = {
+    mimeType: mimeType,
+    body: fs.createReadStream(filePath),
+  };
+
+  const driveRes = await drive.files.create({
+    requestBody: fileMetadata,
+    media: media,
+    fields: 'id, name, size, webViewLink, createdTime',
+    supportsAllDrives: true,
+  });
+
+  return driveRes.data;
+}
+
+export async function listDriveBackups() {
+  const { drive, backupFolderId } = await getDriveClient();
+
+  const query = `'${backupFolderId}' in parents and trashed = false`;
+  const res = await drive.files.list({
+    q: query,
+    fields: 'files(id, name, size, createdTime, webViewLink, mimeType)',
+    supportsAllDrives: true,
+    includeItemsFromAllDrives: true,
+    orderBy: 'createdTime desc',
+    pageSize: 30,
+  });
+
+  return res.data.files || [];
+}
+
+export async function downloadDriveBackup(fileId: string, destPath: string): Promise<void> {
+  const { drive } = await getDriveClient();
+  const fs = await import('fs');
+
+  const res = await drive.files.get(
+    { fileId, alt: 'media', supportsAllDrives: true },
+    { responseType: 'stream' }
+  );
+
+  return new Promise((resolve, reject) => {
+    const dest = fs.createWriteStream(destPath);
+    res.data
+      .pipe(dest)
+      .on('finish', () => resolve())
+      .on('error', (err: any) => reject(err));
+  });
+}

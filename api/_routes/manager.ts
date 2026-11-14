@@ -3,7 +3,13 @@ import nodemailer from 'nodemailer';
 import prisma from '../_prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
-import { uploadFileToDrive, testDriveConnection, getDriveFileStream } from '../_utils/drive';
+import { uploadFileToDrive, testDriveConnection, getDriveFileStream, uploadBackupToDrive, listDriveBackups, downloadDriveBackup } from '../_utils/drive';
+import { exec } from 'child_process';
+import util from 'util';
+import fs from 'fs';
+import path from 'path';
+
+const execPromise = util.promisify(exec);
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -765,6 +771,95 @@ router.get('/drive/image/:fileId', async (req, res) => {
   } catch (error: any) {
     console.error('Drive Image Proxy Error:', error.message);
     res.status(404).send('Image not found');
+  }
+});
+
+// Google Drive Backup & Restore Management
+router.get('/backups', async (req, res) => {
+  try {
+    const files = await listDriveBackups();
+    res.json(files);
+  } catch (error: any) {
+    console.error('List backups error:', error);
+    res.status(500).json({ error: error.message || 'Lỗi khi tải danh sách sao lưu từ Google Drive' });
+  }
+});
+
+router.post('/backups/create', async (req, res) => {
+  const { type } = req.body; // 'db', 'code', or 'all'
+  if (!['db', 'code', 'all'].includes(type)) {
+    return res.status(400).json({ error: 'Loại sao lưu không hợp lệ' });
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  const tmpDir = '/tmp';
+  const createdBackups: any[] = [];
+
+  try {
+    const dbUrl = process.env.DATABASE_URL || 'postgresql://sathach_user:Sathach2026LocalDB@127.0.0.1:5432/sathach_db';
+
+    // 1. Database backup
+    if (type === 'db' || type === 'all') {
+      const dbFileName = `database_backup_${timestamp}.sql`;
+      const dbFilePath = path.join(tmpDir, dbFileName);
+
+      await execPromise(`pg_dump "${dbUrl}" --no-owner --no-acl --clean --if-exists -f "${dbFilePath}"`);
+      const driveFile = await uploadBackupToDrive(dbFilePath, dbFileName, 'application/sql');
+      createdBackups.push({ type: 'db', name: dbFileName, ...driveFile });
+      if (fs.existsSync(dbFilePath)) fs.unlinkSync(dbFilePath);
+    }
+
+    // 2. Codebase backup
+    if (type === 'code' || type === 'all') {
+      const codeFileName = `code_backup_${timestamp}.tar.gz`;
+      const codeFilePath = path.join(tmpDir, codeFileName);
+      const appRoot = process.cwd();
+
+      await execPromise(`tar --exclude='node_modules' --exclude='.git' --exclude='dist' --exclude='.next' --exclude='*.log' -czf "${codeFilePath}" -C "${appRoot}" .`);
+      const driveFile = await uploadBackupToDrive(codeFilePath, codeFileName, 'application/gzip');
+      createdBackups.push({ type: 'code', name: codeFileName, ...driveFile });
+      if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
+    }
+
+    res.json({ success: true, message: 'Sao lưu lên Google Drive thành công!', backups: createdBackups });
+  } catch (error: any) {
+    console.error('Create backup error:', error);
+    res.status(500).json({ error: error.message || 'Lỗi trong quá trình tạo bản sao lưu' });
+  }
+});
+
+router.post('/backups/restore', async (req, res) => {
+  const { fileId, fileName } = req.body;
+  if (!fileId || !fileName) {
+    return res.status(400).json({ error: 'Thiếu thông tin file sao lưu cần khôi phục' });
+  }
+
+  const tmpDir = '/tmp';
+  const destPath = path.join(tmpDir, `restore_${Date.now()}_${fileName}`);
+
+  try {
+    // 1. Download file from Google Drive
+    await downloadDriveBackup(fileId, destPath);
+
+    // 2. Process restore based on file type
+    if (fileName.endsWith('.sql')) {
+      const dbUrl = process.env.DATABASE_URL || 'postgresql://sathach_user:Sathach2026LocalDB@127.0.0.1:5432/sathach_db';
+      await execPromise(`psql "${dbUrl}" -f "${destPath}"`);
+      if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+      return res.json({ success: true, message: 'Khôi phục cơ sở dữ liệu thành công từ Google Drive!' });
+    } else if (fileName.endsWith('.tar.gz')) {
+      const appRoot = process.cwd();
+      await execPromise(`tar -xzf "${destPath}" -C "${appRoot}"`);
+      if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+      return res.json({ success: true, message: 'Khôi phục mã nguồn thành công! Vui lòng build và reload dịch vụ nếu cần.' });
+    } else {
+      if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+      return res.status(400).json({ error: 'Định dạng file sao lưu không được hỗ trợ (chỉ hỗ trợ .sql hoặc .tar.gz)' });
+    }
+  } catch (error: any) {
+    console.error('Restore backup error:', error);
+    if (fs.existsSync(destPath)) fs.unlinkSync(destPath);
+    res.status(500).json({ error: error.message || 'Lỗi trong quá trình khôi phục từ Google Drive' });
   }
 });
 

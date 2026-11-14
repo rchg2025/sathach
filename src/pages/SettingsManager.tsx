@@ -3,13 +3,19 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { API_BASE_URL } from '../config';
-import { Globe, Folder, Mail } from 'lucide-react';
+import { Globe, Folder, Mail, Database, RefreshCw, Download, ArrowUpCircle } from 'lucide-react';
 
 const SettingsManager = () => {
   const [user, setUser] = useState<any>(null);
   
   // State for tabs
-  const [activeTab, setActiveTab] = useState<'seo' | 'drive' | 'smtp' | 'googleAuth'>('seo');
+  const [activeTab, setActiveTab] = useState<'seo' | 'drive' | 'backup' | 'smtp' | 'googleAuth'>('seo');
+  
+  // State for backups
+  const [backups, setBackups] = useState<any[]>([]);
+  const [isLoadingBackups, setIsLoadingBackups] = useState(false);
+  const [isCreatingBackup, setIsCreatingBackup] = useState(false);
+  const [restoringFileId, setRestoringFileId] = useState<string | null>(null);
   
   // State for all settings
   const [settings, setSettings] = useState({
@@ -112,6 +118,81 @@ const SettingsManager = () => {
     });
   };
 
+  const fetchBackups = async () => {
+    setIsLoadingBackups(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/backups`);
+      setBackups(res.data || []);
+    } catch (e: any) {
+      toast.error(e.response?.data?.error || 'Lỗi tải danh sách sao lưu từ Google Drive');
+    } finally {
+      setIsLoadingBackups(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'backup') {
+      fetchBackups();
+    }
+  }, [activeTab]);
+
+  const handleCreateBackup = async (type: 'db' | 'code' | 'all') => {
+    setIsCreatingBackup(true);
+    const label = type === 'db' ? 'Cơ sở dữ liệu' : type === 'code' ? 'Mã nguồn' : 'Toàn bộ hệ thống';
+    const backupPromise = axios.post(`${API_BASE_URL}/api/manager/backups/create`, { type });
+
+    toast.promise(backupPromise, {
+      loading: `Đang tạo và tải bản sao lưu ${label} lên Google Drive...`,
+      success: (res) => {
+        fetchBackups();
+        return res.data.message || `Sao lưu ${label} thành công!`;
+      },
+      error: (err) => err.response?.data?.error || `Lỗi sao lưu ${label}`
+    });
+
+    try {
+      await backupPromise;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsCreatingBackup(false);
+    }
+  };
+
+  const handleRestoreBackup = async (file: any) => {
+    const isDb = file.name.endsWith('.sql');
+    const isCode = file.name.endsWith('.tar.gz');
+    const confirmMsg = isDb 
+      ? `CẢNH BÁO: Bạn có chắc chắn muốn khôi phục CƠ SỞ DỮ LIỆU từ bản sao lưu "${file.name}"?\nToàn bộ dữ liệu hiện tại sẽ được cập nhật lại theo file này!`
+      : isCode
+      ? `CẢNH BÁO: Bạn có chắc chắn muốn khôi phục MÃ NGUỒN từ bản sao lưu "${file.name}"?`
+      : `Bạn có chắc muốn khôi phục file "${file.name}"?`;
+
+    if (!window.confirm(confirmMsg)) return;
+
+    setRestoringFileId(file.id);
+    const restorePromise = axios.post(`${API_BASE_URL}/api/manager/backups/restore`, {
+      fileId: file.id,
+      fileName: file.name
+    });
+
+    toast.promise(restorePromise, {
+      loading: `Đang tải bản sao lưu từ Google Drive và tiến hành khôi phục...`,
+      success: (res) => {
+        return res.data.message || 'Khôi phục thành công!';
+      },
+      error: (err) => err.response?.data?.error || 'Lỗi khôi phục từ Google Drive'
+    });
+
+    try {
+      await restorePromise;
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setRestoringFileId(null);
+    }
+  };
+
   if (!user) return <AdminLayout user={null}><div>Đang tải...</div></AdminLayout>;
 
   return (
@@ -131,9 +212,16 @@ const SettingsManager = () => {
           <button 
             className={`tab-btn ${activeTab === 'drive' ? 'active' : ''}`}
             onClick={() => setActiveTab('drive')}
-            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'drive' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'drive' ? 'var(--text-light)' : 'var(--text-light)', fontWeight: activeTab === 'drive' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'drive' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'drive' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'drive' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
           >
             <Folder size={16} /> Google Drive
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'backup' ? 'active' : ''}`}
+            onClick={() => setActiveTab('backup')}
+            style={{ padding: '0.5rem 0.75rem', background: 'none', border: 'none', borderBottom: activeTab === 'backup' ? '2px solid var(--primary)' : '2px solid transparent', color: activeTab === 'backup' ? 'var(--primary)' : 'var(--text-light)', fontWeight: activeTab === 'backup' ? '600' : 'normal', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap', fontSize: '0.85rem' }}
+          >
+            <Database size={16} /> Sao lưu & Khôi phục
           </button>
           <button 
             className={`tab-btn ${activeTab === 'smtp' ? 'active' : ''}`}
@@ -251,6 +339,142 @@ const SettingsManager = () => {
             <button className="btn btn-primary" style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 0.5rem', fontSize: '0.75rem', whiteSpace: 'nowrap', flex: 1 }} onClick={() => handleSave('Google Drive')}>
               ✓ Lưu cấu hình
             </button>
+          </div>
+        </div>
+        )}
+
+        {/* Khối: Sao lưu & Khôi phục Google Drive */}
+        {activeTab === 'backup' && (
+        <div className="card" style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#10b981', margin: 0 }}>
+              <Database size={20} /> Sao lưu & Khôi phục (Lưu trữ trên Google Drive)
+            </h4>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button 
+                className="btn btn-primary" 
+                style={{ background: '#10b981', borderColor: '#10b981', padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                disabled={isCreatingBackup}
+                onClick={() => handleCreateBackup('db')}
+              >
+                <Database size={16} /> Sao lưu Database
+              </button>
+              <button 
+                className="btn btn-primary" 
+                style={{ background: '#0284c7', borderColor: '#0284c7', padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                disabled={isCreatingBackup}
+                onClick={() => handleCreateBackup('code')}
+              >
+                <ArrowUpCircle size={16} /> Sao lưu Mã nguồn (Code)
+              </button>
+              <button 
+                className="btn btn-primary" 
+                style={{ background: '#6366f1', borderColor: '#6366f1', padding: '0.4rem 0.8rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                disabled={isCreatingBackup}
+                onClick={() => handleCreateBackup('all')}
+              >
+                ⚡ Sao lưu Tất cả
+              </button>
+              <button 
+                className="btn" 
+                style={{ border: '1px solid var(--border)', background: 'white', padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                onClick={fetchBackups}
+                title="Làm mới danh sách"
+                disabled={isLoadingBackups}
+              >
+                <RefreshCw size={16} className={isLoadingBackups ? 'spin' : ''} />
+              </button>
+            </div>
+          </div>
+
+          <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
+            <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, color: '#334155' }}>📌 Cơ chế hoạt động:</p>
+            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#64748b' }}>
+              <li>Bản sao lưu được nén tự động từ máy chủ và tải lên trực tiếp thư mục <b>Backups</b> trong Google Drive của bạn.</li>
+              <li>Bạn có thể bấm <b>Khôi phục</b> bất cứ lúc nào để đưa cơ sở dữ liệu về phiên bản đã sao lưu.</li>
+              <li>Dữ liệu bao gồm đầy đủ tài khoản, học viên, phân công, kết quả chấm thi, cài đặt hệ thống.</li>
+            </ul>
+          </div>
+
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table" style={{ margin: 0, width: '100%' }}>
+              <thead>
+                <tr>
+                  <th style={{ width: '50px' }}>STT</th>
+                  <th>Tên bản sao lưu</th>
+                  <th>Loại</th>
+                  <th>Dung lượng</th>
+                  <th>Thời gian sao lưu</th>
+                  <th style={{ textAlign: 'center', width: '220px' }}>Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {isLoadingBackups ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>Đang tải danh sách bản sao lưu từ Google Drive...</td>
+                  </tr>
+                ) : backups.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                      Chưa có bản sao lưu nào trên Google Drive. Bấm nút sao lưu bên trên để tạo bản đầu tiên!
+                    </td>
+                  </tr>
+                ) : (
+                  backups.map((b, idx) => {
+                    const isDb = b.name.endsWith('.sql');
+                    const isCode = b.name.endsWith('.tar.gz');
+                    const sizeStr = b.size ? `${(Number(b.size) / (1024 * 1024)).toFixed(2)} MB` : '-';
+                    const dateStr = b.createdTime ? new Date(b.createdTime).toLocaleString('vi-VN') : '-';
+
+                    return (
+                      <tr key={b.id}>
+                        <td>{idx + 1}</td>
+                        <td>
+                          <strong>{b.name}</strong>
+                        </td>
+                        <td>
+                          {isDb ? (
+                            <span style={{ background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Database (.sql)</span>
+                          ) : isCode ? (
+                            <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>Mã nguồn (.tar.gz)</span>
+                          ) : (
+                            <span style={{ background: '#f1f5f9', color: '#475569', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }}>Khác</span>
+                          )}
+                        </td>
+                        <td>{sizeStr}</td>
+                        <td>{dateStr}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                            {b.webViewLink && (
+                              <a 
+                                href={b.webViewLink} 
+                                target="_blank" 
+                                rel="noreferrer"
+                                className="action-btn"
+                                title="Xem / Tải từ Google Drive"
+                                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem 0.6rem', color: '#0284c7', background: '#f0f9ff', borderRadius: '4px', textDecoration: 'none' }}
+                              >
+                                <Download size={15} />
+                              </a>
+                            )}
+                            <button
+                              className="btn btn-sm"
+                              style={{ background: '#fef2f2', color: '#b91c1c', border: '1px solid #fecaca', fontSize: '0.8rem', padding: '0.3rem 0.75rem', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer' }}
+                              disabled={restoringFileId === b.id}
+                              onClick={() => handleRestoreBackup(b)}
+                              title="Khôi phục phiên bản này"
+                            >
+                              <RefreshCw size={14} className={restoringFileId === b.id ? 'spin' : ''} />
+                              {restoringFileId === b.id ? 'Đang khôi phục...' : 'Khôi phục'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
         )}
