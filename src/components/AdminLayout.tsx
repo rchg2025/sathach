@@ -92,12 +92,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
       {/* Sidebar */}
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''} ${isCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-header" style={{ position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }} className="d-md-none">
+          <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: '10px' }} className="mobile-close-btn-container">
             {isSidebarOpen && (
-              <X size={24} style={{ cursor: 'pointer', color: 'var(--text-muted)' }} onClick={closeSidebar} />
+              <button 
+                onClick={closeSidebar}
+                style={{ 
+                  background: 'none', 
+                  border: 'none', 
+                  padding: '6px', 
+                  cursor: 'pointer', 
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                aria-label="Đóng menu"
+              >
+                <X size={24} />
+              </button>
             )}
           </div>
-          <button className="sidebar-toggle-btn d-none d-md-flex" onClick={toggleCollapse} style={{ position: 'absolute', right: '-15px', top: '50%', transform: 'translateY(-50%)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: '4px', zIndex: 10 }}>
+          <button className="sidebar-toggle-btn desktop-only-toggle" onClick={toggleCollapse} style={{ position: 'absolute', right: '-15px', top: '50%', transform: 'translateY(-50%)', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '50%', padding: '4px', zIndex: 10 }}>
             {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
           </button>
           
