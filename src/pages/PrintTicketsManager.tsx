@@ -48,6 +48,17 @@ const PrintTicketsManager = () => {
     setSelectedStudentIds([]);
   }, [selectedDate]);
 
+  useEffect(() => {
+    if (selectedDate && selectedCourse) {
+      handleFetchData();
+    } else {
+      setStudents([]);
+      setAssignedTestTypes([]);
+      setCurrentPage(1);
+      setSelectedStudentIds([]);
+    }
+  }, [selectedDate, selectedCourse]);
+
   const handleFetchData = async () => {
     if (!selectedDate || !selectedCourse) {
       toast.error('Vui lòng chọn Ngày thi và Khóa thi');

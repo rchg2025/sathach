@@ -45,7 +45,7 @@ const StatisticsManager = () => {
     try {
       const queryDate = date ? date : 'ALL';
       const [studentsRes, coursesRes, testTypesRes, teachersRes, allAssignmentsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${queryDate}&courseId=${courseId}`),
+        axios.get(`${API_BASE_URL}/api/manager/station/students-v2?userId=${currentUser.id}&role=${currentUser.role}&date=${queryDate}&courseId=${courseId}&includeScores=true`),
         axios.get(`${API_BASE_URL}/api/manager/courses`),
         axios.get(`${API_BASE_URL}/api/manager/test-types`),
         axios.get(`${API_BASE_URL}/api/manager/users?role=TEACHER`),

@@ -1008,8 +1008,9 @@ router.get('/station/students', async (req, res) => {
 });
 
 router.get('/station/students-v2', async (req, res) => {
-  const { userId, role, date, courseId } = req.query;
+  const { userId, role, date, courseId, includeScores } = req.query;
   if (!userId || !role) return res.status(400).json({ error: 'Missing parameters' });
+  const shouldIncludeScores = includeScores === 'true';
   
   try {
     let targetDateMidnight: Date | null = null;
@@ -1136,13 +1137,15 @@ router.get('/station/students-v2', async (req, res) => {
             stationManager: true, 
             vehicle: true, 
             testType: true,
-            scores: {
-              include: {
-                criterion: {
-                  include: { exam: true }
+            ...(shouldIncludeScores ? {
+              scores: {
+                include: {
+                  criterion: {
+                    include: { exam: true }
+                  }
                 }
               }
-            }
+            } : {})
           },
           orderBy: { createdAt: 'desc' }
         }
@@ -2055,39 +2058,42 @@ router.get('/print-tickets/data', async (req, res) => {
     }
 
     const cId = Number(courseId);
-
-    // Fetch students in this course or retaking in this course
-    const students = await prisma.student.findMany({
-      where: {
-        OR: [
-          { courseId: cId },
-          { RetakeSession: { some: { targetCourseId: cId } } }
-        ]
-      },
-      include: {
-        testResults: true
-      },
-      orderBy: { name: 'asc' }
-    });
-
     const startOfDay = new Date(`${date}T00:00:00.000Z`);
     const endOfDay = new Date(`${date}T23:59:59.999Z`);
 
-    // Fetch assignments to get assigned exams
-    const assignments = await prisma.testAssignment.findMany({
-      where: {
-        courseId: cId,
-        assignmentDate: {
-          gte: startOfDay,
-          lte: endOfDay
+    // Fetch students and assignments in parallel with lean select fields
+    const [students, assignments] = await Promise.all([
+      prisma.student.findMany({
+        where: {
+          OR: [
+            { courseId: cId },
+            { RetakeSession: { some: { targetCourseId: cId } } }
+          ]
         },
-        examId: { not: null }
-      },
-      include: {
-        exam: true,
-        testType: true
-      }
-    });
+        select: {
+          id: true,
+          name: true,
+          cccd: true,
+          courseName: true,
+          testStationOrder: true,
+          courseId: true
+        },
+        orderBy: { name: 'asc' }
+      }),
+      prisma.testAssignment.findMany({
+        where: {
+          courseId: cId,
+          assignmentDate: {
+            gte: startOfDay,
+            lte: endOfDay
+          },
+          examId: { not: null }
+        },
+        select: {
+          testType: true
+        }
+      })
+    ]);
 
     // Deduplicate testTypes
     const uniqueTestTypesMap = new Map();
