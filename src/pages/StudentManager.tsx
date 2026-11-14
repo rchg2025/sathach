@@ -384,7 +384,7 @@ const StudentManager = () => {
 
   const getVehicleScheduleLabel = (trans?: string, sched?: string) => {
     const t = trans === 'AUTO' ? 'Số tự động' : 'Số sàn';
-    const s = sched === 'SUNDAY' ? 'Cuối tuần' : 'Ngày thường';
+    const s = sched === 'SUNDAY' ? 'Cuối tuần (T7 & CN)' : 'Ngày thường (T2 - T6)';
     return `${t} - ${s}`;
   };
 
@@ -500,10 +500,10 @@ const StudentManager = () => {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
     
     const noteData = [
-      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Ngày thường' },
-      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Cuối tuần' },
-      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Ngày thường' },
-      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Cuối tuần' },
+      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Ngày thường (Thứ 2 - Thứ 6)' },
+      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Cuối tuần (Thứ 7 & Chủ nhật)' },
+      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Ngày thường (Thứ 2 - Thứ 6)' },
+      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Cuối tuần (Thứ 7 & Chủ nhật)' },
     ];
     const noteSheet = XLSX.utils.json_to_sheet(noteData);
     XLSX.utils.book_append_sheet(workbook, noteSheet, 'Quy ước Loại xe & Lịch học');
@@ -871,8 +871,8 @@ const StudentManager = () => {
                   value={scheduleType} 
                   onChange={e => setScheduleType(e.target.value as 'WEEKDAY' | 'SUNDAY')}
                 >
-                  <option value="WEEKDAY">📅 Ngày thường (Thứ 2 - Thứ 7)</option>
-                  <option value="SUNDAY">🏖️ Cuối tuần (Chủ nhật)</option>
+                  <option value="WEEKDAY">📅 Ngày thường (Thứ 2 - Thứ 6)</option>
+                  <option value="SUNDAY">🏖️ Cuối tuần (Thứ 7 & Chủ nhật)</option>
                 </select>
               </div>
             </div>

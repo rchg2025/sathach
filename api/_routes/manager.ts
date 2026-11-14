@@ -1139,7 +1139,9 @@ router.post('/students/bulk', async (req, res) => {
       if (s.vehicleSchedule) {
         const vs = String(s.vehicleSchedule).toLowerCase();
         if (vs.includes('tự động') || vs.includes('auto')) trans = 'AUTO';
-        if (vs.includes('cuối tuần') || vs.includes('chủ nhật') || vs.includes('sunday')) sched = 'SUNDAY';
+        if (vs.includes('cuối tuần') || vs.includes('thứ 7') || vs.includes('chủ nhật') || vs.includes('sunday') || vs.includes('t7') || vs.includes('cn')) {
+          sched = 'SUNDAY';
+        }
       }
       if (s.transmissionType) trans = s.transmissionType;
       if (s.scheduleType) sched = s.scheduleType;
