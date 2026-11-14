@@ -137,6 +137,8 @@ const StudentManager = () => {
   const [licenseExpiryDate, setLicenseExpiryDate] = useState('');
   const [licenseDuration, setLicenseDuration] = useState('');
   const [teacherId, setTeacherId] = useState<number | null>(null);
+  const [transmissionType, setTransmissionType] = useState<'MANUAL' | 'AUTO'>('MANUAL');
+  const [scheduleType, setScheduleType] = useState<'WEEKDAY' | 'SUNDAY'>('WEEKDAY');
   
   // Pagination & Search
   const [searchKeyword, setSearchKeyword] = useState('');
@@ -220,7 +222,8 @@ const StudentManager = () => {
       const payload = { 
         registrationCode, name, dob, cccd, address, licenseNumber, 
         licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-        licenseDuration, courseName, courseId: cId, teacherId
+        licenseDuration, courseName, courseId: cId, teacherId,
+        transmissionType, scheduleType
       };
       
       if (editingId) {
@@ -257,6 +260,8 @@ const StudentManager = () => {
     setLicenseExpiryDate('');
     setLicenseDuration('');
     setTeacherId(null);
+    setTransmissionType('MANUAL');
+    setScheduleType('WEEKDAY');
   };
 
   const handleEdit = (student: any) => {
@@ -274,6 +279,8 @@ const StudentManager = () => {
     setPassDate(formatDate(student.passDate) === '-' ? '' : formatDate(student.passDate));
     setLicenseDuration(student.licenseDuration || '');
     setTeacherId(student.teacherId || null);
+    setTransmissionType(student.tuitionInfo?.transmissionType || 'MANUAL');
+    setScheduleType(student.tuitionInfo?.scheduleType || 'WEEKDAY');
     setActiveTab('add');
   };
 
@@ -375,6 +382,12 @@ const StudentManager = () => {
   const totalPages = Math.ceil(filteredStudents.length / itemsPerPage);
   const displayedStudents = filteredStudents.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
+  const getVehicleScheduleLabel = (trans?: string, sched?: string) => {
+    const t = trans === 'AUTO' ? 'Số tự động' : 'Số sàn';
+    const s = sched === 'SUNDAY' ? 'Cuối tuần' : 'Ngày thường';
+    return `${t} - ${s}`;
+  };
+
   const exportToExcel = async () => {
     const toastId = toast.loading('Đang xuất file Excel...');
     try {
@@ -396,6 +409,7 @@ const StudentManager = () => {
         { header: 'Ngày trúng tuyển', key: 'pass', width: 15 },
         { header: 'Ngày hết hạn', key: 'expiry', width: 15 },
         { header: 'Thời gian GPLX', key: 'duration', width: 15 },
+        { header: 'Loại xe & Lịch học', key: 'vehicleSchedule', width: 25 },
         { header: 'Giáo viên dạy thực hành', key: 'teacher', width: 25 },
         { header: 'Mã QR', key: 'qr', width: 15 } // We'll put image here
       ];
@@ -417,6 +431,7 @@ const StudentManager = () => {
           pass: s.passDate || '',
           expiry: s.licenseExpiryDate || '',
           duration: s.licenseDuration || '',
+          vehicleSchedule: getVehicleScheduleLabel(s.tuitionInfo?.transmissionType, s.tuitionInfo?.scheduleType),
           teacher: s.teacher?.name || ''
         });
 
@@ -429,9 +444,9 @@ const StudentManager = () => {
           extension: 'png',
         });
         
-        // Add image to the 'O' column (Mã QR) at current row
+        // Add image to the 'P' column (Mã QR) at current row (index 15)
         worksheet.addImage(imageId, {
-          tl: { col: 14, row: i + 1 }, // 14 = column O (0-indexed)
+          tl: { col: 15, row: i + 1 }, // 15 = column P (0-indexed)
           ext: { width: 80, height: 80 }
         });
 
@@ -476,6 +491,7 @@ const StudentManager = () => {
       'Ngày trúng tuyển': '27/03/2021 12:00:00 SA',
       'Ngày hết hạn': '01/01/1900 12:00:00 SA',
       'Thời gian GPLX': '0',
+      'Loại xe & Lịch học': 'Số sàn - Ngày thường',
       'Username giáo viên': ''
     }];
     
@@ -483,6 +499,15 @@ const StudentManager = () => {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Template');
     
+    const noteData = [
+      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Ngày thường' },
+      { 'Quy ước Loại xe & Lịch học': 'Số sàn - Cuối tuần' },
+      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Ngày thường' },
+      { 'Quy ước Loại xe & Lịch học': 'Số tự động - Cuối tuần' },
+    ];
+    const noteSheet = XLSX.utils.json_to_sheet(noteData);
+    XLSX.utils.book_append_sheet(workbook, noteSheet, 'Quy ước Loại xe & Lịch học');
+
     const teacherData = teachers.map(t => ({
       'Username (Dùng để import)': t.username,
       'Tên hiển thị': t.name
@@ -539,6 +564,7 @@ const StudentManager = () => {
             passDate: row['Ngày trúng tuyển']?.toString() || '',
             licenseExpiryDate: row['Ngày hết hạn']?.toString() || '',
             licenseDuration: row['Thời gian GPLX']?.toString() || '',
+            vehicleSchedule: row['Loại xe & Lịch học']?.toString() || '',
             teacherUsername: row['Username giáo viên']?.toString() || ''
           };
         });
@@ -658,6 +684,7 @@ const StudentManager = () => {
                   <th>Ngày sinh</th>
                   <th>CCCD</th>
                   <th>Hạng</th>
+                  <th>Loại xe & Lịch</th>
                   <th>Giáo viên</th>
                   <th className="sticky-col-right" style={{ width: '120px' }}>Hành động</th>
                 </tr>
@@ -679,6 +706,11 @@ const StudentManager = () => {
                     <td>{formatDate(student.dob)}</td>
                     <td>{student.cccd}</td>
                     <td>{student.licenseClass ? <span className="badge badge-warning">{student.licenseClass}</span> : '-'}</td>
+                    <td>
+                      <span className="badge" style={{ backgroundColor: '#f1f5f9', color: '#334155', border: '1px solid #cbd5e1', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        {getVehicleScheduleLabel(student.tuitionInfo?.transmissionType, student.tuitionInfo?.scheduleType)}
+                      </span>
+                    </td>
                     <td>{student.teacher?.name ? <span className="badge badge-primary">{student.teacher.name}</span> : '-'}</td>
                     <td className="sticky-col-right">
                       <div className="action-buttons-grid">
@@ -818,6 +850,31 @@ const StudentManager = () => {
                   styles={{ control: (base: any) => ({ ...base, borderColor: '#d1d5db', borderRadius: '6px', padding: '2px', boxShadow: 'none' }) }}
                 />
               </div>
+
+              {/* 14. Loại xe & Lịch học */}
+              <div className="form-group">
+                <label>Loại xe đăng ký (*)</label>
+                <select 
+                  className="form-control" 
+                  value={transmissionType} 
+                  onChange={e => setTransmissionType(e.target.value as 'MANUAL' | 'AUTO')}
+                >
+                  <option value="MANUAL">🚗 Số sàn (MT)</option>
+                  <option value="AUTO">🚙 Số tự động (AT)</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Lịch học tập lái (*)</label>
+                <select 
+                  className="form-control" 
+                  value={scheduleType} 
+                  onChange={e => setScheduleType(e.target.value as 'WEEKDAY' | 'SUNDAY')}
+                >
+                  <option value="WEEKDAY">📅 Ngày thường (Thứ 2 - Thứ 7)</option>
+                  <option value="SUNDAY">🏖️ Cuối tuần (Chủ nhật)</option>
+                </select>
+              </div>
             </div>
             <button type="submit" className="btn btn-primary mt-4">Lưu Học viên</button>
           </form>
@@ -854,6 +911,7 @@ const StudentManager = () => {
                 <tr><td><strong>Ngày hết hạn:</strong></td><td>{formatDate(viewStudent.licenseExpiryDate)}</td></tr>
                 <tr><td><strong>Ngày trúng tuyển:</strong></td><td>{formatDate(viewStudent.passDate)}</td></tr>
                 <tr><td><strong>Thời gian GPLX:</strong></td><td>{viewStudent.licenseDuration || '-'}</td></tr>
+                <tr><td><strong>Loại xe & Lịch học:</strong></td><td><strong>{getVehicleScheduleLabel(viewStudent.tuitionInfo?.transmissionType, viewStudent.tuitionInfo?.scheduleType)}</strong></td></tr>
                 <tr><td><strong>Giáo viên dạy thực hành:</strong></td><td>{viewStudent.teacher?.name || '-'}</td></tr>
               </tbody>
             </table>

@@ -939,7 +939,11 @@ router.get('/students', async (req, res) => {
   try {
     const students = await prisma.student.findMany({
       orderBy: { id: 'desc' },
-      include: { course: true, teacher: { select: { id: true, name: true, username: true } } }
+      include: {
+        course: true,
+        teacher: { select: { id: true, name: true, username: true } },
+        tuitionInfo: true
+      }
     });
     res.json(students);
   } catch (error) { res.status(500).json({ error: 'Server error' }); }
@@ -949,16 +953,39 @@ router.post('/students', async (req, res) => {
   const { 
     registrationCode, name, dob, cccd, address, licenseNumber, 
     licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-    licenseDuration, courseName, courseId, teacherId 
+    licenseDuration, courseName, courseId, teacherId,
+    transmissionType, scheduleType
   } = req.body;
   try {
+    const cId = courseId ? Number(courseId) : null;
+    const trans = transmissionType || 'MANUAL';
+    const sched = scheduleType || 'WEEKDAY';
+
+    let config = null;
+    if (cId) {
+      config = await prisma.tuitionFeeConfig.findFirst({
+        where: { courseId: cId, transmissionType: trans, scheduleType: sched }
+      });
+    }
+
     const student = await prisma.student.create({ 
       data: {
         registrationCode, name, dob, cccd, address, licenseNumber, 
         licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-        licenseDuration, courseName, courseId: courseId ? Number(courseId) : null,
-        teacherId: teacherId ? Number(teacherId) : null
-      } 
+        licenseDuration, courseName, courseId: cId,
+        teacherId: teacherId ? Number(teacherId) : null,
+        tuitionInfo: {
+          create: {
+            tuitionConfigId: config ? config.id : null,
+            transmissionType: trans,
+            scheduleType: sched,
+            tuitionAmount: config ? config.tuitionAmount : 0,
+            teacherSharePercent: config ? config.teacherSharePercent : 0,
+            teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : 0
+          }
+        }
+      },
+      include: { course: true, teacher: true, tuitionInfo: true }
     });
     res.json(student);
   } catch (error: any) { 
@@ -972,9 +999,11 @@ router.put('/students/:id', async (req, res) => {
   const { 
     registrationCode, name, dob, cccd, address, licenseNumber, 
     licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
-    licenseDuration, courseName, courseId, teacherId 
+    licenseDuration, courseName, courseId, teacherId,
+    transmissionType, scheduleType
   } = req.body;
   try {
+    const sId = Number(id);
     const data: any = {
       registrationCode, name, dob, cccd, address, licenseNumber, 
       licenseClass, licenseIssueDate, passDate, licenseExpiryDate, 
@@ -982,8 +1011,49 @@ router.put('/students/:id', async (req, res) => {
     };
     if (courseId !== undefined) data.courseId = courseId ? Number(courseId) : null;
     if (teacherId !== undefined) data.teacherId = teacherId ? Number(teacherId) : null;
-    const student = await prisma.student.update({ where: { id: Number(id) }, data });
-    res.json(student);
+    const student = await prisma.student.update({ where: { id: sId }, data });
+
+    // Cập nhật hoặc tạo mới StudentTuition
+    if (transmissionType !== undefined || scheduleType !== undefined || courseId !== undefined) {
+      const existingTuition = await prisma.studentTuition.findUnique({ where: { studentId: sId } });
+      const trans = transmissionType || existingTuition?.transmissionType || 'MANUAL';
+      const sched = scheduleType || existingTuition?.scheduleType || 'WEEKDAY';
+      const finalCourseId = data.courseId !== undefined ? data.courseId : student.courseId;
+
+      let config = null;
+      if (finalCourseId) {
+        config = await prisma.tuitionFeeConfig.findFirst({
+          where: { courseId: finalCourseId, transmissionType: trans, scheduleType: sched }
+        });
+      }
+
+      await prisma.studentTuition.upsert({
+        where: { studentId: sId },
+        update: {
+          tuitionConfigId: config ? config.id : undefined,
+          transmissionType: trans,
+          scheduleType: sched,
+          tuitionAmount: config ? config.tuitionAmount : (existingTuition?.tuitionAmount || 0),
+          teacherSharePercent: config ? config.teacherSharePercent : (existingTuition?.teacherSharePercent || 0),
+          teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : (existingTuition?.teacherEarnedAmount || 0)
+        },
+        create: {
+          studentId: sId,
+          tuitionConfigId: config ? config.id : null,
+          transmissionType: trans,
+          scheduleType: sched,
+          tuitionAmount: config ? config.tuitionAmount : 0,
+          teacherSharePercent: config ? config.teacherSharePercent : 0,
+          teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : 0
+        }
+      });
+    }
+
+    const updated = await prisma.student.findUnique({
+      where: { id: sId },
+      include: { course: true, teacher: true, tuitionInfo: true }
+    });
+    res.json(updated);
   } catch (error: any) { 
     if (error.code === 'P2002') return res.status(400).json({ error: 'CCCD đã tồn tại' });
     res.status(500).json({ error: 'Server error' }); 
@@ -1062,6 +1132,18 @@ router.post('/students/bulk', async (req, res) => {
         const t = await prisma.user.findUnique({ where: { username: s.teacherUsername } });
         if (t) teacherId = t.id;
       }
+
+      // Xử lý loại xe & lịch học
+      let trans = 'MANUAL';
+      let sched = 'WEEKDAY';
+      if (s.vehicleSchedule) {
+        const vs = String(s.vehicleSchedule).toLowerCase();
+        if (vs.includes('tự động') || vs.includes('auto')) trans = 'AUTO';
+        if (vs.includes('cuối tuần') || vs.includes('chủ nhật') || vs.includes('sunday')) sched = 'SUNDAY';
+      }
+      if (s.transmissionType) trans = s.transmissionType;
+      if (s.scheduleType) sched = s.scheduleType;
+
       if (existing) {
         await prisma.student.update({
           where: { id: existing.id },
@@ -1081,14 +1163,52 @@ router.post('/students/bulk', async (req, res) => {
             teacherId: teacherId !== null ? teacherId : existing.teacherId,
           }
         });
+
+        // Upsert tuitionInfo
+        const finalCourseId = courseId !== null ? courseId : existing.courseId;
+        let config = null;
+        if (finalCourseId) {
+          config = await prisma.tuitionFeeConfig.findFirst({
+            where: { courseId: finalCourseId, transmissionType: trans, scheduleType: sched }
+          });
+        }
+
+        await prisma.studentTuition.upsert({
+          where: { studentId: existing.id },
+          update: {
+            tuitionConfigId: config ? config.id : undefined,
+            transmissionType: trans,
+            scheduleType: sched,
+            tuitionAmount: config ? config.tuitionAmount : undefined,
+            teacherSharePercent: config ? config.teacherSharePercent : undefined,
+            teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : undefined
+          },
+          create: {
+            studentId: existing.id,
+            tuitionConfigId: config ? config.id : null,
+            transmissionType: trans,
+            scheduleType: sched,
+            tuitionAmount: config ? config.tuitionAmount : 0,
+            teacherSharePercent: config ? config.teacherSharePercent : 0,
+            teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : 0
+          }
+        });
+
         skipped++;
       } else {
+        let config = null;
+        if (courseId) {
+          config = await prisma.tuitionFeeConfig.findFirst({
+            where: { courseId, transmissionType: trans, scheduleType: sched }
+          });
+        }
+
         await prisma.student.create({
           data: {
             registrationCode: s.registrationCode,
             name: s.name,
             dob: s.dob,
-            cccd: String(s.cccd),
+            cccd: cccdStr,
             address: s.address,
             licenseNumber: s.licenseNumber,
             licenseClass: s.licenseClass,
@@ -1099,6 +1219,16 @@ router.post('/students/bulk', async (req, res) => {
             courseName: s.courseName,
             courseId,
             teacherId,
+            tuitionInfo: {
+              create: {
+                tuitionConfigId: config ? config.id : null,
+                transmissionType: trans,
+                scheduleType: sched,
+                tuitionAmount: config ? config.tuitionAmount : 0,
+                teacherSharePercent: config ? config.teacherSharePercent : 0,
+                teacherEarnedAmount: config ? (config.tuitionAmount * config.teacherSharePercent) / 100 : 0
+              }
+            }
           }
         });
         imported++;
