@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { DollarSign, Trash2, Edit3, Save, RefreshCw, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
+import { formatCurrencyNumber, parseCurrencyInput } from '../utils/currencyUtils';
 
 const API_BASE_URL = '';
 
@@ -491,16 +492,16 @@ export default function FinanceSettingsManager() {
                       <td><strong>Ngày thường (Thứ 2 - Thứ 6)</strong></td>
                       <td>
                         <input
-                          type="number"
+                          type="text"
                           className="form-control"
                           placeholder="0"
-                          value={matrixData.manual_weekday.tuitionAmount || ''}
+                          value={matrixData.manual_weekday.tuitionAmount ? formatCurrencyNumber(matrixData.manual_weekday.tuitionAmount) : ''}
                           onChange={(e) =>
                             setMatrixData({
                               ...matrixData,
                               manual_weekday: {
                                 ...matrixData.manual_weekday,
-                                tuitionAmount: Number(e.target.value),
+                                tuitionAmount: parseCurrencyInput(e.target.value),
                               },
                             })
                           }
@@ -544,16 +545,16 @@ export default function FinanceSettingsManager() {
                       <td><strong style={{ color: 'var(--danger)' }}>Cuối tuần (Thứ 7 & Chủ nhật)</strong></td>
                       <td>
                         <input
-                          type="number"
+                          type="text"
                           className="form-control"
                           placeholder="0"
-                          value={matrixData.manual_sunday.tuitionAmount || ''}
+                          value={matrixData.manual_sunday.tuitionAmount ? formatCurrencyNumber(matrixData.manual_sunday.tuitionAmount) : ''}
                           onChange={(e) =>
                             setMatrixData({
                               ...matrixData,
                               manual_sunday: {
                                 ...matrixData.manual_sunday,
-                                tuitionAmount: Number(e.target.value),
+                                tuitionAmount: parseCurrencyInput(e.target.value),
                               },
                             })
                           }
@@ -597,16 +598,16 @@ export default function FinanceSettingsManager() {
                       <td><strong>Ngày thường (Thứ 2 - Thứ 6)</strong></td>
                       <td>
                         <input
-                          type="number"
+                          type="text"
                           className="form-control"
                           placeholder="0"
-                          value={matrixData.auto_weekday.tuitionAmount || ''}
+                          value={matrixData.auto_weekday.tuitionAmount ? formatCurrencyNumber(matrixData.auto_weekday.tuitionAmount) : ''}
                           onChange={(e) =>
                             setMatrixData({
                               ...matrixData,
                               auto_weekday: {
                                 ...matrixData.auto_weekday,
-                                tuitionAmount: Number(e.target.value),
+                                tuitionAmount: parseCurrencyInput(e.target.value),
                               },
                             })
                           }
@@ -650,16 +651,16 @@ export default function FinanceSettingsManager() {
                       <td><strong style={{ color: 'var(--danger)' }}>Cuối tuần (Thứ 7 & Chủ nhật)</strong></td>
                       <td>
                         <input
-                          type="number"
+                          type="text"
                           className="form-control"
                           placeholder="0"
-                          value={matrixData.auto_sunday.tuitionAmount || ''}
+                          value={matrixData.auto_sunday.tuitionAmount ? formatCurrencyNumber(matrixData.auto_sunday.tuitionAmount) : ''}
                           onChange={(e) =>
                             setMatrixData({
                               ...matrixData,
                               auto_sunday: {
                                 ...matrixData.auto_sunday,
-                                tuitionAmount: Number(e.target.value),
+                                tuitionAmount: parseCurrencyInput(e.target.value),
                               },
                             })
                           }
@@ -945,14 +946,18 @@ export default function FinanceSettingsManager() {
                     </label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <input
-                        type="number"
+                        type="text"
                         className="form-control"
                         placeholder="0"
-                        value={editingDeduction ? editingDeduction.defaultAmount : newDeduction.defaultAmount}
+                        value={
+                          editingDeduction
+                            ? (editingDeduction.defaultAmount ? formatCurrencyNumber(editingDeduction.defaultAmount) : '')
+                            : (newDeduction.defaultAmount ? formatCurrencyNumber(newDeduction.defaultAmount) : '')
+                        }
                         onChange={(e) =>
                           editingDeduction
-                            ? setEditingDeduction({ ...editingDeduction, defaultAmount: Number(e.target.value) })
-                            : setNewDeduction({ ...newDeduction, defaultAmount: Number(e.target.value) })
+                            ? setEditingDeduction({ ...editingDeduction, defaultAmount: parseCurrencyInput(e.target.value) })
+                            : setNewDeduction({ ...newDeduction, defaultAmount: parseCurrencyInput(e.target.value) })
                         }
                         style={{ minHeight: '40px', flex: 1 }}
                       />

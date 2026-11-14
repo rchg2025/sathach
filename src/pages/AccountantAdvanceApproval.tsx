@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
+import { numberToWordsVietnamese, formatCurrencyNumber, parseCurrencyInput } from '../utils/currencyUtils';
 
 const API_BASE_URL = '';
 
@@ -70,7 +71,17 @@ export default function AccountantAdvanceApproval() {
   const handleOpenAction = (req: AdvanceRequest, type: 'APPROVE' | 'REJECT' | 'PAY' | 'VIEW') => {
     setSelectedRequest(req);
     setActionType(type);
-    setApprovedAmount(req.approvedAmount !== undefined && req.approvedAmount !== null ? req.approvedAmount : req.requestedAmount);
+    
+    // Nếu chưa duyệt, mặc định số tiền duyệt chi thực tế = Số tiền GV đề nghị - Tổng các khoản giảm trừ kê khai
+    let initialAmount = 0;
+    if (req.approvedAmount !== undefined && req.approvedAmount !== null) {
+      initialAmount = req.approvedAmount;
+    } else {
+      const totalDed = (req.deductions || []).reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+      initialAmount = Math.max(0, req.requestedAmount - totalDed);
+    }
+
+    setApprovedAmount(initialAmount);
     setAccountantNotes(req.accountantNotes || '');
     setPaymentReference(req.paymentReference || '');
   };
@@ -389,14 +400,14 @@ export default function AccountantAdvanceApproval() {
                   <div className="form-group">
                     <label>Số tiền duyệt chi thực tế (VNĐ) <span style={{ color: 'var(--danger)' }}>*</span>:</label>
                     <input
-                      type="number"
+                      type="text"
                       className="form-control"
-                      value={approvedAmount}
-                      onChange={(e) => setApprovedAmount(Number(e.target.value))}
-                      style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--success)' }}
+                      value={formatCurrencyNumber(approvedAmount)}
+                      onChange={(e) => setApprovedAmount(parseCurrencyInput(e.target.value))}
+                      style={{ fontSize: '1.2rem', fontWeight: 'bold', color: 'var(--success)' }}
                     />
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                      Bằng chữ: <em>{formatCurrency(approvedAmount)} đồng</em>
+                    <div style={{ fontSize: '0.85rem', color: '#166534', marginTop: '4px', fontWeight: 500 }}>
+                      Bằng chữ: <em>{numberToWordsVietnamese(approvedAmount)}</em>
                     </div>
                   </div>
 

@@ -4,6 +4,7 @@ import Select from 'react-select';
 import { CreditCard, FilePlus, Clock, CheckCircle2, XCircle, AlertCircle, RefreshCw, Trash2, Users, History, Eye } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
+import { numberToWordsVietnamese, formatCurrencyNumber, parseCurrencyInput } from '../utils/currencyUtils';
 
 const API_BASE_URL = '';
 
@@ -353,20 +354,18 @@ export default function TeacherAdvanceRequest() {
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <input
-                      type="number"
+                      type="text"
                       className="form-control"
                       placeholder="0"
-                      min={100000}
-                      max={estimate?.remainingAdvanceAllowed || undefined}
-                      value={requestedAmount || ''}
-                      onChange={(e) => setRequestedAmount(Number(e.target.value))}
+                      value={requestedAmount ? formatCurrencyNumber(requestedAmount) : ''}
+                      onChange={(e) => setRequestedAmount(parseCurrencyInput(e.target.value))}
                       required
                       style={{ fontSize: '1.15rem', fontWeight: 'bold', color: 'var(--primary)', minHeight: '40px', flex: 1 }}
                     />
                     <span style={{ fontWeight: 'bold', fontSize: '1rem', color: 'var(--text-muted)' }}>VNĐ</span>
                   </div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                    Bằng chữ: <em>{formatCurrency(requestedAmount)} đồng</em>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--primary)', marginTop: '4px', fontWeight: 500 }}>
+                    Bằng chữ: <em>{numberToWordsVietnamese(requestedAmount)}</em>
                   </div>
                 </div>
               </div>
@@ -452,13 +451,13 @@ export default function TeacherAdvanceRequest() {
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flex: 1, minWidth: '140px' }}>
                           <input
-                            type="number"
+                            type="text"
                             className="form-control"
                             placeholder="Số tiền"
-                            value={d.amount || ''}
+                            value={d.amount ? formatCurrencyNumber(d.amount) : ''}
                             onChange={(e) => {
                               const updated = [...selectedDeductions];
-                              updated[index].amount = Number(e.target.value);
+                              updated[index].amount = parseCurrencyInput(e.target.value);
                               setSelectedDeductions(updated);
                             }}
                             required
