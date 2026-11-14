@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 import prisma from '../_prisma';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
-import { uploadFileToDrive, testDriveConnection, getDriveFileStream, uploadBackupToDrive, listDriveBackups, downloadDriveBackup } from '../_utils/drive';
+import { uploadFileToDrive, testDriveConnection, getDriveFileStream, uploadBackupToDrive, listDriveBackups, downloadDriveBackup, cleanupOldBackups } from '../_utils/drive';
 import { exec } from 'child_process';
 import util from 'util';
 import fs from 'fs';
@@ -821,10 +821,81 @@ router.post('/backups/create', async (req, res) => {
       if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
     }
 
-    res.json({ success: true, message: 'Sao lưu lên Google Drive thành công!', backups: createdBackups });
+    // 3. Tự động dọn dẹp các bản sao lưu cũ, chỉ giữ lại số lượng cấu hình (mặc định 10 bản mới nhất)
+    const maxBackupsSetting = await prisma.setting.findUnique({ where: { key: 'backup_max_keep' } });
+    const maxKeep = maxBackupsSetting ? Math.max(1, parseInt(maxBackupsSetting.value, 10) || 10) : 10;
+    const cleanupResult = await cleanupOldBackups(maxKeep);
+
+    res.json({ 
+      success: true, 
+      message: `Sao lưu lên Google Drive thành công! (Tối đa giữ ${maxKeep} bản mới nhất${cleanupResult.deletedCount > 0 ? `, đã tự động dọn dẹp ${cleanupResult.deletedCount} bản cũ` : ''})`, 
+      backups: createdBackups,
+      cleanup: cleanupResult
+    });
   } catch (error: any) {
     console.error('Create backup error:', error);
     res.status(500).json({ error: error.message || 'Lỗi trong quá trình tạo bản sao lưu' });
+  }
+});
+
+router.post('/backups/cleanup', async (req, res) => {
+  try {
+    const maxBackupsSetting = await prisma.setting.findUnique({ where: { key: 'backup_max_keep' } });
+    const maxKeep = maxBackupsSetting ? Math.max(1, parseInt(maxBackupsSetting.value, 10) || 10) : 10;
+    const result = await cleanupOldBackups(maxKeep);
+    res.json({ success: true, message: `Đã dọn dẹp ${result.deletedCount} bản sao lưu cũ trên Google Drive!`, ...result });
+  } catch (error: any) {
+    console.error('Cleanup backups error:', error);
+    res.status(500).json({ error: error.message || 'Lỗi khi dọn dẹp bản sao lưu cũ' });
+  }
+});
+
+// Trigger auto backup schedule (called by cron or internal timer)
+router.get('/cron/backup', async (req, res) => {
+  try {
+    const scheduleSetting = await prisma.setting.findUnique({ where: { key: 'backup_schedule_enabled' } });
+    if (scheduleSetting?.value !== 'true') {
+      return res.json({ skipped: true, message: 'Sao lưu tự động theo lịch đang tắt' });
+    }
+
+    const typeSetting = await prisma.setting.findUnique({ where: { key: 'backup_schedule_type' } });
+    const type = typeSetting?.value || 'all';
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const tmpDir = '/tmp';
+    const dbUrl = process.env.DATABASE_URL || 'postgresql://sathach_user:Sathach2026LocalDB@127.0.0.1:5432/sathach_db';
+
+    if (type === 'db' || type === 'all') {
+      const dbFileName = `database_backup_${timestamp}.sql`;
+      const dbFilePath = path.join(tmpDir, dbFileName);
+      await execPromise(`pg_dump "${dbUrl}" --no-owner --no-acl --clean --if-exists -f "${dbFilePath}"`);
+      await uploadBackupToDrive(dbFilePath, dbFileName, 'application/sql');
+      if (fs.existsSync(dbFilePath)) fs.unlinkSync(dbFilePath);
+    }
+
+    if (type === 'code' || type === 'all') {
+      const codeFileName = `code_backup_${timestamp}.tar.gz`;
+      const codeFilePath = path.join(tmpDir, codeFileName);
+      const appRoot = process.cwd();
+      await execPromise(`tar --exclude='node_modules' --exclude='.git' --exclude='dist' --exclude='.next' --exclude='*.log' -czf "${codeFilePath}" -C "${appRoot}" .`);
+      await uploadBackupToDrive(codeFilePath, codeFileName, 'application/gzip');
+      if (fs.existsSync(codeFilePath)) fs.unlinkSync(codeFilePath);
+    }
+
+    const maxBackupsSetting = await prisma.setting.findUnique({ where: { key: 'backup_max_keep' } });
+    const maxKeep = maxBackupsSetting ? Math.max(1, parseInt(maxBackupsSetting.value, 10) || 10) : 10;
+    await cleanupOldBackups(maxKeep);
+
+    await prisma.setting.upsert({
+      where: { key: 'backup_last_run' },
+      update: { value: new Date().toISOString() },
+      create: { key: 'backup_last_run', value: new Date().toISOString() }
+    });
+
+    res.json({ success: true, message: 'Đã hoàn thành sao lưu tự động theo lịch lên Google Drive' });
+  } catch (error: any) {
+    console.error('Cron backup error:', error);
+    res.status(500).json({ error: error.message || 'Lỗi khi chạy cron sao lưu tự động' });
   }
 });
 

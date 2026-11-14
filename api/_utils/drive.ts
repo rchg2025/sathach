@@ -307,3 +307,40 @@ export async function downloadDriveBackup(fileId: string, destPath: string): Pro
       .on('error', (err: any) => reject(err));
   });
 }
+
+export async function deleteDriveFile(fileId: string): Promise<void> {
+  const { drive } = await getDriveClient();
+  await drive.files.delete({
+    fileId,
+    supportsAllDrives: true,
+  });
+}
+
+export async function cleanupOldBackups(keepCount = 10): Promise<{ deletedCount: number, deletedFiles: string[] }> {
+  const files = await listDriveBackups();
+  // Filter for db and code backups
+  const dbFiles = files.filter((f: any) => f.name && f.name.endsWith('.sql'));
+  const codeFiles = files.filter((f: any) => f.name && f.name.endsWith('.tar.gz'));
+
+  const filesToDelete: any[] = [];
+
+  if (dbFiles.length > keepCount) {
+    filesToDelete.push(...dbFiles.slice(keepCount));
+  }
+
+  if (codeFiles.length > keepCount) {
+    filesToDelete.push(...codeFiles.slice(keepCount));
+  }
+
+  const deletedFiles: string[] = [];
+  for (const file of filesToDelete) {
+    try {
+      await deleteDriveFile(file.id);
+      deletedFiles.push(file.name);
+    } catch (err: any) {
+      console.error(`Failed to delete old backup ${file.name}:`, err.message);
+    }
+  }
+
+  return { deletedCount: deletedFiles.length, deletedFiles };
+}

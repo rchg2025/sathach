@@ -35,7 +35,13 @@ const SettingsManager = () => {
     smtp_user: '',
     smtp_app_password: '',
 
-    google_client_id: ''
+    google_client_id: '',
+
+    backup_schedule_enabled: 'false',
+    backup_schedule_time: '02:00',
+    backup_schedule_type: 'all',
+    backup_max_keep: '10',
+    backup_last_run: ''
   });
 
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -56,7 +62,7 @@ const SettingsManager = () => {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
   };
@@ -387,10 +393,91 @@ const SettingsManager = () => {
             </div>
           </div>
 
+          {/* Thiết lập lịch sao lưu tự động & Giới hạn lưu trữ */}
+          <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '1.25rem', marginBottom: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+            <h5 style={{ margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '8px', color: '#1e293b', fontSize: '1rem', fontWeight: 600 }}>
+              ⏰ Cài đặt Lịch sao lưu tự động & Giới hạn bản lưu
+            </h5>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1rem', alignItems: 'center' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Tự động sao lưu định kỳ</label>
+                <select 
+                  className="form-control" 
+                  name="backup_schedule_enabled" 
+                  value={settings.backup_schedule_enabled} 
+                  onChange={handleChange}
+                  style={{ height: '38px', borderRadius: '6px' }}
+                >
+                  <option value="false">Tắt (Thủ công)</option>
+                  <option value="true">Bật (Hàng ngày theo lịch)</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Thời gian sao lưu hàng ngày</label>
+                <input 
+                  type="time" 
+                  className="form-control" 
+                  name="backup_schedule_time" 
+                  value={settings.backup_schedule_time} 
+                  onChange={handleChange}
+                  disabled={settings.backup_schedule_enabled !== 'true'}
+                  style={{ height: '38px', borderRadius: '6px' }}
+                />
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Nội dung sao lưu định kỳ</label>
+                <select 
+                  className="form-control" 
+                  name="backup_schedule_type" 
+                  value={settings.backup_schedule_type} 
+                  onChange={handleChange}
+                  disabled={settings.backup_schedule_enabled !== 'true'}
+                  style={{ height: '38px', borderRadius: '6px' }}
+                >
+                  <option value="all">Cả Database & Code</option>
+                  <option value="db">Chỉ Database (.sql)</option>
+                  <option value="code">Chỉ Code (.tar.gz)</option>
+                </select>
+              </div>
+
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.85rem', fontWeight: 500, color: '#475569', marginBottom: '0.4rem', display: 'block' }}>Số bản mới nhất giữ lại</label>
+                <input 
+                  type="number" 
+                  min="1" 
+                  max="50" 
+                  className="form-control" 
+                  name="backup_max_keep" 
+                  value={settings.backup_max_keep} 
+                  onChange={handleChange}
+                  placeholder="10"
+                  style={{ height: '38px', borderRadius: '6px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                {settings.backup_last_run ? `Lần sao lưu tự động gần nhất: ${new Date(settings.backup_last_run).toLocaleString('vi-VN')}` : 'Chưa có lịch sao lưu nào chạy gần đây.'}
+                {settings.backup_max_keep && ` • Hệ thống sẽ chỉ giữ lại đúng ${settings.backup_max_keep} bản mới nhất và tự động xóa bản cũ trên Google Drive.`}
+              </div>
+              <button 
+                className="btn btn-primary" 
+                style={{ background: '#28a745', borderColor: '#28a745', padding: '0.4rem 1rem', fontSize: '0.85rem' }} 
+                onClick={() => handleSave('Lịch sao lưu & Giới hạn')}
+              >
+                ✓ Lưu cài đặt lịch
+              </button>
+            </div>
+          </div>
+
           <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', border: '1px solid #e2e8f0', fontSize: '0.875rem' }}>
             <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, color: '#334155' }}>📌 Cơ chế hoạt động:</p>
             <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#64748b' }}>
               <li>Bản sao lưu được nén tự động từ máy chủ và tải lên trực tiếp thư mục <b>Backups</b> trong Google Drive của bạn.</li>
+              <li>Tự động dọn dẹp các bản sao lưu cũ trên Google Drive khi vượt quá số lượng <b>{settings.backup_max_keep || 10} bản mới nhất</b>.</li>
               <li>Bạn có thể bấm <b>Khôi phục</b> bất cứ lúc nào để đưa cơ sở dữ liệu về phiên bản đã sao lưu.</li>
               <li>Dữ liệu bao gồm đầy đủ tài khoản, học viên, phân công, kết quả chấm thi, cài đặt hệ thống.</li>
             </ul>
