@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import Select from 'react-select';
 import { DollarSign, Trash2, Edit3, Save, RefreshCw, UserCheck } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
@@ -139,7 +140,6 @@ export default function FinanceSettingsManager() {
   const fetchTeachers = async () => {
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/users`);
-      // Tất cả tài khoản trừ Kế toán đều có thể là giáo viên
       const allUsers = res.data || [];
       const teacherList = allUsers.filter((u: any) => u.role !== 'ACCOUNTANT');
       setTeachers(teacherList);
@@ -359,9 +359,17 @@ export default function FinanceSettingsManager() {
     return new Intl.NumberFormat('vi-VN').format(val || 0);
   };
 
+  // Options for react-select
+  const teacherOptions = teachers.map((t) => ({
+    value: t.id,
+    label: `${t.name} (@${t.username})`,
+  }));
+
+  const selectedTeacherOption = teacherOptions.find(opt => opt.value === newRate.teacherId) || null;
+
   return (
     <AdminLayout user={user}>
-      <div>
+      <div style={{ width: '100%', maxWidth: '100%' }}>
         <h2 className="mb-4" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <DollarSign size={24} color="var(--primary)" /> Cấu hình Học phí & Hạn mức Tạm ứng
         </h2>
@@ -394,9 +402,9 @@ export default function FinanceSettingsManager() {
           </div>
         </div>
 
-        {/* TAB 1: BIỂU GIÁ HỌC PHÍ */}
+        {/* TAB 1: BIỂU GIÁ HỌC PHÍ CHUNG THEO KHÓA */}
         {activeTab === 'tuition' && (
-          <div className="card">
+          <div className="card" style={{ width: '100%' }}>
             <div className="flex justify-between items-center mb-4" style={{ gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ flex: '1 1 300px' }}>
                 <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
@@ -446,7 +454,7 @@ export default function FinanceSettingsManager() {
                   <thead>
                     <tr>
                       <th style={{ width: '140px' }}>Loại xe</th>
-                      <th style={{ width: '160px' }}>Lịch học</th>
+                      <th style={{ width: '180px' }}>Lịch học</th>
                       <th>Mức học phí (VNĐ)</th>
                       <th style={{ width: '130px' }}>Tỉ lệ mặc định (%)</th>
                       <th style={{ width: '180px', textAlign: 'right' }}>Thù lao chuẩn / HV</th>
@@ -671,94 +679,124 @@ export default function FinanceSettingsManager() {
           </div>
         )}
 
-        {/* TAB 2: CÀI ĐẶT TỈ LỆ % RIÊNG CHO TỪNG GIÁO VIÊN */}
+        {/* TAB 2: CÀI ĐẶT TỈ LỆ % RIÊNG CHO TỪNG GIÁO VIÊN - THIẾT KẾ MỘT CỘT FULL MÀN HÌNH */}
         {activeTab === 'teacher_rates' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-            {/* Form thiết lập tỉ lệ */}
-            <div className="card">
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <UserCheck size={18} color="var(--primary)" /> Thiết lập Tỉ lệ cho Giáo viên
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+            {/* Form thiết lập tỉ lệ - Full width */}
+            <div className="card" style={{ width: '100%' }}>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserCheck size={20} color="var(--primary)" /> Thiết lập Tỉ lệ Hưởng cho Giáo viên
               </h3>
 
               <form onSubmit={handleSaveTeacherRate}>
-                <div className="form-group">
-                  <label>Chọn Giáo viên <span style={{ color: 'var(--danger)' }}>*</span>:</label>
-                  <select
-                    className="form-control"
-                    value={newRate.teacherId}
-                    onChange={(e) => setNewRate({ ...newRate, teacherId: Number(e.target.value) })}
-                    required
-                  >
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.name} (@{t.username})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Áp dụng cho Khóa học:</label>
-                  <select
-                    className="form-control"
-                    value={newRate.courseId}
-                    onChange={(e) => setNewRate({ ...newRate, courseId: e.target.value })}
-                  >
-                    <option value="">-- Áp dụng cho TẤT CẢ các khóa học --</option>
-                    {courses.map((c) => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                  <small style={{ color: 'var(--text-muted)' }}>Để trống nếu muốn áp dụng mức tỉ lệ này cho mọi khóa của giáo viên</small>
-                </div>
-
-                <div className="form-group">
-                  <label>Tỉ lệ % giáo viên được hưởng <span style={{ color: 'var(--danger)' }}>*</span>:</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '200px' }}>
-                    <input
-                      type="number"
-                      className="form-control"
-                      min={0}
-                      max={100}
-                      value={newRate.ratePercent}
-                      onChange={(e) => setNewRate({ ...newRate, ratePercent: Number(e.target.value) })}
-                      required
-                      style={{ fontWeight: 'bold', fontSize: '1.1rem' }}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                  {/* Dropdown thông minh chọn Giáo viên */}
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Chọn Giáo viên <span style={{ color: 'var(--danger)' }}>*</span>:
+                    </label>
+                    <Select
+                      options={teacherOptions}
+                      value={selectedTeacherOption}
+                      onChange={(opt: any) => setNewRate({ ...newRate, teacherId: opt ? opt.value : 0 })}
+                      placeholder="🔍 Gõ tên hoặc tài khoản để tìm nhanh..."
+                      isClearable={false}
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
                     />
-                    <span style={{ fontWeight: 'bold' }}>%</span>
+                  </div>
+
+                  {/* Chọn khóa học áp dụng */}
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Áp dụng cho Khóa học:
+                    </label>
+                    <select
+                      className="form-control"
+                      value={newRate.courseId}
+                      onChange={(e) => setNewRate({ ...newRate, courseId: e.target.value })}
+                      style={{ height: '40px', width: '100%' }}
+                    >
+                      <option value="">-- Áp dụng cho TẤT CẢ các khóa học --</option>
+                      {courses.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Tỉ lệ % */}
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Tỉ lệ % giáo viên được hưởng <span style={{ color: 'var(--danger)' }}>*</span>:
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <input
+                        type="number"
+                        className="form-control"
+                        min={0}
+                        max={100}
+                        value={newRate.ratePercent}
+                        onChange={(e) => setNewRate({ ...newRate, ratePercent: Number(e.target.value) })}
+                        required
+                        style={{ fontWeight: 'bold', fontSize: '1.1rem', height: '40px', flex: 1 }}
+                      />
+                      <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>%</span>
+                    </div>
+                  </div>
+
+                  {/* Ghi chú */}
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Ghi chú / Quyết định:
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="VD: Hợp đồng đặc biệt, GV chính thức..."
+                      value={newRate.note}
+                      onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
+                      style={{ height: '40px', width: '100%' }}
+                    />
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Ghi chú / Quyết định mức thù lao:</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="VD: Hợp đồng đặc biệt, GV chính thức bậc 2..."
-                    value={newRate.note}
-                    onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
-                  />
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.2rem' }}>
+                  <button
+                    type="submit"
+                    className="btn btn-primary"
+                    disabled={savingRate}
+                    style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 1.5rem', fontWeight: 600 }}
+                  >
+                    <Save size={16} /> {savingRate ? 'Đang lưu...' : 'Lưu Tỉ Lệ Giáo Viên'}
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={savingRate}
-                  style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '1rem' }}
-                >
-                  <Save size={16} /> {savingRate ? 'Đang lưu...' : 'Lưu Tỉ Lệ Giáo Viên'}
-                </button>
               </form>
             </div>
 
-            {/* Bảng danh sách tỉ lệ riêng */}
-            <div className="card">
-              <div className="flex justify-between items-center mb-3">
-                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
+            {/* Bảng danh sách tỉ lệ riêng - Full width */}
+            <div className="card" style={{ width: '100%' }}>
+              <div className="flex justify-between items-center mb-3" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.15rem', margin: 0 }}>
                   Danh sách Tỉ lệ Giáo viên đã cài đặt ({teacherRates.length})
                 </h3>
-                <button className="btn btn-secondary" onClick={fetchTeacherRates} style={{ padding: '4px 8px' }}>
-                  <RefreshCw size={12} className={loadingTeacherRates ? 'spin' : ''} />
+                <button
+                  className="btn btn-secondary"
+                  onClick={fetchTeacherRates}
+                  style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 10px' }}
+                >
+                  <RefreshCw size={13} className={loadingTeacherRates ? 'spin' : ''} /> Làm mới
                 </button>
               </div>
 
@@ -766,31 +804,37 @@ export default function FinanceSettingsManager() {
                 <table className="table">
                   <thead>
                     <tr>
+                      <th style={{ width: '60px' }}>STT</th>
                       <th>Giáo viên</th>
-                      <th>Khóa học</th>
-                      <th style={{ textAlign: 'center' }}>% Hưởng</th>
-                      <th>Ghi chú</th>
-                      <th style={{ textAlign: 'center', width: '60px' }}>Xóa</th>
+                      <th>Khóa học áp dụng</th>
+                      <th style={{ textAlign: 'center', width: '150px' }}>Tỉ lệ % Hưởng</th>
+                      <th>Ghi chú / Quyết định</th>
+                      <th style={{ textAlign: 'center', width: '80px' }}>Xóa</th>
                     </tr>
                   </thead>
                   <tbody>
                     {teacherRates.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                           Chưa có tỉ lệ tùy chỉnh riêng nào. Tất cả GV đang áp dụng tỉ lệ mặc định theo từng khóa học.
                         </td>
                       </tr>
                     ) : (
-                      teacherRates.map((r) => (
+                      teacherRates.map((r, idx) => (
                         <tr key={r.id}>
+                          <td>{idx + 1}</td>
                           <td>
                             <strong>{r.teacher?.name}</strong>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{r.teacher?.username}</div>
                           </td>
                           <td>
-                            {r.course ? <span className="badge badge-info">{r.course.name}</span> : <span className="badge badge-primary">Tất cả khóa</span>}
+                            {r.course ? (
+                              <span className="badge badge-info">{r.course.name}</span>
+                            ) : (
+                              <span className="badge badge-primary">Tất cả các khóa</span>
+                            )}
                           </td>
-                          <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.05rem', color: 'var(--success)' }}>
+                          <td style={{ textAlign: 'center', fontWeight: 'bold', fontSize: '1.1rem', color: 'var(--success)' }}>
                             {r.ratePercent}%
                           </td>
                           <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{r.note || '-'}</td>
@@ -800,7 +844,7 @@ export default function FinanceSettingsManager() {
                               onClick={() => handleDeleteTeacherRate(r.id)}
                               title="Xóa tỉ lệ"
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={15} />
                             </button>
                           </td>
                         </tr>
@@ -813,83 +857,102 @@ export default function FinanceSettingsManager() {
           </div>
         )}
 
-        {/* TAB 3: DANH MỤC CÁC KHOẢN GIẢM TRỪ */}
+        {/* TAB 3: DANH MỤC CÁC KHOẢN GIẢM TRỪ - THIẾT KẾ MỘT CỘT FULL MÀN HÌNH */}
         {activeTab === 'deductions' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
-            <div className="card">
-              <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+            {/* Form thêm / sửa khoản trừ */}
+            <div className="card" style={{ width: '100%' }}>
+              <h3 style={{ fontSize: '1.15rem', marginBottom: '1rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
                 {editingDeduction ? 'Chỉnh sửa Khoản giảm trừ' : 'Thêm mới Khoản giảm trừ'}
               </h3>
               <form onSubmit={editingDeduction ? (e) => { e.preventDefault(); handleUpdateDeduction(); } : handleCreateDeduction}>
-                <div className="form-group">
-                  <label>Tên khoản trừ <span style={{ color: 'var(--danger)' }}>*</span></label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="VD: Tiền thuê sân, Tiền xăng xe..."
-                    value={editingDeduction ? editingDeduction.name : newDeduction.name}
-                    onChange={(e) =>
-                      editingDeduction
-                        ? setEditingDeduction({ ...editingDeduction, name: e.target.value })
-                        : setNewDeduction({ ...newDeduction, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Số tiền mặc định (nếu có)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    placeholder="0"
-                    value={editingDeduction ? editingDeduction.defaultAmount : newDeduction.defaultAmount}
-                    onChange={(e) =>
-                      editingDeduction
-                        ? setEditingDeduction({ ...editingDeduction, defaultAmount: Number(e.target.value) })
-                        : setNewDeduction({ ...newDeduction, defaultAmount: Number(e.target.value) })
-                    }
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Mô tả / Ghi chú</label>
-                  <textarea
-                    className="form-control"
-                    rows={2}
-                    placeholder="Quy định áp dụng khoản trừ này..."
-                    value={editingDeduction ? (editingDeduction.description || '') : newDeduction.description}
-                    onChange={(e) =>
-                      editingDeduction
-                        ? setEditingDeduction({ ...editingDeduction, description: e.target.value })
-                        : setNewDeduction({ ...newDeduction, description: e.target.value })
-                    }
-                  ></textarea>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem' }}>
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Tên khoản trừ <span style={{ color: 'var(--danger)' }}>*</span>:
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="VD: Tiền thuê sân, Tiền xăng xe, Phạt trễ hạn..."
+                      value={editingDeduction ? editingDeduction.name : newDeduction.name}
+                      onChange={(e) =>
+                        editingDeduction
+                          ? setEditingDeduction({ ...editingDeduction, name: e.target.value })
+                          : setNewDeduction({ ...newDeduction, name: e.target.value })
+                      }
+                      required
+                      style={{ height: '40px' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0 }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Số tiền mặc định (nếu có):
+                    </label>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <input
+                        type="number"
+                        className="form-control"
+                        placeholder="0"
+                        value={editingDeduction ? editingDeduction.defaultAmount : newDeduction.defaultAmount}
+                        onChange={(e) =>
+                          editingDeduction
+                            ? setEditingDeduction({ ...editingDeduction, defaultAmount: Number(e.target.value) })
+                            : setNewDeduction({ ...newDeduction, defaultAmount: Number(e.target.value) })
+                        }
+                        style={{ height: '40px', flex: 1 }}
+                      />
+                      <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>VNĐ</span>
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ margin: 0, gridColumn: 'span 2' }}>
+                    <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                      Mô tả / Hướng dẫn áp dụng khoản trừ:
+                    </label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder="Quy định áp dụng khoản trừ này..."
+                      value={editingDeduction ? (editingDeduction.description || '') : newDeduction.description}
+                      onChange={(e) =>
+                        editingDeduction
+                          ? setEditingDeduction({ ...editingDeduction, description: e.target.value })
+                          : setNewDeduction({ ...newDeduction, description: e.target.value })
+                      }
+                      style={{ height: '40px' }}
+                    />
+                  </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.2rem' }}>
                   {editingDeduction && (
                     <button
                       type="button"
                       className="btn btn-secondary"
                       onClick={() => setEditingDeduction(null)}
+                      style={{ padding: '0.6rem 1.2rem' }}
                     >
                       Hủy bỏ
                     </button>
                   )}
-                  <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Save size={14} />
-                    {editingDeduction ? 'Cập nhật' : 'Thêm khoản trừ'}
+                  <button type="submit" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '0.6rem 1.5rem', fontWeight: 600 }}>
+                    <Save size={16} />
+                    {editingDeduction ? 'Cập nhật Khoản trừ' : 'Thêm Khoản trừ'}
                   </button>
                 </div>
               </form>
             </div>
 
-            <div className="card">
-              <div className="flex justify-between items-center mb-3">
-                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>
+            {/* Bảng danh sách khoản trừ */}
+            <div className="card" style={{ width: '100%' }}>
+              <div className="flex justify-between items-center mb-3" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+                <h3 style={{ fontSize: '1.15rem', margin: 0 }}>
                   Danh sách Khoản giảm trừ ({deductions.length})
                 </h3>
-                <button className="btn btn-secondary" onClick={fetchDeductions} style={{ padding: '4px 8px', fontSize: '0.85rem' }}>
-                  <RefreshCw size={12} />
+                <button className="btn btn-secondary" onClick={fetchDeductions} style={{ padding: '5px 10px' }}>
+                  <RefreshCw size={13} /> Làm mới
                 </button>
               </div>
 
@@ -897,43 +960,48 @@ export default function FinanceSettingsManager() {
                 <table className="table">
                   <thead>
                     <tr>
+                      <th style={{ width: '60px' }}>STT</th>
                       <th>Tên khoản trừ</th>
-                      <th style={{ textAlign: 'right' }}>Mức trừ mặc định</th>
-                      <th style={{ width: '80px', textAlign: 'center' }}>Thao tác</th>
+                      <th>Mô tả / Hướng dẫn</th>
+                      <th style={{ textAlign: 'right', width: '180px' }}>Mức trừ mặc định</th>
+                      <th style={{ width: '100px', textAlign: 'center' }}>Thao tác</th>
                     </tr>
                   </thead>
                   <tbody>
                     {deductions.length === 0 ? (
                       <tr>
-                        <td colSpan={3} style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--text-muted)' }}>
-                          Chưa có khoản giảm trừ nào.
+                        <td colSpan={5} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          Chưa có khoản giảm trừ nào trong danh mục.
                         </td>
                       </tr>
                     ) : (
-                      deductions.map((d) => (
+                      deductions.map((d, idx) => (
                         <tr key={d.id}>
+                          <td>{idx + 1}</td>
                           <td>
                             <strong>{d.name}</strong>
-                            {d.description && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{d.description}</div>}
                           </td>
-                          <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--danger)' }}>
-                            {d.defaultAmount > 0 ? `${formatCurrency(d.defaultAmount)} đ` : 'Nhập tay'}
+                          <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                            {d.description || '-'}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--danger)', fontSize: '1rem' }}>
+                            {d.defaultAmount > 0 ? `${formatCurrency(d.defaultAmount)} đ` : 'Nhập tay khi duyệt'}
                           </td>
                           <td style={{ textAlign: 'center' }}>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px' }}>
                               <button
                                 className="action-btn btn-edit"
                                 onClick={() => setEditingDeduction(d)}
                                 title="Sửa"
                               >
-                                <Edit3 size={14} />
+                                <Edit3 size={15} />
                               </button>
                               <button
                                 className="action-btn btn-delete"
                                 onClick={() => handleDeleteDeduction(d.id)}
                                 title="Xóa"
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={15} />
                               </button>
                             </div>
                           </td>
@@ -947,67 +1015,85 @@ export default function FinanceSettingsManager() {
           </div>
         )}
 
-        {/* TAB 4: QUY ĐỊNH & HẠN MỨC TẠM ỨNG */}
+        {/* TAB 4: QUY ĐỊNH & HẠN MỨC TẠM ỨNG - THIẾT KẾ FULL MÀN HÌNH */}
         {activeTab === 'policy' && (
-          <div className="card" style={{ maxWidth: '750px' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>Thiết lập Quy định Tạm ứng</h3>
+          <div className="card" style={{ width: '100%' }}>
+            <h3 style={{ fontSize: '1.15rem', marginBottom: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              Thiết lập Quy định Tạm ứng dành cho Giáo viên
+            </h3>
             <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', marginBottom: '1.5rem' }}>
               Hệ thống áp dụng các tham số này để tự động kiểm tra và giới hạn số tiền tạm ứng tối đa khi giáo viên nộp đơn đăng ký.
             </p>
 
-            <div className="form-group mb-3">
-              <label style={{ fontWeight: 600 }}>Mức % tạm ứng tối đa cho phép (% trên thù lao ước tính):</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '250px' }}>
-                <input
-                  type="number"
-                  className="form-control"
-                  min={1}
-                  max={100}
-                  value={policy.maxAdvancePercent}
-                  onChange={(e) => setPolicy({ ...policy, maxAdvancePercent: Number(e.target.value) })}
-                />
-                <span style={{ fontWeight: 'bold' }}>%</span>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                  Mức % tạm ứng tối đa cho phép (% trên thù lao ước tính):
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min={1}
+                    max={100}
+                    value={policy.maxAdvancePercent}
+                    onChange={(e) => setPolicy({ ...policy, maxAdvancePercent: Number(e.target.value) })}
+                    style={{ height: '42px', fontWeight: 'bold', fontSize: '1.1rem', maxWidth: '200px' }}
+                  />
+                  <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>%</span>
+                </div>
+                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '6px' }}>
+                  Ví dụ: 70% nghĩa là giáo viên có tổng thù lao khóa 10.000.000 đ thì chỉ được tạm ứng tối đa 7.000.000 đ trước khi bế giảng.
+                </small>
               </div>
-              <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '4px' }}>
-                Ví dụ: 70% nghĩa là giáo viên có tổng thù lao khóa 10.000.000 đ thì chỉ được tạm ứng tối đa 7.000.000 đ trước khi bế giảng.
-              </small>
-            </div>
 
-            <div className="form-group mb-3">
-              <label style={{ fontWeight: 600 }}>Số lần tạm ứng tối đa trong một khóa học:</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', maxWidth: '250px' }}>
-                <input
-                  type="number"
-                  className="form-control"
-                  min={1}
-                  max={10}
-                  value={policy.maxAdvanceTimes}
-                  onChange={(e) => setPolicy({ ...policy, maxAdvanceTimes: Number(e.target.value) })}
-                />
-                <span>lần</span>
+              <div className="form-group" style={{ margin: 0 }}>
+                <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                  Số lần tạm ứng tối đa trong một khóa học:
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <input
+                    type="number"
+                    className="form-control"
+                    min={1}
+                    max={10}
+                    value={policy.maxAdvanceTimes}
+                    onChange={(e) => setPolicy({ ...policy, maxAdvanceTimes: Number(e.target.value) })}
+                    style={{ height: '42px', fontWeight: 'bold', fontSize: '1.1rem', maxWidth: '200px' }}
+                  />
+                  <span style={{ fontSize: '1rem' }}>lần</span>
+                </div>
+                <small style={{ color: 'var(--text-muted)', display: 'block', marginTop: '6px' }}>
+                  Số lần tối đa giáo viên được nộp phiếu đề nghị tạm ứng trong cùng 1 khóa.
+                </small>
               </div>
             </div>
 
             <div className="form-group mb-4">
-              <label style={{ fontWeight: 600 }}>Thông báo / Hướng dẫn quy định (hiển thị trên form của Giáo viên):</label>
+              <label style={{ fontWeight: 600, marginBottom: '0.4rem', display: 'block' }}>
+                Thông báo / Hướng dẫn quy định (hiển thị trực tiếp trên form của Giáo viên):
+              </label>
               <textarea
                 className="form-control"
                 rows={4}
                 value={policy.guidelines || ''}
                 onChange={(e) => setPolicy({ ...policy, guidelines: e.target.value })}
                 placeholder="Nhập nội dung quy định, thời hạn nộp đơn, lưu ý cho giáo viên..."
+                style={{ width: '100%' }}
               ></textarea>
             </div>
 
-            <button
-              className="btn btn-primary"
-              onClick={handleSavePolicy}
-              disabled={savingPolicy}
-              style={{ display: 'flex', alignItems: 'center', gap: '6px', width: 'fit-content' }}
-            >
-              <Save size={16} />
-              {savingPolicy ? 'Đang lưu...' : 'Lưu thiết lập quy định'}
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                className="btn btn-primary"
+                onClick={handleSavePolicy}
+                disabled={savingPolicy}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '0.6rem 1.8rem', fontWeight: 600 }}
+              >
+                <Save size={16} />
+                {savingPolicy ? 'Đang lưu...' : 'Lưu thiết lập quy định'}
+              </button>
+            </div>
           </div>
         )}
       </div>
