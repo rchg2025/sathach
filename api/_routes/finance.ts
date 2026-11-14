@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import prisma from '../_prisma';
 
+const router = Router();
+
 // Helper xác định tỉ lệ % thù lao của giáo viên:
 // Ưu tiên 1: Cấu hình riêng cho Giáo viên (TeacherRateConfig)
 // Ưu tiên 2: Cấu hình theo Khóa học (TuitionFeeConfig)
