@@ -710,6 +710,12 @@ export default function FinanceSettingsManager() {
                           borderRadius: 'var(--radius)',
                           '&:hover': { borderColor: 'var(--primary)' }
                         }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
                         menu: (base: any) => ({
                           ...base,
                           zIndex: 9999
@@ -727,7 +733,7 @@ export default function FinanceSettingsManager() {
                       className="form-control"
                       value={newRate.courseId}
                       onChange={(e) => setNewRate({ ...newRate, courseId: e.target.value })}
-                      style={{ height: '40px', width: '100%' }}
+                      style={{ minHeight: '40px', width: '100%' }}
                     >
                       <option value="">-- Áp dụng cho TẤT CẢ các khóa học --</option>
                       {courses.map((c) => (
@@ -750,7 +756,7 @@ export default function FinanceSettingsManager() {
                         value={newRate.ratePercent}
                         onChange={(e) => setNewRate({ ...newRate, ratePercent: Number(e.target.value) })}
                         required
-                        style={{ fontWeight: 'bold', fontSize: '1.1rem', height: '40px', flex: 1 }}
+                        style={{ fontWeight: 'bold', fontSize: '1.1rem', minHeight: '40px', flex: 1 }}
                       />
                       <span style={{ fontWeight: 'bold', fontSize: '1.1rem' }}>%</span>
                     </div>
@@ -767,7 +773,7 @@ export default function FinanceSettingsManager() {
                       placeholder="VD: Hợp đồng đặc biệt, GV chính thức..."
                       value={newRate.note}
                       onChange={(e) => setNewRate({ ...newRate, note: e.target.value })}
-                      style={{ height: '40px', width: '100%' }}
+                      style={{ minHeight: '40px', width: '100%' }}
                     />
                   </div>
                 </div>
@@ -882,7 +888,7 @@ export default function FinanceSettingsManager() {
                           : setNewDeduction({ ...newDeduction, name: e.target.value })
                       }
                       required
-                      style={{ height: '40px' }}
+                      style={{ minHeight: '40px' }}
                     />
                   </div>
 
@@ -901,7 +907,7 @@ export default function FinanceSettingsManager() {
                             ? setEditingDeduction({ ...editingDeduction, defaultAmount: Number(e.target.value) })
                             : setNewDeduction({ ...newDeduction, defaultAmount: Number(e.target.value) })
                         }
-                        style={{ height: '40px', flex: 1 }}
+                        style={{ minHeight: '40px', flex: 1 }}
                       />
                       <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>VNĐ</span>
                     </div>
@@ -921,7 +927,7 @@ export default function FinanceSettingsManager() {
                           ? setEditingDeduction({ ...editingDeduction, description: e.target.value })
                           : setNewDeduction({ ...newDeduction, description: e.target.value })
                       }
-                      style={{ height: '40px' }}
+                      style={{ minHeight: '40px' }}
                     />
                   </div>
                 </div>

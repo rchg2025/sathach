@@ -104,11 +104,21 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-control {
   width: 100%;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
   border-radius: 4px;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  min-height: 40px;
+  box-sizing: border-box;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+select.form-control {
+  padding: 0.45rem 1.75rem 0.45rem 0.75rem;
+  line-height: 1.5;
+  height: auto;
+  min-height: 40px;
 }
 
 .form-control:focus {
