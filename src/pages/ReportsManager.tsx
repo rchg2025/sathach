@@ -1,15 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
-import { Printer, FileText, AlertTriangle, Download, Edit, Save, X } from 'lucide-react';
+import { Printer, FileText, AlertTriangle, Download, Edit, Save, X, Scan } from 'lucide-react';
 import toast from 'react-hot-toast';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { Html5Qrcode } from 'html5-qrcode';
 import AdminLayout from '../components/AdminLayout';
 import PrintTemplate from '../components/PrintTemplate';
 import PrintErrorTemplate from '../components/PrintErrorTemplate';
 import { API_BASE_URL } from '../config';
 import { useDebounce } from '../hooks/useDebounce';
 import { getLocalDateString } from '../utils/dateUtils';
+import { removeAccents } from '../utils/stringUtils';
 
 const ReportsManager = () => {
   const [students, setStudents] = useState<any[]>([]);
@@ -20,6 +22,7 @@ const ReportsManager = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [filterCourse, setFilterCourse] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
   const [filterDate, setFilterDate] = useState(() => getLocalDateString());
@@ -31,6 +34,67 @@ const ReportsManager = () => {
   
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  useEffect(() => {
+    let html5QrCode: Html5Qrcode | null = null;
+    let isMounted = true;
+
+    if (isScannerOpen) {
+      const initScanner = setTimeout(async () => {
+        if (!isMounted) return;
+
+        html5QrCode = new Html5Qrcode("qr-reader-reports", { verbose: false } as any);
+
+        const onScanSuccess = (decodedText: string) => {
+          let value = decodedText.trim();
+          if (value.includes('|')) {
+            const parts = value.split('|');
+            if (parts[0] && parts[0].length >= 12) {
+              value = parts[0].substring(0, 12);
+            }
+          }
+          setSearchQuery(value);
+          setCurrentPage(1);
+          setIsScannerOpen(false);
+          toast.success('Đã quét thành công CCCD!');
+        };
+
+        try {
+          await html5QrCode.start(
+            { facingMode: "environment" } as any,
+            { fps: 15, disableFlip: false },
+            onScanSuccess,
+            () => {}
+          );
+        } catch (err: any) {
+          if (!isMounted) return;
+          console.error("Scanner failed:", err);
+          let errMsg = typeof err === 'string' ? err : (err?.name || err?.message || JSON.stringify(err) || '');
+          const isZaloOrFB = /Zalo|FBAN|FBAV|Messenger/i.test(navigator.userAgent);
+          if (isZaloOrFB) {
+            alert('⚠️ BẠN ĐANG MỞ BẰNG ZALO / FACEBOOK?\n\nCác ứng dụng này thường CHẶN CAMERA. Bạn hãy nhấn vào nút 3 chấm góc phải trên cùng và chọn "Mở bằng trình duyệt" (Chrome / Safari) để quét nhé!');
+          } else if (errMsg.includes('NotReadableError') || errMsg.includes('Could not start video source')) {
+            alert('⚠️ CAMERA ĐANG BỊ KẸT!\n\nLỗi này xảy ra do camera đang bị ứng dụng khác sử dụng (hoặc chưa kịp tắt sau khi tải lại trang).\n\n👉 CÁCH SỬA: Đóng hoàn toàn trình duyệt này (vuốt tắt ứng dụng) rồi mở lại, hoặc kiểm tra xem có ứng dụng nào khác đang dùng camera không.');
+          } else if (errMsg.includes('NotAllowedError') || errMsg.includes('permission') || errMsg.includes('Permission')) {
+            alert('❌ Trình duyệt đã chặn quyền truy cập Camera.\n\n👉 Vui lòng bấm vào biểu tượng Ổ KHÓA 🔒 trên thanh địa chỉ.\n👉 Chọn "Quyền" -> "Cho phép" Camera.\n👉 Sau đó tải lại trang (F5) và thử lại.');
+          } else {
+            toast.error('Không thể bật camera. Lỗi: ' + errMsg);
+          }
+          setIsScannerOpen(false);
+        }
+      }, 200);
+
+      return () => {
+        isMounted = false;
+        clearTimeout(initScanner);
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => {
+            html5QrCode?.clear();
+          }).catch(console.error);
+        }
+      };
+    }
+  }, [isScannerOpen]);
 
   useEffect(() => {
     const u = localStorage.getItem('user');
@@ -169,8 +233,17 @@ const ReportsManager = () => {
     return courseFilteredStudents.filter(s => {
       let match = true;
       if (debouncedSearchQuery) {
-        const q = debouncedSearchQuery.toLowerCase();
-        match = (s.name?.toLowerCase().includes(q) || s.cccd?.includes(q) || s.registrationCode?.toLowerCase().includes(q));
+        let q = debouncedSearchQuery.trim();
+        if (q.includes('|')) {
+          q = q.split('|')[0].trim();
+        }
+        q = q.toLowerCase();
+        const qNoAccent = removeAccents(q);
+        const sName = s.name ? removeAccents(s.name.toLowerCase()) : '';
+        const sCccd = s.cccd ? String(s.cccd).toLowerCase() : '';
+        const sReg = s.registrationCode ? String(s.registrationCode).toLowerCase() : '';
+
+        match = (sName.includes(qNoAccent) || sCccd.includes(q) || sReg.includes(q));
       }
       if (match && filterStatus !== 'ALL') {
         if (filterStatus === 'PASS' && s.finalStatus !== 'ĐẬU') match = false;
@@ -296,14 +369,23 @@ const ReportsManager = () => {
 
         <div className="card no-print" style={{ padding: '0' }}>
           <div className="filter-group" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-            <div style={{ minWidth: '100%' }}>
+            <div style={{ minWidth: '100%', display: 'flex', gap: '0.5rem' }}>
               <input 
                 type="text" 
                 className="form-control" 
-                placeholder="Tìm kiếm theo Tên, CCCD..." 
+                placeholder="Tìm kiếm theo Tên, CCCD (Hỗ trợ quét mã CCCD)..." 
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+                style={{ flex: 1 }}
               />
+              <button 
+                className="btn btn-primary" 
+                style={{ padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                onClick={() => setIsScannerOpen(true)}
+                title="Quét mã QR trên thẻ CCCD"
+              >
+                <Scan size={20} />
+              </button>
             </div>
             <div style={{ minWidth: '100%' }}>
               <select className="form-control" value={filterCourse} onChange={(e) => { setFilterCourse(e.target.value); setCurrentPage(1); }}>
@@ -476,6 +558,73 @@ const ReportsManager = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {isScannerOpen && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ position: 'relative', width: '90%', maxWidth: '500px' }}>
+            <h3 style={{ color: '#fff', textAlign: 'center', marginBottom: '0.5rem', fontSize: '1.25rem', fontWeight: '500' }}>
+              Di chuyển camera đến mã QR
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', marginBottom: '2rem', fontSize: '0.9rem' }}>
+              Hệ thống sẽ tự động nhận diện và quét mã trên thẻ CCCD
+            </p>
+            
+            <div style={{ position: 'relative', borderRadius: '16px', overflow: 'hidden', background: '#000', boxShadow: '0 0 0 2px rgba(255,255,255,0.2)' }}>
+              <div id="qr-reader-reports" style={{ width: '100%', border: 'none' }}></div>
+              <div style={{ position: 'absolute', top: '10%', left: '10%', right: '10%', bottom: '10%', border: '2px dashed rgba(255,255,255,0.6)', borderRadius: '12px', pointerEvents: 'none', zIndex: 5 }}></div>
+              <div className="scanner-line"></div>
+            </div>
+            
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <button 
+                onClick={() => setIsScannerOpen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.2)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '12px 32px',
+                  borderRadius: '30px',
+                  fontSize: '1rem',
+                  fontWeight: '500',
+                  backdropFilter: 'blur(10px)',
+                  cursor: 'pointer'
+                }}
+              >
+                Hủy quét
+              </button>
+            </div>
+          </div>
+          
+          <style>
+            {`
+              #qr-reader-reports video {
+                object-fit: cover;
+                border-radius: 16px;
+                width: 100% !important;
+                display: block;
+              }
+              #qr-shaded-region {
+                border-color: rgba(0, 0, 0, 0.6) !important;
+              }
+              .scanner-line {
+                position: absolute;
+                left: 15%;
+                width: 70%;
+                height: 2px;
+                background: #4ade80;
+                box-shadow: 0 0 10px #4ade80, 0 0 20px #4ade80;
+                animation: scan 2s infinite linear;
+                z-index: 10;
+              }
+              @keyframes scan {
+                0% { top: 15%; opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { top: 85%; opacity: 0; }
+              }
+            `}
+          </style>
         </div>
       )}
     </AdminLayout>
