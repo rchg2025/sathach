@@ -8,6 +8,17 @@ import { numberToWordsVietnamese, formatCurrencyNumber, parseCurrencyInput } fro
 
 const API_BASE_URL = '';
 
+interface AdvanceStudentItem {
+  id: number;
+  name: string;
+  cccd: string;
+  transmissionType: string;
+  scheduleType: string;
+  tuitionAmount: number;
+  teacherSharePercent: number;
+  earnedAmount: number;
+}
+
 interface AdvanceRequest {
   id: number;
   requestCode: string;
@@ -21,6 +32,8 @@ interface AdvanceRequest {
   totalDeductions: number;
   requestedAmount: number;
   approvedAmount?: number;
+  totalTuitionAmount?: number;
+  students?: AdvanceStudentItem[];
   status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAID';
   reason?: string;
   accountantNotes?: string;
@@ -237,8 +250,10 @@ export default function AccountantAdvanceApproval() {
                   <th>Giáo viên</th>
                   <th>Khóa học</th>
                   <th style={{ textAlign: 'center' }}>Học viên</th>
+                  <th style={{ textAlign: 'right' }}>Học phí đóng</th>
                   <th style={{ textAlign: 'right' }}>Đề nghị</th>
                   <th style={{ textAlign: 'right' }}>Duyệt chi</th>
+                  <th style={{ textAlign: 'right' }}>Còn lại</th>
                   <th>Trạng thái</th>
                   <th>Ngày tạo</th>
                   <th style={{ textAlign: 'center', width: '220px' }}>Thao tác</th>
@@ -247,84 +262,95 @@ export default function AccountantAdvanceApproval() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                    <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                       Đang tải danh sách yêu cầu tạm ứng...
                     </td>
                   </tr>
                 ) : filteredRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                    <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
                       Không tìm thấy đơn đề nghị tạm ứng nào.
                     </td>
                   </tr>
                 ) : (
-                  filteredRequests.map((req) => (
-                    <tr key={req.id}>
-                      <td><strong style={{ color: 'var(--primary)' }}>{req.requestCode}</strong></td>
-                      <td>
-                        <strong>{req.teacher?.name}</strong>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{req.teacher?.username}</div>
-                      </td>
-                      <td>{req.course?.name}</td>
-                      <td style={{ textAlign: 'center' }}><strong>{req.studentCount}</strong> HV</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(req.requestedAmount)} đ</td>
-                      <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
-                        {req.approvedAmount !== undefined && req.approvedAmount !== null ? `${formatCurrency(req.approvedAmount)} đ` : '-'}
-                      </td>
-                      <td>{getStatusBadge(req.status)}</td>
-                      <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                        {new Date(req.createdAt).toLocaleDateString('vi-VN')}
-                      </td>
-                      <td style={{ textAlign: 'center' }}>
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                          <button
-                            className="btn btn-secondary"
-                            style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                            onClick={() => handleOpenAction(req, 'VIEW')}
-                            title="Xem chi tiết"
-                          >
-                            <Eye size={14} />
-                            <span className="btn-action-text">Xem</span>
-                          </button>
+                  filteredRequests.map((req) => {
+                    const effectiveDeducted = req.approvedAmount !== undefined && req.approvedAmount !== null ? req.approvedAmount : req.requestedAmount;
+                    const remainingEarned = Math.max(0, (req.grossEstimatedAmount || 0) - effectiveDeducted);
 
-                          {req.status === 'PENDING' && (
-                            <>
-                              <button
-                                className="btn btn-primary"
-                                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                onClick={() => handleOpenAction(req, 'APPROVE')}
-                                title="Duyệt đơn"
-                              >
-                                <Check size={14} />
-                                <span className="btn-action-text">Duyệt</span>
-                              </button>
-                              <button
-                                className="btn btn-danger"
-                                style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                onClick={() => handleOpenAction(req, 'REJECT')}
-                                title="Từ chối"
-                              >
-                                <X size={14} />
-                                <span className="btn-action-text">Từ chối</span>
-                              </button>
-                            </>
-                          )}
-
-                          {req.status === 'APPROVED' && (
+                    return (
+                      <tr key={req.id}>
+                        <td><strong style={{ color: 'var(--primary)' }}>{req.requestCode}</strong></td>
+                        <td>
+                          <strong>{req.teacher?.name}</strong>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{req.teacher?.username}</div>
+                        </td>
+                        <td>{req.course?.name}</td>
+                        <td style={{ textAlign: 'center' }}><strong>{req.studentCount}</strong> HV</td>
+                        <td style={{ textAlign: 'right', fontWeight: 500, color: 'var(--text-color)' }}>
+                          {formatCurrency(req.totalTuitionAmount || 0)} đ
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(req.requestedAmount)} đ</td>
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
+                          {req.approvedAmount !== undefined && req.approvedAmount !== null ? `${formatCurrency(req.approvedAmount)} đ` : '-'}
+                        </td>
+                        <td style={{ textAlign: 'right', fontWeight: 600, color: '#b45309' }}>
+                          {formatCurrency(remainingEarned)} đ
+                        </td>
+                        <td>{getStatusBadge(req.status)}</td>
+                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {new Date(req.createdAt).toLocaleDateString('vi-VN')}
+                        </td>
+                        <td style={{ textAlign: 'center' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
                             <button
-                              className="btn btn-success"
-                              style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                              onClick={() => handleOpenAction(req, 'PAY')}
-                              title="Xác nhận chi tiền"
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                              onClick={() => handleOpenAction(req, 'VIEW')}
+                              title="Xem chi tiết"
                             >
-                              <DollarSign size={14} />
-                              <span className="btn-action-text">Chi tiền</span>
+                              <Eye size={14} />
+                              <span className="btn-action-text">Xem</span>
                             </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+
+                            {req.status === 'PENDING' && (
+                              <>
+                                <button
+                                  className="btn btn-primary"
+                                  style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  onClick={() => handleOpenAction(req, 'APPROVE')}
+                                  title="Duyệt đơn"
+                                >
+                                  <Check size={14} />
+                                  <span className="btn-action-text">Duyệt</span>
+                                </button>
+                                <button
+                                  className="btn btn-danger"
+                                  style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  onClick={() => handleOpenAction(req, 'REJECT')}
+                                  title="Từ chối"
+                                >
+                                  <X size={14} />
+                                  <span className="btn-action-text">Từ chối</span>
+                                </button>
+                              </>
+                            )}
+
+                            {req.status === 'APPROVED' && (
+                              <button
+                                className="btn btn-success"
+                                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                onClick={() => handleOpenAction(req, 'PAY')}
+                                title="Xác nhận chi tiền"
+                              >
+                                <DollarSign size={14} />
+                                <span className="btn-action-text">Chi tiền</span>
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -375,13 +401,87 @@ export default function AccountantAdvanceApproval() {
                 <div><strong>Giáo viên:</strong> {selectedRequest.teacher?.name} (@{selectedRequest.teacher?.username})</div>
                 <div><strong>Khóa học:</strong> {selectedRequest.course?.name}</div>
                 <div><strong>Số học viên:</strong> {selectedRequest.studentCount} HV</div>
+                <div><strong>Tổng học phí đóng:</strong> <span style={{ fontWeight: 600, color: 'var(--text-color)' }}>{formatCurrency(selectedRequest.totalTuitionAmount || 0)} đ</span></div>
                 <div><strong>Tổng thù lao ước tính:</strong> {formatCurrency(selectedRequest.grossEstimatedAmount)} đ</div>
+                <div>
+                  <strong>Số tiền còn lại sau tạm ứng:</strong>{' '}
+                  <span style={{ fontWeight: 'bold', color: '#b45309' }}>
+                    {formatCurrency(
+                      Math.max(
+                        0,
+                        (selectedRequest.grossEstimatedAmount || 0) -
+                        ((actionType === 'APPROVE' || actionType === 'PAY') ? approvedAmount : (selectedRequest.approvedAmount !== undefined && selectedRequest.approvedAmount !== null ? selectedRequest.approvedAmount : selectedRequest.requestedAmount))
+                      )
+                    )} đ
+                  </span>
+                </div>
                 <div style={{ gridColumn: 'span 2' }}>
                   <strong>Số tiền GV đề nghị:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{formatCurrency(selectedRequest.requestedAmount)} VNĐ</span>
                 </div>
                 {selectedRequest.reason && (
                   <div style={{ gridColumn: 'span 2' }}>
                     <strong>Lý do GV đề nghị:</strong> {selectedRequest.reason}
+                  </div>
+                )}
+              </div>
+
+              {/* Danh sách học viên mà giáo viên đã đăng ký tạm ứng */}
+              <div style={{ marginBottom: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '0.75rem', background: '#fff' }}>
+                <div style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span>Danh sách học viên giáo viên phụ trách ({selectedRequest.students?.length || 0}):</span>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                    Tổng học phí: <strong style={{ color: 'var(--primary)' }}>{formatCurrency(selectedRequest.totalTuitionAmount || 0)} đ</strong>
+                  </span>
+                </div>
+
+                {(!selectedRequest.students || selectedRequest.students.length === 0) ? (
+                  <div style={{ padding: '0.75rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                    Chưa có dữ liệu học viên gắn với giáo viên trong khóa này.
+                  </div>
+                ) : (
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
+                    <table className="table" style={{ margin: 0, fontSize: '0.82rem' }}>
+                      <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>
+                        <tr>
+                          <th style={{ width: '40px', textAlign: 'center' }}>STT</th>
+                          <th>Học viên</th>
+                          <th>CCCD</th>
+                          <th>Loại xe & Lịch</th>
+                          <th style={{ textAlign: 'right' }}>Học phí đóng</th>
+                          <th style={{ textAlign: 'center' }}>%</th>
+                          <th style={{ textAlign: 'right' }}>Thù lao</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedRequest.students.map((st, idx) => (
+                          <tr key={st.id || idx}>
+                            <td style={{ textAlign: 'center', color: 'var(--text-muted)' }}>{idx + 1}</td>
+                            <td><strong>{st.name}</strong></td>
+                            <td style={{ fontFamily: 'monospace' }}>{st.cccd || '-'}</td>
+                            <td>
+                              <span style={{ fontSize: '0.75rem' }}>
+                                {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} - {st.scheduleType === 'SUNDAY' ? 'Cuối tuần' : 'Ngày thường'}
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 500 }}>{formatCurrency(st.tuitionAmount)} đ</td>
+                            <td style={{ textAlign: 'center', color: 'var(--primary)', fontWeight: 600 }}>{st.teacherSharePercent}%</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(st.earnedAmount)} đ</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot style={{ position: 'sticky', bottom: 0, background: '#f1f5f9', fontWeight: 'bold' }}>
+                        <tr>
+                          <td colSpan={4} style={{ textAlign: 'right' }}>TỔNG CỘNG:</td>
+                          <td style={{ textAlign: 'right', color: 'var(--primary)' }}>
+                            {formatCurrency(selectedRequest.totalTuitionAmount || 0)} đ
+                          </td>
+                          <td style={{ textAlign: 'center' }}>-</td>
+                          <td style={{ textAlign: 'right', color: 'var(--success)' }}>
+                            {formatCurrency(selectedRequest.grossEstimatedAmount)} đ
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
                   </div>
                 )}
               </div>

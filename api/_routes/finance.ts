@@ -434,7 +434,53 @@ router.get('/advance-requests', async (req, res) => {
       orderBy: { createdAt: 'desc' }
     });
 
-    res.json(requests);
+    // Lấy thông tin học sinh & tổng học phí cho từng request
+    const requestsWithStudents = await Promise.all(
+      requests.map(async (r) => {
+        const students = await prisma.student.findMany({
+          where: { teacherId: r.teacherId, courseId: r.courseId },
+          include: {
+            tuitionInfo: { include: { tuitionConfig: true } }
+          }
+        });
+
+        const configs = await prisma.tuitionFeeConfig.findMany({ where: { courseId: r.courseId } });
+
+        const studentBreakdown = [];
+        let totalTuitionAmount = 0;
+
+        for (const s of students) {
+          const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+          const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+          const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+          const tuition = s.tuitionInfo?.tuitionAmount || (cfg ? cfg.tuitionAmount : 0);
+          const defaultCoursePercent = cfg ? cfg.teacherSharePercent : 0;
+          const percent = await getEffectiveTeacherRate(r.teacherId, r.courseId, trans, sched, s.tuitionInfo?.teacherSharePercent || defaultCoursePercent);
+          const earned = (tuition * percent) / 100;
+
+          totalTuitionAmount += tuition;
+
+          studentBreakdown.push({
+            id: s.id,
+            name: s.name,
+            cccd: s.cccd,
+            transmissionType: trans,
+            scheduleType: sched,
+            tuitionAmount: tuition,
+            teacherSharePercent: percent,
+            earnedAmount: earned
+          });
+        }
+
+        return {
+          ...r,
+          totalTuitionAmount,
+          students: studentBreakdown
+        };
+      })
+    );
+
+    res.json(requestsWithStudents);
   } catch (error: any) {
     console.error('Error fetching advance requests:', error);
     res.status(500).json({ error: error.message || 'Lỗi lấy danh sách đơn tạm ứng' });
