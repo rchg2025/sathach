@@ -68,6 +68,11 @@ interface DeductionCategory {
   defaultAmount: number;
 }
 
+interface CourseItem {
+  id: number;
+  name: string;
+}
+
 interface NewDeductionItem {
   deductionCategoryId?: number;
   name: string;
@@ -78,17 +83,21 @@ interface NewDeductionItem {
 export default function AccountantAdvanceApproval() {
   const [user, setUser] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'ADVANCE' | 'SETTLEMENT'>('ADVANCE');
+  const [courses, setCourses] = useState<CourseItem[]>([]);
 
   // Tab 1: Advance Requests state
   const [requests, setRequests] = useState<AdvanceRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [courseFilter, setCourseFilter] = useState<string>('ALL');
   const [searchKeyword, setSearchKeyword] = useState('');
 
   // Tab 2: Settlement state
   const [settlementList, setSettlementList] = useState<SettlementSummaryItem[]>([]);
   const [loadingSettlements, setLoadingSettlements] = useState(false);
   const [settlementSearch, setSettlementSearch] = useState('');
+  const [settlementCourseFilter, setSettlementCourseFilter] = useState<string>('ALL');
+  const [settlementStatusFilter, setSettlementStatusFilter] = useState<string>('ALL');
   const [categories, setCategories] = useState<DeductionCategory[]>([]);
 
   // Advance Action Modal
@@ -111,6 +120,7 @@ export default function AccountantAdvanceApproval() {
   useEffect(() => {
     const uStr = localStorage.getItem('user');
     if (uStr) setUser(JSON.parse(uStr));
+    fetchCourses();
     fetchRequests();
     fetchDeductionCategories();
   }, [statusFilter]);
@@ -120,6 +130,17 @@ export default function AccountantAdvanceApproval() {
       fetchSettlementSummary();
     }
   }, [activeTab]);
+
+  const fetchCourses = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/courses`);
+      const courseList: CourseItem[] = res.data?.courses || res.data || [];
+      courseList.sort((a, b) => b.id - a.id);
+      setCourses(courseList);
+    } catch (e) {
+      console.error('Lỗi tải danh sách khóa học', e);
+    }
+  };
 
   const fetchRequests = async () => {
     setLoadingRequests(true);
@@ -318,6 +339,11 @@ export default function AccountantAdvanceApproval() {
   };
 
   const filteredRequests = requests.filter(r => {
+    // Lọc theo khóa học
+    if (courseFilter !== 'ALL' && String(r.courseId) !== courseFilter) {
+      return false;
+    }
+
     const kw = searchKeyword.toLowerCase().trim();
     if (!kw) return true;
     return (
@@ -329,6 +355,22 @@ export default function AccountantAdvanceApproval() {
   });
 
   const filteredSettlements = settlementList.filter(item => {
+    // Lọc theo khóa học
+    if (settlementCourseFilter !== 'ALL' && String(item.course.id) !== settlementCourseFilter) {
+      return false;
+    }
+
+    // Lọc theo trạng thái quyết toán
+    if (settlementStatusFilter === 'SETTLED' && !item.isFullySettled) {
+      return false;
+    }
+    if (settlementStatusFilter === 'ADVANCING' && (item.isFullySettled || item.totalAdvancePaid === 0)) {
+      return false;
+    }
+    if (settlementStatusFilter === 'NOT_SETTLED' && (item.isFullySettled || item.totalAdvancePaid > 0)) {
+      return false;
+    }
+
     const kw = settlementSearch.toLowerCase().trim();
     if (!kw) return true;
     return (
@@ -398,9 +440,48 @@ export default function AccountantAdvanceApproval() {
                     placeholder="🔍 Tìm theo mã phiếu, tên giáo viên, khóa học..."
                     value={searchKeyword}
                     onChange={(e) => setSearchKeyword(e.target.value)}
-                    style={{ flex: 1, minWidth: '220px' }}
+                    style={{ flex: '1 1 200px', minWidth: '180px' }}
                   />
-                  <div style={{ minWidth: '200px', flex: '0 0 auto' }}>
+                  {/* Lọc Khóa học */}
+                  <div style={{ minWidth: '180px', flex: '0 0 auto' }}>
+                    <Select
+                      options={[
+                        { value: 'ALL', label: 'Tất cả khóa học' },
+                        ...courses.map(c => ({ value: String(c.id), label: c.name }))
+                      ]}
+                      value={{
+                        value: courseFilter,
+                        label: courseFilter === 'ALL'
+                          ? 'Tất cả khóa học'
+                          : (courses.find(c => String(c.id) === courseFilter)?.name || courseFilter)
+                      }}
+                      onChange={(opt: any) => setCourseFilter(opt ? opt.value : 'ALL')}
+                      isSearchable={true}
+                      placeholder="Chọn khóa học..."
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
+                    />
+                  </div>
+                  {/* Lọc Trạng thái */}
+                  <div style={{ minWidth: '180px', flex: '0 0 auto' }}>
                     <Select
                       options={[
                         { value: 'ALL', label: 'Tất cả trạng thái' },
@@ -594,15 +675,102 @@ export default function AccountantAdvanceApproval() {
               </div>
             </div>
 
-            {/* Tìm kiếm */}
+            {/* Bộ lọc quyết toán */}
             <div className="card mb-4">
-              <input
-                type="text"
-                className="form-control"
-                placeholder="🔍 Tìm kiếm theo tên giáo viên hoặc tên khóa học..."
-                value={settlementSearch}
-                onChange={(e) => setSettlementSearch(e.target.value)}
-              />
+              <div className="flex justify-between items-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 300px', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="🔍 Tìm kiếm theo tên giáo viên hoặc tên khóa học..."
+                    value={settlementSearch}
+                    onChange={(e) => setSettlementSearch(e.target.value)}
+                    style={{ flex: '1 1 200px', minWidth: '180px' }}
+                  />
+                  {/* Lọc Khóa học */}
+                  <div style={{ minWidth: '180px', flex: '0 0 auto' }}>
+                    <Select
+                      options={[
+                        { value: 'ALL', label: 'Tất cả khóa học' },
+                        ...courses.map(c => ({ value: String(c.id), label: c.name }))
+                      ]}
+                      value={{
+                        value: settlementCourseFilter,
+                        label: settlementCourseFilter === 'ALL'
+                          ? 'Tất cả khóa học'
+                          : (courses.find(c => String(c.id) === settlementCourseFilter)?.name || settlementCourseFilter)
+                      }}
+                      onChange={(opt: any) => setSettlementCourseFilter(opt ? opt.value : 'ALL')}
+                      isSearchable={true}
+                      placeholder="Chọn khóa học..."
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
+                    />
+                  </div>
+                  {/* Lọc Trạng thái quyết toán */}
+                  <div style={{ minWidth: '180px', flex: '0 0 auto' }}>
+                    <Select
+                      options={[
+                        { value: 'ALL', label: 'Tất cả trạng thái' },
+                        { value: 'NOT_SETTLED', label: 'Chưa thanh toán' },
+                        { value: 'ADVANCING', label: 'Đang tạm ứng' },
+                        { value: 'SETTLED', label: 'Đã quyết toán' }
+                      ]}
+                      value={{
+                        value: settlementStatusFilter,
+                        label:
+                          settlementStatusFilter === 'SETTLED'
+                            ? 'Đã quyết toán'
+                            : settlementStatusFilter === 'ADVANCING'
+                            ? 'Đang tạm ứng'
+                            : settlementStatusFilter === 'NOT_SETTLED'
+                            ? 'Chưa thanh toán'
+                            : 'Tất cả trạng thái'
+                      }}
+                      onChange={(opt: any) => setSettlementStatusFilter(opt ? opt.value : 'ALL')}
+                      isSearchable={true}
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Bảng tổng hợp quyết toán */}
