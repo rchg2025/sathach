@@ -441,7 +441,14 @@ const StationTesting = () => {
       });
       if (unconfirmedAssignments.length > 0) return 3; // "Xác nhận thi" button
 
-      const isTestingElsewhere = s.testResults?.some((tr: any) => tr.status === 'IN_PROGRESS' && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
+      const isTestingElsewhere = s.testResults?.some((tr: any) => {
+        if (tr.status !== 'IN_PROGRESS') return false;
+        const matchingAssignment = myAssignments.find(a => a.testType?.id === tr.testTypeId);
+        if (matchingAssignment) return false;
+        // If there's another record for this same testTypeId that is already completed/transferred, it's a zombie record, not actively testing
+        const alreadyDone = s.testResults?.some((otherTr: any) => otherTr.testTypeId === tr.testTypeId && ['TRANSFERRED', 'PASSED', 'FAILED', 'FINISHED'].includes(otherTr.status));
+        return !alreadyDone;
+      });
       if (isTestingElsewhere) return 4; // "Đang thi ở trạm khác" text
       
       const isConfirmed = myAssignments.some(a => {
@@ -614,7 +621,14 @@ const StationTesting = () => {
                           if (myAssignments.length === 0) return null;
 
                           const myInProgressTr = s.testResults?.find((tr: any) => ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED'].includes(tr.status) && myAssignments.find(a => a.testType?.id === tr.testTypeId));
-                          const isTestingElsewhere = s.testResults?.some((tr: any) => tr.status === 'IN_PROGRESS' && !myAssignments.find(a => a.testType?.id === tr.testTypeId));
+                          const isTestingElsewhere = s.testResults?.some((tr: any) => {
+        if (tr.status !== 'IN_PROGRESS') return false;
+        const matchingAssignment = myAssignments.find(a => a.testType?.id === tr.testTypeId);
+        if (matchingAssignment) return false;
+        // If there's another record for this same testTypeId that is already completed/transferred, it's a zombie record, not actively testing
+        const alreadyDone = s.testResults?.some((otherTr: any) => otherTr.testTypeId === tr.testTypeId && ['TRANSFERRED', 'PASSED', 'FAILED', 'FINISHED'].includes(otherTr.status));
+        return !alreadyDone;
+      });
 
                           if (isTestingElsewhere && !myInProgressTr) {
                             return <span className="text-muted small">Đang thi ở trạm khác</span>;

@@ -1466,18 +1466,28 @@ router.get('/station/students-v2', async (req, res) => {
 router.post('/station/confirm-test', async (req, res) => {
   const { studentId, testTypeId, stationManagerId } = req.body;
   try {
-    let testResult = await prisma.testResult.findFirst({
-      where: { 
-        studentId: Number(studentId), 
-        testTypeId: Number(testTypeId),
-        status: { in: ['PENDING', 'CONFIRMED'] }
-      },
-      orderBy: { createdAt: 'desc' }
+    const sId = Number(studentId);
+    const tId = Number(testTypeId);
+
+    // Clean up any stray duplicate records keeping only the most recent one
+    const allResults = await prisma.testResult.findMany({
+      where: { studentId: sId, testTypeId: tId },
+      orderBy: { id: 'desc' }
     });
 
-    if (testResult) {
-      testResult = await prisma.testResult.update({
-        where: { id: testResult.id },
+    let targetTr = allResults[0] || null;
+
+    if (allResults.length > 1) {
+      // Keep targetTr, remove others that are empty/zombie
+      const extraIds = allResults.slice(1).map(r => r.id);
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: extraIds } } });
+      await prisma.score.deleteMany({ where: { testResultId: { in: extraIds } } });
+      await prisma.testResult.deleteMany({ where: { id: { in: extraIds } } });
+    }
+
+    if (targetTr) {
+      targetTr = await prisma.testResult.update({
+        where: { id: targetTr.id },
         data: { 
           status: 'CONFIRMED',
           stationManagerId: Number(stationManagerId),
@@ -1485,11 +1495,11 @@ router.post('/station/confirm-test', async (req, res) => {
         }
       });
     } else {
-      const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
-      testResult = await prisma.testResult.create({
+      const testType = await prisma.testType.findUnique({ where: { id: tId } });
+      targetTr = await prisma.testResult.create({
         data: {
-          studentId: Number(studentId),
-          testTypeId: Number(testTypeId),
+          studentId: sId,
+          testTypeId: tId,
           status: 'CONFIRMED',
           stationManagerId: Number(stationManagerId),
           totalScore: testType?.maxScore || 100,
@@ -1497,7 +1507,7 @@ router.post('/station/confirm-test', async (req, res) => {
       });
     }
 
-    res.json(testResult);
+    res.json(targetTr);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Server error' });
@@ -1507,24 +1517,39 @@ router.post('/station/confirm-test', async (req, res) => {
 router.post('/station/start-test', async (req, res) => {
   const { studentId, testTypeId, vehicleId, stationManagerId } = req.body;
   try {
-    let testResult = await prisma.testResult.findFirst({
-      where: { 
-        studentId: Number(studentId), 
-        testTypeId: Number(testTypeId),
-        status: { in: ['PENDING', 'CONFIRMED'] }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-    
-    const testType = await prisma.testType.findUnique({ where: { id: Number(testTypeId) } });
+    const sId = Number(studentId);
+    const tId = Number(testTypeId);
+
+    const testType = await prisma.testType.findUnique({ where: { id: tId } });
     if (!testType) return res.status(404).json({ error: 'Không tìm thấy trạm thi' });
+
+    // Clean up any stray duplicate records keeping the most relevant one
+    const allResults = await prisma.testResult.findMany({
+      where: { studentId: sId, testTypeId: tId },
+      orderBy: { id: 'desc' }
+    });
+
+    let targetTr = allResults[0] || null;
+
+    if (allResults.length > 1) {
+      const extraIds = allResults.slice(1).map(r => r.id);
+      await prisma.examProgress.deleteMany({ where: { testResultId: { in: extraIds } } });
+      await prisma.score.deleteMany({ where: { testResultId: { in: extraIds } } });
+      await prisma.testResult.deleteMany({ where: { id: { in: extraIds } } });
+    }
+
+    // Check if student is already in progress on this test
+    if (targetTr && targetTr.status === 'IN_PROGRESS' && targetTr.vehicleId === Number(vehicleId)) {
+      return res.json(targetTr);
+    }
 
     // Check vehicle occupancy
     if (vehicleId) {
       const inProgressCount = await prisma.testResult.count({
         where: {
           vehicleId: Number(vehicleId),
-          status: 'IN_PROGRESS'
+          status: 'IN_PROGRESS',
+          studentId: { not: sId }
         }
       });
       const isDuongTruong = testType.name.toLowerCase().includes('đường trường');
@@ -1537,22 +1562,22 @@ router.post('/station/start-test', async (req, res) => {
 
     const maxScore = testType.maxScore || 100;
 
-    if (testResult) {
-      testResult = await prisma.testResult.update({
-        where: { id: testResult.id },
+    if (targetTr) {
+      targetTr = await prisma.testResult.update({
+        where: { id: targetTr.id },
         data: { 
           status: 'IN_PROGRESS', 
           vehicleId: Number(vehicleId),
           stationManagerId: stationManagerId ? Number(stationManagerId) : null,
           startTime: new Date(),
-          totalScore: testResult.status === 'PENDING' ? maxScore : testResult.totalScore
+          totalScore: targetTr.status === 'PENDING' ? maxScore : targetTr.totalScore
         }
       });
     } else {
-      testResult = await prisma.testResult.create({
+      targetTr = await prisma.testResult.create({
         data: { 
-          studentId: Number(studentId), 
-          testTypeId: Number(testTypeId), 
+          studentId: sId, 
+          testTypeId: tId, 
           vehicleId: Number(vehicleId),
           status: 'IN_PROGRESS',
           totalScore: maxScore,
@@ -1561,8 +1586,9 @@ router.post('/station/start-test', async (req, res) => {
         }
       });
     }
-    res.json(testResult);
+    res.json(targetTr);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1570,22 +1596,24 @@ router.post('/station/start-test', async (req, res) => {
 router.post('/station/end-test', async (req, res) => {
   const { studentId, testTypeId } = req.body;
   try {
-    const testResult = await prisma.testResult.findFirst({
-      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
-      orderBy: { createdAt: 'desc' }
+    const sId = Number(studentId);
+    const tId = Number(testTypeId);
+
+    // Update all matching test results for this student and testType to TRANSFERRED
+    await prisma.testResult.updateMany({
+      where: { 
+        studentId: sId, 
+        testTypeId: tId,
+        status: { in: ['IN_PROGRESS', 'FINISHED', 'FAILED', 'PASSED', 'CONFIRMED'] }
+      },
+      data: { 
+        status: 'TRANSFERRED',
+        endTime: new Date()
+      }
     });
-    
-    if (testResult) {
-      await prisma.testResult.update({
-        where: { id: testResult.id },
-        data: { 
-          status: 'TRANSFERRED',
-          endTime: new Date()
-        }
-      });
-    }
     res.json({ success: true });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1593,9 +1621,12 @@ router.post('/station/end-test', async (req, res) => {
 router.post('/station/mark-absent', async (req, res) => {
   const { studentId, testTypeId, stationManagerId } = req.body;
   try {
+    const sId = Number(studentId);
+    const tId = Number(testTypeId);
+
     let testResult = await prisma.testResult.findFirst({
-      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
-      orderBy: { createdAt: 'desc' }
+      where: { studentId: sId, testTypeId: tId },
+      orderBy: { id: 'desc' }
     });
     
     if (testResult) {
@@ -1611,8 +1642,8 @@ router.post('/station/mark-absent', async (req, res) => {
     } else {
       testResult = await prisma.testResult.create({
         data: { 
-          studentId: Number(studentId), 
-          testTypeId: Number(testTypeId), 
+          studentId: sId, 
+          testTypeId: tId, 
           status: 'ABSENT',
           totalScore: 0,
           stationManagerId: stationManagerId ? Number(stationManagerId) : null,
@@ -1622,6 +1653,7 @@ router.post('/station/mark-absent', async (req, res) => {
     }
     res.json(testResult);
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -1629,18 +1661,13 @@ router.post('/station/mark-absent', async (req, res) => {
 router.post('/station/transfer-score', async (req, res) => {
   const { studentId, testTypeId } = req.body;
   try {
-    const testResult = await prisma.testResult.findFirst({
-      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) }
+    await prisma.testResult.updateMany({
+      where: { studentId: Number(studentId), testTypeId: Number(testTypeId) },
+      data: { status: 'TRANSFERRED' }
     });
-    
-    if (testResult) {
-      await prisma.testResult.update({
-        where: { id: testResult.id },
-        data: { status: 'TRANSFERRED' }
-      });
-    }
     res.json({ success: true });
   } catch (error) {
+    console.error(error);
     res.status(500).json({ error: 'Server error' });
   }
 });
