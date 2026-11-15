@@ -117,6 +117,7 @@ const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>, setter: (val: 
 const StudentManager = () => {
   const location = useLocation();
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const isAccountant = user?.role === 'ACCOUNTANT';
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [students, setStudents] = useState([]);
   const [dbCourses, setDbCourses] = useState<any[]>([]);
@@ -285,10 +286,18 @@ const StudentManager = () => {
   };
 
   const handleDelete = (id: number) => {
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền xóa học viên');
+      return;
+    }
     setDeleteModal({ isOpen: true, id });
   };
 
   const confirmDelete = async () => {
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền xóa học viên');
+      return;
+    }
     if (deleteModal.id === null) return;
     try {
       await axios.delete(`${API_BASE_URL}/api/manager/students/${deleteModal.id}?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`);
@@ -303,6 +312,10 @@ const StudentManager = () => {
   };
 
   const confirmBulkDelete = async () => {
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền xóa học viên');
+      return;
+    }
     if (selectedStudentIds.length === 0) return;
     try {
       await axios.post(`${API_BASE_URL}/api/manager/students/bulk-delete?username=${(JSON.parse(localStorage.getItem('user') || '{}')?.username) || ''}`, {
@@ -652,7 +665,7 @@ const StudentManager = () => {
                 <span>📥 Xuất Excel</span>
               </button>
 
-              {selectedStudentIds.length > 0 && (
+              {!isAccountant && selectedStudentIds.length > 0 && (
                 <button 
                   className="btn btn-danger" 
                   onClick={() => setBulkDeleteModal(true)} 
@@ -717,7 +730,9 @@ const StudentManager = () => {
                         <button className="action-btn" title="Mã QR" style={{ color: '#28a745' }} onClick={() => setQrStudent(student)}><QrCode size={16} /></button>
                         <button className="action-btn" title="Xem" style={{ color: '#17a2b8' }} onClick={() => setViewStudent(student)}><Eye size={16} /></button>
                         <button className="action-btn btn-edit" title="Sửa" onClick={() => handleEdit(student)}><Edit size={16} /></button>
-                        <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(student.id)}><Trash2 size={16} /></button>
+                        {!isAccountant && (
+                          <button className="action-btn btn-delete" title="Xóa" onClick={() => handleDelete(student.id)}><Trash2 size={16} /></button>
+                        )}
                       </div>
                     </td>
                   </tr>

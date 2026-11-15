@@ -1064,6 +1064,13 @@ router.delete('/students/:id', async (req, res) => {
   const { username } = req.query;
   const id = Number(req.params.id);
   try {
+    if (username) {
+      const caller = await prisma.user.findUnique({ where: { username: String(username) } });
+      if (caller && caller.role === 'ACCOUNTANT') {
+        return res.status(403).json({ error: 'Tài khoản Kế toán không có quyền xóa học viên' });
+      }
+    }
+
     if (username === 'quantri') {
       const testResults = await prisma.testResult.findMany({ where: { studentId: id } });
       const trIds = testResults.map(tr => tr.id);
@@ -1089,6 +1096,13 @@ router.post('/students/bulk-delete', async (req, res) => {
   if (!Array.isArray(ids) || ids.length === 0) return res.status(400).json({ error: 'No IDs provided' });
   
   try {
+    if (username) {
+      const caller = await prisma.user.findUnique({ where: { username: String(username) } });
+      if (caller && caller.role === 'ACCOUNTANT') {
+        return res.status(403).json({ error: 'Tài khoản Kế toán không có quyền xóa học viên' });
+      }
+    }
+
     const studentIds = ids.map((id: any) => Number(id));
     if (username === 'quantri') {
       const testResults = await prisma.testResult.findMany({ where: { studentId: { in: studentIds } } });
