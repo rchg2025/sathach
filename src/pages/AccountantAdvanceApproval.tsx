@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X } from 'lucide-react';
+import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X, CreditCard, Plus, Trash2, Award } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { numberToWordsVietnamese, formatCurrencyNumber, parseCurrencyInput } from '../utils/currencyUtils';
@@ -45,16 +45,53 @@ interface AdvanceRequest {
   deductions: Array<{ id: number; name: string; amount: number; note?: string }>;
 }
 
+interface SettlementSummaryItem {
+  teacher: { id: number; name: string; username: string; phone?: string };
+  course: { id: number; name: string; startDate?: string; endDate?: string };
+  studentCount: number;
+  totalTuition: number;
+  grossEarned: number;
+  totalAdvancePaid: number;
+  totalAdvancePendingOrApproved: number;
+  totalSettledPaid: number;
+  remainingToPay: number;
+  isFullySettled: boolean;
+  advanceRequests: AdvanceRequest[];
+  settlementRequests: AdvanceRequest[];
+  students: AdvanceStudentItem[];
+}
+
+interface DeductionCategory {
+  id: number;
+  name: string;
+  code?: string;
+  defaultAmount: number;
+}
+
+interface NewDeductionItem {
+  deductionCategoryId?: number;
+  name: string;
+  amount: number;
+  note?: string;
+}
+
 export default function AccountantAdvanceApproval() {
   const [user, setUser] = useState<any>(null);
-  const [requests, setRequests] = useState<AdvanceRequest[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'ADVANCE' | 'SETTLEMENT'>('ADVANCE');
 
-  // Filters
+  // Tab 1: Advance Requests state
+  const [requests, setRequests] = useState<AdvanceRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [searchKeyword, setSearchKeyword] = useState('');
 
-  // Action modal state
+  // Tab 2: Settlement state
+  const [settlementList, setSettlementList] = useState<SettlementSummaryItem[]>([]);
+  const [loadingSettlements, setLoadingSettlements] = useState(false);
+  const [settlementSearch, setSettlementSearch] = useState('');
+  const [categories, setCategories] = useState<DeductionCategory[]>([]);
+
+  // Advance Action Modal
   const [selectedRequest, setSelectedRequest] = useState<AdvanceRequest | null>(null);
   const [actionType, setActionType] = useState<'APPROVE' | 'REJECT' | 'PAY' | 'VIEW' | null>(null);
   const [approvedAmount, setApprovedAmount] = useState<number>(0);
@@ -62,14 +99,30 @@ export default function AccountantAdvanceApproval() {
   const [paymentReference, setPaymentReference] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Settlement Modal State
+  const [selectedSettlement, setSelectedSettlement] = useState<SettlementSummaryItem | null>(null);
+  const [settlementDeductions, setSettlementDeductions] = useState<NewDeductionItem[]>([]);
+  const [settlementPaymentRef, setSettlementPaymentRef] = useState('');
+  const [settlementNotes, setSettlementNotes] = useState('');
+  const [customPayAmount, setCustomPayAmount] = useState<number>(0);
+  const [useCustomPayAmount, setUseCustomPayAmount] = useState<boolean>(false);
+  const [submittingSettlement, setSubmittingSettlement] = useState(false);
+
   useEffect(() => {
     const uStr = localStorage.getItem('user');
     if (uStr) setUser(JSON.parse(uStr));
     fetchRequests();
+    fetchDeductionCategories();
   }, [statusFilter]);
 
+  useEffect(() => {
+    if (activeTab === 'SETTLEMENT') {
+      fetchSettlementSummary();
+    }
+  }, [activeTab]);
+
   const fetchRequests = async () => {
-    setLoading(true);
+    setLoadingRequests(true);
     try {
       const res = await axios.get(`${API_BASE_URL}/api/manager/finance/advance-requests?status=${statusFilter}`);
       setRequests(res.data || []);
@@ -77,15 +130,36 @@ export default function AccountantAdvanceApproval() {
       console.error('Lỗi tải danh sách yêu cầu tạm ứng', e);
       toast.error('Lỗi tải danh sách yêu cầu tạm ứng');
     } finally {
-      setLoading(false);
+      setLoadingRequests(false);
+    }
+  };
+
+  const fetchSettlementSummary = async () => {
+    setLoadingSettlements(true);
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/finance/settlement-summary`);
+      setSettlementList(res.data || []);
+    } catch (e) {
+      console.error('Lỗi tải dữ liệu quyết toán', e);
+      toast.error('Lỗi tải danh sách quyết toán khóa học');
+    } finally {
+      setLoadingSettlements(false);
+    }
+  };
+
+  const fetchDeductionCategories = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/manager/finance/deduction-categories`);
+      setCategories(res.data || []);
+    } catch (e) {
+      console.error('Lỗi tải danh mục khoản trừ', e);
     }
   };
 
   const handleOpenAction = (req: AdvanceRequest, type: 'APPROVE' | 'REJECT' | 'PAY' | 'VIEW') => {
     setSelectedRequest(req);
     setActionType(type);
-    
-    // Nếu chưa duyệt, mặc định số tiền duyệt chi thực tế = Số tiền GV đề nghị - Tổng các khoản giảm trừ kê khai
+
     let initialAmount = 0;
     if (req.approvedAmount !== undefined && req.approvedAmount !== null) {
       initialAmount = req.approvedAmount;
@@ -127,10 +201,102 @@ export default function AccountantAdvanceApproval() {
       toast.success(actionMsg);
       handleCloseModal();
       fetchRequests();
+      if (activeTab === 'SETTLEMENT') fetchSettlementSummary();
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Lỗi xử lý yêu cầu');
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Mở modal thanh toán quyết toán cuối khóa
+  const handleOpenSettlementModal = (item: SettlementSummaryItem) => {
+    setSelectedSettlement(item);
+    setSettlementDeductions([]);
+    setSettlementPaymentRef('');
+    setSettlementNotes(`Thanh toán quyết toán thù lao kết thúc khóa ${item.course.name}`);
+    setUseCustomPayAmount(false);
+    setCustomPayAmount(item.remainingToPay);
+  };
+
+  const handleCloseSettlementModal = () => {
+    setSelectedSettlement(null);
+    setSettlementDeductions([]);
+  };
+
+  // Thêm khoản giảm trừ
+  const handleAddDeduction = () => {
+    const firstCat = categories[0];
+    setSettlementDeductions([
+      ...settlementDeductions,
+      {
+        deductionCategoryId: firstCat ? firstCat.id : undefined,
+        name: firstCat ? firstCat.name : '',
+        amount: firstCat ? firstCat.defaultAmount : 0,
+        note: ''
+      }
+    ]);
+  };
+
+  const handleRemoveDeduction = (idx: number) => {
+    const updated = [...settlementDeductions];
+    updated.splice(idx, 1);
+    setSettlementDeductions(updated);
+  };
+
+  const handleDeductionChange = (idx: number, field: keyof NewDeductionItem, value: any) => {
+    const updated = [...settlementDeductions];
+    if (field === 'deductionCategoryId') {
+      const catId = Number(value);
+      const cat = categories.find(c => c.id === catId);
+      updated[idx] = {
+        ...updated[idx],
+        deductionCategoryId: catId,
+        name: cat ? cat.name : updated[idx].name,
+        amount: cat ? cat.defaultAmount : updated[idx].amount
+      };
+    } else {
+      updated[idx] = { ...updated[idx], [field]: value };
+    }
+    setSettlementDeductions(updated);
+  };
+
+  // Tính toán số tiền thanh toán cuối khóa còn lại
+  const totalSettlementDeductions = settlementDeductions.reduce((sum, d) => sum + (Number(d.amount) || 0), 0);
+  const calculatedRemainingPay = selectedSettlement
+    ? Math.max(0, selectedSettlement.remainingToPay - totalSettlementDeductions)
+    : 0;
+  const finalPayoutAmount = useCustomPayAmount ? customPayAmount : calculatedRemainingPay;
+
+  // Xác nhận thực hiện thanh toán quyết toán cuối khóa
+  const handleConfirmSettlementPayment = async () => {
+    if (!selectedSettlement) return;
+
+    if (finalPayoutAmount < 0) {
+      toast.error('Số tiền thanh toán không được nhỏ hơn 0');
+      return;
+    }
+
+    setSubmittingSettlement(true);
+    try {
+      await axios.post(`${API_BASE_URL}/api/manager/finance/settlement`, {
+        teacherId: selectedSettlement.teacher.id,
+        courseId: selectedSettlement.course.id,
+        finalAmount: finalPayoutAmount,
+        deductions: settlementDeductions,
+        accountantNotes: settlementNotes,
+        paymentReference: settlementPaymentRef,
+        accountantName: user?.name || user?.username || 'Kế toán'
+      });
+
+      toast.success(`Đã thanh toán quyết toán thành công cho giáo viên ${selectedSettlement.teacher.name}!`);
+      handleCloseSettlementModal();
+      fetchSettlementSummary();
+      fetchRequests();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Lỗi xử lý thanh toán cuối khóa');
+    } finally {
+      setSubmittingSettlement(false);
     }
   };
 
@@ -162,202 +328,388 @@ export default function AccountantAdvanceApproval() {
     );
   });
 
+  const filteredSettlements = settlementList.filter(item => {
+    const kw = settlementSearch.toLowerCase().trim();
+    if (!kw) return true;
+    return (
+      item.teacher.name.toLowerCase().includes(kw) ||
+      item.teacher.username.toLowerCase().includes(kw) ||
+      item.course.name.toLowerCase().includes(kw)
+    );
+  });
+
   return (
     <AdminLayout user={user}>
       <div>
+        {/* HEADER & TABS */}
         <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
-            <DollarSign size={24} color="var(--primary)" /> Quản lý Duyệt Tạm ứng & Chi tiền
-          </h2>
+          <div>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <DollarSign size={26} color="var(--primary)" /> Quản lý Tạm ứng & Thanh toán Thù lao
+            </h2>
+            <div style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+              Phê duyệt các đợt tạm ứng và quyết toán thanh toán các khoản còn lại cho giáo viên khi kết thúc khóa học
+            </div>
+          </div>
           <button
             className="btn btn-secondary"
-            onClick={fetchRequests}
+            onClick={activeTab === 'ADVANCE' ? fetchRequests : fetchSettlementSummary}
             style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
           >
-            <RefreshCw size={14} className={loading ? 'spin' : ''} /> Làm mới
+            <RefreshCw size={14} className={(loadingRequests || loadingSettlements) ? 'spin' : ''} /> Làm mới
           </button>
         </div>
 
-        {/* Bộ lọc */}
-        <div className="card mb-4">
-          <div className="flex justify-between items-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 300px', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+        {/* TAB BUTTONS */}
+        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem' }}>
+          <button
+            className={`btn ${activeTab === 'ADVANCE' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, padding: '8px 16px' }}
+            onClick={() => setActiveTab('ADVANCE')}
+          >
+            <Clock size={16} /> Danh sách Đơn tạm ứng
+            {requests.filter(r => r.status === 'PENDING').length > 0 && (
+              <span style={{ background: '#ef4444', color: '#fff', borderRadius: '10px', padding: '1px 7px', fontSize: '0.75rem' }}>
+                {requests.filter(r => r.status === 'PENDING').length}
+              </span>
+            )}
+          </button>
+          <button
+            className={`btn ${activeTab === 'SETTLEMENT' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, padding: '8px 16px' }}
+            onClick={() => setActiveTab('SETTLEMENT')}
+          >
+            <CreditCard size={16} /> Thanh toán / Quyết toán cuối khóa
+          </button>
+        </div>
+
+        {/* ========================================================= */}
+        {/* TAB 1: DANH SÁCH ĐƠN TẠM ỨNG                              */}
+        {/* ========================================================= */}
+        {activeTab === 'ADVANCE' && (
+          <>
+            {/* Bộ lọc */}
+            <div className="card mb-4">
+              <div className="flex justify-between items-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ flex: '1 1 300px', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="🔍 Tìm theo mã phiếu, tên giáo viên, khóa học..."
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                    style={{ flex: 1, minWidth: '220px' }}
+                  />
+                  <div style={{ minWidth: '200px', flex: '0 0 auto' }}>
+                    <Select
+                      options={[
+                        { value: 'ALL', label: 'Tất cả trạng thái' },
+                        { value: 'PENDING', label: 'Chờ duyệt (Mới)' },
+                        { value: 'APPROVED', label: 'Đã duyệt (Chờ chi)' },
+                        { value: 'PAID', label: 'Đã chi tiền' },
+                        { value: 'REJECTED', label: 'Từ chối' }
+                      ]}
+                      value={{
+                        value: statusFilter,
+                        label:
+                          statusFilter === 'PENDING'
+                            ? 'Chờ duyệt (Mới)'
+                            : statusFilter === 'APPROVED'
+                            ? 'Đã duyệt (Chờ chi)'
+                            : statusFilter === 'PAID'
+                            ? 'Đã chi tiền'
+                            : statusFilter === 'REJECTED'
+                            ? 'Từ chối'
+                            : 'Tất cả trạng thái'
+                      }}
+                      onChange={(opt: any) => setStatusFilter(opt ? opt.value : 'ALL')}
+                      isSearchable={true}
+                      styles={{
+                        control: (base: any, state: any) => ({
+                          ...base,
+                          minHeight: '40px',
+                          borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
+                          boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
+                          borderRadius: 'var(--radius)',
+                          '&:hover': { borderColor: 'var(--primary)' }
+                        }),
+                        singleValue: (base: any) => ({
+                          ...base,
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }),
+                        menu: (base: any) => ({
+                          ...base,
+                          zIndex: 9999
+                        })
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Danh sách yêu cầu */}
+            <div className="card">
+              <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: '130px' }}>Mã phiếu</th>
+                      <th>Giáo viên</th>
+                      <th>Khóa học</th>
+                      <th style={{ textAlign: 'center' }}>Học viên</th>
+                      <th style={{ textAlign: 'right' }}>Học phí đóng</th>
+                      <th style={{ textAlign: 'right' }}>Đề nghị</th>
+                      <th style={{ textAlign: 'right' }}>Duyệt chi</th>
+                      <th style={{ textAlign: 'right' }}>Còn lại</th>
+                      <th>Trạng thái</th>
+                      <th>Ngày tạo</th>
+                      <th style={{ textAlign: 'center', width: '220px' }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingRequests ? (
+                      <tr>
+                        <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          Đang tải danh sách yêu cầu tạm ứng...
+                        </td>
+                      </tr>
+                    ) : filteredRequests.length === 0 ? (
+                      <tr>
+                        <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          Không tìm thấy đơn đề nghị tạm ứng nào.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredRequests.map((req) => {
+                        const effectiveDeducted = req.approvedAmount !== undefined && req.approvedAmount !== null ? req.approvedAmount : req.requestedAmount;
+                        const remainingEarned = Math.max(0, (req.grossEstimatedAmount || 0) - effectiveDeducted);
+
+                        return (
+                          <tr key={req.id}>
+                            <td>
+                              <strong style={{ color: req.requestCode.startsWith('QT-') ? '#059669' : 'var(--primary)' }}>
+                                {req.requestCode}
+                              </strong>
+                              {req.requestCode.startsWith('QT-') && (
+                                <div style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>[Quyết toán]</div>
+                              )}
+                            </td>
+                            <td>
+                              <strong>{req.teacher?.name}</strong>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{req.teacher?.username}</div>
+                            </td>
+                            <td>{req.course?.name}</td>
+                            <td style={{ textAlign: 'center' }}><strong>{req.studentCount}</strong> HV</td>
+                            <td style={{ textAlign: 'right', fontWeight: 500, color: 'var(--text-color)' }}>
+                              {formatCurrency(req.totalTuitionAmount || 0)} đ
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(req.requestedAmount)} đ</td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
+                              {req.approvedAmount !== undefined && req.approvedAmount !== null ? `${formatCurrency(req.approvedAmount)} đ` : '-'}
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: '#b45309' }}>
+                              {formatCurrency(remainingEarned)} đ
+                            </td>
+                            <td>{getStatusBadge(req.status)}</td>
+                            <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              {new Date(req.createdAt).toLocaleDateString('vi-VN')}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                  onClick={() => handleOpenAction(req, 'VIEW')}
+                                  title="Xem chi tiết"
+                                >
+                                  <Eye size={14} />
+                                  <span className="btn-action-text">Xem</span>
+                                </button>
+
+                                {req.status === 'PENDING' && (
+                                  <>
+                                    <button
+                                      className="btn btn-primary"
+                                      style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                      onClick={() => handleOpenAction(req, 'APPROVE')}
+                                      title="Duyệt đơn"
+                                    >
+                                      <Check size={14} />
+                                      <span className="btn-action-text">Duyệt</span>
+                                    </button>
+                                    <button
+                                      className="btn btn-danger"
+                                      style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                      onClick={() => handleOpenAction(req, 'REJECT')}
+                                      title="Từ chối"
+                                    >
+                                      <X size={14} />
+                                      <span className="btn-action-text">Từ chối</span>
+                                    </button>
+                                  </>
+                                )}
+
+                                {req.status === 'APPROVED' && (
+                                  <button
+                                    className="btn btn-success"
+                                    style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                    onClick={() => handleOpenAction(req, 'PAY')}
+                                    title="Xác nhận chi tiền"
+                                  >
+                                    <DollarSign size={14} />
+                                    <span className="btn-action-text">Chi tiền</span>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* ========================================================= */}
+        {/* TAB 2: QUYẾT TOÁN / THANH TOÁN CUỐI KHÓA CHO GIÁO VIÊN      */}
+        {/* ========================================================= */}
+        {activeTab === 'SETTLEMENT' && (
+          <div>
+            <div className="card mb-4" style={{ background: '#f8fafc', borderLeft: '4px solid var(--primary)' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                <Award size={24} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0', color: 'var(--primary)' }}>Hướng dẫn Quyết toán & Thanh toán cuối khóa:</h4>
+                  <div style={{ fontSize: '0.88rem', color: '#475569', lineHeight: 1.5 }}>
+                    Dựa trên tổng thù lao từ học viên giáo viên phụ trách, hệ thống tự động đối soát với các khoản giáo viên đã tạm ứng trước đó.
+                    Khi kết thúc khóa học, kế toán chọn <strong>"Thanh toán"</strong> để kê khai thêm các khoản giảm trừ phát sinh (xăng xe, cabin, vi phạm...) và xác nhận thanh toán số tiền thù lao còn lại cho giáo viên.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tìm kiếm */}
+            <div className="card mb-4">
               <input
                 type="text"
                 className="form-control"
-                placeholder="🔍 Tìm theo mã phiếu, tên giáo viên, khóa học..."
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                style={{ flex: 1, minWidth: '220px' }}
+                placeholder="🔍 Tìm kiếm theo tên giáo viên hoặc tên khóa học..."
+                value={settlementSearch}
+                onChange={(e) => setSettlementSearch(e.target.value)}
               />
-              <div style={{ minWidth: '200px', flex: '0 0 auto' }}>
-                <Select
-                  options={[
-                    { value: 'ALL', label: 'Tất cả trạng thái' },
-                    { value: 'PENDING', label: 'Chờ duyệt (Mới)' },
-                    { value: 'APPROVED', label: 'Đã duyệt (Chờ chi)' },
-                    { value: 'PAID', label: 'Đã chi tiền' },
-                    { value: 'REJECTED', label: 'Từ chối' }
-                  ]}
-                  value={{
-                    value: statusFilter,
-                    label:
-                      statusFilter === 'PENDING'
-                        ? 'Chờ duyệt (Mới)'
-                        : statusFilter === 'APPROVED'
-                        ? 'Đã duyệt (Chờ chi)'
-                        : statusFilter === 'PAID'
-                        ? 'Đã chi tiền'
-                        : statusFilter === 'REJECTED'
-                        ? 'Từ chối'
-                        : 'Tất cả trạng thái'
-                  }}
-                  onChange={(opt: any) => setStatusFilter(opt ? opt.value : 'ALL')}
-                  isSearchable={true}
-                  styles={{
-                    control: (base: any, state: any) => ({
-                      ...base,
-                      minHeight: '40px',
-                      borderColor: state.isFocused ? 'var(--primary)' : 'var(--border)',
-                      boxShadow: state.isFocused ? '0 0 0 1px var(--primary)' : 'none',
-                      borderRadius: 'var(--radius)',
-                      '&:hover': { borderColor: 'var(--primary)' }
-                    }),
-                    singleValue: (base: any) => ({
-                      ...base,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }),
-                    menu: (base: any) => ({
-                      ...base,
-                      zIndex: 9999
-                    })
-                  }}
-                />
+            </div>
+
+            {/* Bảng tổng hợp quyết toán */}
+            <div className="card">
+              <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Giáo viên</th>
+                      <th>Khóa học</th>
+                      <th style={{ textAlign: 'center' }}>Số HV</th>
+                      <th style={{ textAlign: 'right' }}>Tổng học phí</th>
+                      <th style={{ textAlign: 'right' }}>Tổng thù lao</th>
+                      <th style={{ textAlign: 'right' }}>Đã tạm ứng</th>
+                      <th style={{ textAlign: 'right' }}>Đã quyết toán</th>
+                      <th style={{ textAlign: 'right' }}>Còn lại cần chi</th>
+                      <th style={{ textAlign: 'center' }}>Trạng thái</th>
+                      <th style={{ textAlign: 'center', width: '180px' }}>Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loadingSettlements ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          Đang tải danh sách tổng hợp quyết toán...
+                        </td>
+                      </tr>
+                    ) : filteredSettlements.length === 0 ? (
+                      <tr>
+                        <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                          Không tìm thấy dữ liệu giáo viên và khóa học nào cần thanh toán.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredSettlements.map((item, idx) => {
+                        return (
+                          <tr key={`${item.teacher.id}-${item.course.id}-${idx}`}>
+                            <td>
+                              <strong>{item.teacher.name}</strong>
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{item.teacher.username}</div>
+                            </td>
+                            <td>
+                              <strong>{item.course.name}</strong>
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <span className="badge" style={{ background: '#e2e8f0', color: '#1e293b' }}>
+                                {item.studentCount} HV
+                              </span>
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 500 }}>
+                              {formatCurrency(item.totalTuition)} đ
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
+                              {formatCurrency(item.grossEarned)} đ
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 500, color: '#b45309' }}>
+                              {formatCurrency(item.totalAdvancePaid)} đ
+                              {item.totalAdvancePendingOrApproved > 0 && (
+                                <div style={{ fontSize: '0.75rem', color: '#dc2626' }}>
+                                  (Chờ chi: {formatCurrency(item.totalAdvancePendingOrApproved)} đ)
+                                </div>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 500, color: '#059669' }}>
+                              {formatCurrency(item.totalSettledPaid)} đ
+                            </td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold', fontSize: '1rem', color: item.remainingToPay > 0 ? '#b45309' : 'var(--text-muted)' }}>
+                              {formatCurrency(item.remainingToPay)} đ
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              {item.isFullySettled ? (
+                                <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <CheckCircle2 size={12} /> Đã quyết toán
+                                </span>
+                              ) : item.totalAdvancePaid > 0 ? (
+                                <span className="badge badge-info" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> Đang tạm ứng
+                                </span>
+                              ) : (
+                                <span className="badge badge-warning" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <Clock size={12} /> Chưa thanh toán
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'center' }}>
+                              <button
+                                className={`btn ${item.remainingToPay > 0 ? 'btn-primary' : 'btn-secondary'}`}
+                                style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                onClick={() => handleOpenSettlementModal(item)}
+                              >
+                                <CreditCard size={14} /> Thanh toán
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Danh sách yêu cầu */}
-        <div className="card">
-          <div className="table-responsive" style={{ width: '100%', overflowX: 'auto' }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th style={{ width: '130px' }}>Mã phiếu</th>
-                  <th>Giáo viên</th>
-                  <th>Khóa học</th>
-                  <th style={{ textAlign: 'center' }}>Học viên</th>
-                  <th style={{ textAlign: 'right' }}>Học phí đóng</th>
-                  <th style={{ textAlign: 'right' }}>Đề nghị</th>
-                  <th style={{ textAlign: 'right' }}>Duyệt chi</th>
-                  <th style={{ textAlign: 'right' }}>Còn lại</th>
-                  <th>Trạng thái</th>
-                  <th>Ngày tạo</th>
-                  <th style={{ textAlign: 'center', width: '220px' }}>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                      Đang tải danh sách yêu cầu tạm ứng...
-                    </td>
-                  </tr>
-                ) : filteredRequests.length === 0 ? (
-                  <tr>
-                    <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                      Không tìm thấy đơn đề nghị tạm ứng nào.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredRequests.map((req) => {
-                    const effectiveDeducted = req.approvedAmount !== undefined && req.approvedAmount !== null ? req.approvedAmount : req.requestedAmount;
-                    const remainingEarned = Math.max(0, (req.grossEstimatedAmount || 0) - effectiveDeducted);
-
-                    return (
-                      <tr key={req.id}>
-                        <td><strong style={{ color: 'var(--primary)' }}>{req.requestCode}</strong></td>
-                        <td>
-                          <strong>{req.teacher?.name}</strong>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>@{req.teacher?.username}</div>
-                        </td>
-                        <td>{req.course?.name}</td>
-                        <td style={{ textAlign: 'center' }}><strong>{req.studentCount}</strong> HV</td>
-                        <td style={{ textAlign: 'right', fontWeight: 500, color: 'var(--text-color)' }}>
-                          {formatCurrency(req.totalTuitionAmount || 0)} đ
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 600 }}>{formatCurrency(req.requestedAmount)} đ</td>
-                        <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>
-                          {req.approvedAmount !== undefined && req.approvedAmount !== null ? `${formatCurrency(req.approvedAmount)} đ` : '-'}
-                        </td>
-                        <td style={{ textAlign: 'right', fontWeight: 600, color: '#b45309' }}>
-                          {formatCurrency(remainingEarned)} đ
-                        </td>
-                        <td>{getStatusBadge(req.status)}</td>
-                        <td style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          {new Date(req.createdAt).toLocaleDateString('vi-VN')}
-                        </td>
-                        <td style={{ textAlign: 'center' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
-                            <button
-                              className="btn btn-secondary"
-                              style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                              onClick={() => handleOpenAction(req, 'VIEW')}
-                              title="Xem chi tiết"
-                            >
-                              <Eye size={14} />
-                              <span className="btn-action-text">Xem</span>
-                            </button>
-
-                            {req.status === 'PENDING' && (
-                              <>
-                                <button
-                                  className="btn btn-primary"
-                                  style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                  onClick={() => handleOpenAction(req, 'APPROVE')}
-                                  title="Duyệt đơn"
-                                >
-                                  <Check size={14} />
-                                  <span className="btn-action-text">Duyệt</span>
-                                </button>
-                                <button
-                                  className="btn btn-danger"
-                                  style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                  onClick={() => handleOpenAction(req, 'REJECT')}
-                                  title="Từ chối"
-                                >
-                                  <X size={14} />
-                                  <span className="btn-action-text">Từ chối</span>
-                                </button>
-                              </>
-                            )}
-
-                            {req.status === 'APPROVED' && (
-                              <button
-                                className="btn btn-success"
-                                style={{ padding: '4px 10px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                onClick={() => handleOpenAction(req, 'PAY')}
-                                title="Xác nhận chi tiền"
-                              >
-                                <DollarSign size={14} />
-                                <span className="btn-action-text">Chi tiền</span>
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Modal Xử lý / Xem chi tiết */}
+        {/* ========================================================= */}
+        {/* MODAL 1: XỬ LÝ / XEM ĐƠN TẠM ỨNG (TAB 1)                  */}
+        {/* ========================================================= */}
         {selectedRequest && actionType && (
           <div
             style={{
@@ -416,8 +768,13 @@ export default function AccountantAdvanceApproval() {
                   </span>
                 </div>
                 <div style={{ gridColumn: 'span 2' }}>
-                  <strong>Số tiền GV đề nghị:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{formatCurrency(selectedRequest.requestedAmount)} VNĐ</span>
+                  <strong>Số tiền đề nghị:</strong> <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>{formatCurrency(selectedRequest.requestedAmount)} VNĐ</span>
                 </div>
+                {selectedRequest.paymentReference && (
+                  <div style={{ gridColumn: 'span 2' }}>
+                    <strong>Mã giao dịch / UNC:</strong> <span style={{ color: '#059669', fontWeight: 600 }}>{selectedRequest.paymentReference}</span>
+                  </div>
+                )}
                 {selectedRequest.reason && (
                   <div style={{ gridColumn: 'span 2' }}>
                     <strong>Lý do GV đề nghị:</strong> {selectedRequest.reason}
@@ -425,7 +782,7 @@ export default function AccountantAdvanceApproval() {
                 )}
               </div>
 
-              {/* Danh sách học viên mà giáo viên đã đăng ký tạm ứng */}
+              {/* Danh sách học viên */}
               <div style={{ marginBottom: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '0.75rem', background: '#fff' }}>
                 <div style={{ fontWeight: 600, marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span>Danh sách học viên giáo viên phụ trách ({selectedRequest.students?.length || 0}):</span>
@@ -571,6 +928,305 @@ export default function AccountantAdvanceApproval() {
                     {submitting ? 'Đang xử lý...' : actionType === 'APPROVE' ? 'Xác nhận Duyệt' : actionType === 'PAY' ? 'Xác nhận Chi tiền' : 'Xác nhận Từ chối'}
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ========================================================= */}
+        {/* MODAL 2: THANH TOÁN / QUYẾT TOÁN CUỐI KHÓA (TAB 2)        */}
+        {/* ========================================================= */}
+        {selectedSettlement && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              zIndex: 1050,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+            onClick={handleCloseSettlementModal}
+          >
+            <div
+              className="card"
+              style={{ width: '95%', maxWidth: '960px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem' }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex justify-between items-center mb-3" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--primary)' }}>
+                  <CreditCard size={22} /> Thanh toán Quyết toán Cuối khóa cho Giáo viên
+                </h3>
+                <button
+                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  onClick={handleCloseSettlementModal}
+                >
+                  &times;
+                </button>
+              </div>
+
+              {/* TỔNG QUAN TÀI CHÍNH CỦA GIÁO VIÊN TRONG KHÓA */}
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', fontSize: '0.9rem' }}>
+                  <div>
+                    <strong>Giáo viên:</strong> <span style={{ fontSize: '1rem', color: 'var(--text-color)' }}>{selectedSettlement.teacher.name}</span> (@{selectedSettlement.teacher.username})
+                  </div>
+                  <div>
+                    <strong>Khóa học:</strong> <span style={{ fontSize: '1rem', color: 'var(--primary)', fontWeight: 'bold' }}>{selectedSettlement.course.name}</span>
+                  </div>
+                  <div>
+                    <strong>Số học viên phụ trách:</strong> <strong>{selectedSettlement.studentCount}</strong> học viên
+                  </div>
+                  <div>
+                    <strong>Tổng học phí học viên đóng:</strong> <strong style={{ color: 'var(--text-color)' }}>{formatCurrency(selectedSettlement.totalTuition)} đ</strong>
+                  </div>
+                </div>
+
+                <div style={{ margin: '0.75rem 0', borderTop: '1px dashed #cbd5e1' }} />
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', textAlign: 'center' }}>
+                  <div style={{ background: '#ecfdf5', padding: '0.5rem', borderRadius: '6px', border: '1px solid #a7f3d0' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#065f46' }}>TỔNG THÙ LAO</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#047857' }}>{formatCurrency(selectedSettlement.grossEarned)} đ</div>
+                  </div>
+                  <div style={{ background: '#fffbeb', padding: '0.5rem', borderRadius: '6px', border: '1px solid #fde68a' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#92400e' }}>ĐÃ TẠM ỨNG</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#b45309' }}>-{formatCurrency(selectedSettlement.totalAdvancePaid)} đ</div>
+                  </div>
+                  <div style={{ background: '#eff6ff', padding: '0.5rem', borderRadius: '6px', border: '1px solid #bfdbfe' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#1e40af' }}>ĐÃ QUYẾT TOÁN</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#1d4ed8' }}>-{formatCurrency(selectedSettlement.totalSettledPaid)} đ</div>
+                  </div>
+                  <div style={{ background: '#fdf2f8', padding: '0.5rem', borderRadius: '6px', border: '1px solid #fbcfe8' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#9d174d' }}>CÒN LẠI CHƯA CHI</div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: '#be185d' }}>{formatCurrency(selectedSettlement.remainingToPay)} đ</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* LỊCH SỬ CÁC ĐỢT TẠM ỨNG TRƯỚC ĐÂY */}
+              {selectedSettlement.advanceRequests && selectedSettlement.advanceRequests.length > 0 && (
+                <div style={{ marginBottom: '1rem', border: '1px solid var(--border)', borderRadius: '6px', padding: '0.75rem' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.4rem', color: '#475569' }}>
+                    Lịch sử các đợt tạm ứng trong khóa ({selectedSettlement.advanceRequests.length} đợt):
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.85rem' }}>
+                    {selectedSettlement.advanceRequests.map(r => (
+                      <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 8px', background: '#f8fafc', borderRadius: '4px' }}>
+                        <span>
+                          <strong>{r.requestCode}</strong> - {new Date(r.createdAt).toLocaleDateString('vi-VN')} {getStatusBadge(r.status)}
+                        </span>
+                        <span>
+                          Đề nghị: <strong>{formatCurrency(r.requestedAmount)} đ</strong> | Duyệt: <strong style={{ color: 'var(--success)' }}>{formatCurrency(r.approvedAmount || 0)} đ</strong>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* DANH SÁCH CÁC KHOẢN PHẢI TRỪ THÊM (XĂNG XE, CABIN, VI PHẠM...) */}
+              <div style={{ marginBottom: '1.25rem', border: '1px solid var(--border)', borderRadius: '8px', padding: '0.85rem', background: '#fafafa' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                  <div>
+                    <strong style={{ fontSize: '0.95rem' }}>Các khoản giảm trừ kê khai thêm khi kết thúc khóa:</strong>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Chọn từ danh mục hoặc nhập các khoản trừ khác (tiền xăng xe, tiền thuê cabin, tiền vi phạm...)
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '4px 10px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                    onClick={handleAddDeduction}
+                  >
+                    <Plus size={14} /> Thêm khoản trừ
+                  </button>
+                </div>
+
+                {settlementDeductions.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '0.75rem', color: 'var(--text-muted)', fontSize: '0.85rem', background: '#fff', borderRadius: '4px', border: '1px dashed #cbd5e1' }}>
+                    Không có khoản giảm trừ thêm nào. Bấm "+ Thêm khoản trừ" nếu có chi phí cần cấn trừ.
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {settlementDeductions.map((d, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '8px', alignItems: 'center', background: '#fff', padding: '8px', borderRadius: '6px', border: '1px solid #e2e8f0', flexWrap: 'wrap' }}>
+                        <div style={{ width: '220px', flex: '0 0 auto' }}>
+                          <select
+                            className="form-control"
+                            value={d.deductionCategoryId || ''}
+                            onChange={(e) => handleDeductionChange(idx, 'deductionCategoryId', e.target.value)}
+                            style={{ fontSize: '0.85rem' }}
+                          >
+                            <option value="">-- Khoản trừ tùy chỉnh --</option>
+                            {categories.map(c => (
+                              <option key={c.id} value={c.id}>{c.name} ({formatCurrency(c.defaultAmount)} đ)</option>
+                            ))}
+                          </select>
+                        </div>
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Tên khoản trừ..."
+                          value={d.name}
+                          onChange={(e) => handleDeductionChange(idx, 'name', e.target.value)}
+                          style={{ flex: 1, minWidth: '150px', fontSize: '0.85rem' }}
+                        />
+                        <div style={{ width: '150px', flex: '0 0 auto' }}>
+                          <input
+                            type="text"
+                            className="form-control"
+                            placeholder="Số tiền trừ"
+                            value={formatCurrencyNumber(d.amount)}
+                            onChange={(e) => handleDeductionChange(idx, 'amount', parseCurrencyInput(e.target.value))}
+                            style={{ textAlign: 'right', fontWeight: 600, color: 'var(--danger)', fontSize: '0.85rem' }}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ padding: '6px 8px' }}
+                          onClick={() => handleRemoveDeduction(idx)}
+                          title="Xóa khoản trừ"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    <div style={{ textAlign: 'right', fontSize: '0.88rem', fontWeight: 600, color: '#dc2626', marginTop: '4px' }}>
+                      Tổng các khoản trừ thêm: -{formatCurrency(totalSettlementDeductions)} đ
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* SỐ TIỀN THỰC CHI THANH TOÁN */}
+              <div style={{ background: '#ecfdf5', padding: '1rem', borderRadius: '8px', border: '1px solid #a7f3d0', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                    <label style={{ fontSize: '1rem', fontWeight: 'bold', color: '#065f46', margin: 0 }}>
+                      SỐ TIỀN THANH TOÁN THỰC CHI CHO GIÁO VIÊN:
+                    </label>
+                    <div style={{ fontSize: '0.82rem', color: '#047857' }}>
+                      = Thù lao ({formatCurrency(selectedSettlement.grossEarned)} đ) - Đã tạm ({formatCurrency(selectedSettlement.totalAdvancePaid)} đ) - Khoản trừ ({formatCurrency(totalSettlementDeductions)} đ)
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#047857' }}>
+                      {formatCurrency(finalPayoutAmount)} VNĐ
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{ fontSize: '0.88rem', color: '#166534', marginTop: '6px', fontWeight: 500 }}>
+                  Bằng chữ: <em>{numberToWordsVietnamese(finalPayoutAmount)}</em>
+                </div>
+
+                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+                  <input
+                    type="checkbox"
+                    id="adjustPayCheckbox"
+                    checked={useCustomPayAmount}
+                    onChange={(e) => {
+                      setUseCustomPayAmount(e.target.checked);
+                      if (!e.target.checked) setCustomPayAmount(calculatedRemainingPay);
+                    }}
+                  />
+                  <label htmlFor="adjustPayCheckbox" style={{ cursor: 'pointer', margin: 0, color: '#065f46' }}>
+                    Điều chỉnh số tiền chi thực tế thủ công (nếu muốn làm tròn hoặc có thỏa thuận khác)
+                  </label>
+                </div>
+
+                {useCustomPayAmount && (
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formatCurrencyNumber(customPayAmount)}
+                      onChange={(e) => setCustomPayAmount(parseCurrencyInput(e.target.value))}
+                      style={{ fontSize: '1.1rem', fontWeight: 'bold', color: 'var(--success)', maxWidth: '300px' }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* THÔNG TIN THANH TOÁN (UNC & GHI CHÚ) */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+                <div className="form-group">
+                  <label>Mã giao dịch / Số ủy nhiệm chi (UNC):</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="VD: UNC-K188-001 / FT26048123456"
+                    value={settlementPaymentRef}
+                    onChange={(e) => setSettlementPaymentRef(e.target.value)}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Ghi chú quyết toán của Kế toán:</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="Lưu ý hoặc nội dung chuyển tiền..."
+                    value={settlementNotes}
+                    onChange={(e) => setSettlementNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* DANH SÁCH HỌC VIÊN PHỤ TRÁCH (CÓ THỂ MỞ RỘNG ĐỂ XEM) */}
+              <details style={{ border: '1px solid var(--border)', borderRadius: '6px', padding: '0.5rem', background: '#fff' }}>
+                <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', color: '#475569' }}>
+                  Xem danh sách chi tiết {selectedSettlement.students.length} học viên phụ trách
+                </summary>
+                <div style={{ maxHeight: '200px', overflowY: 'auto', marginTop: '0.5rem' }}>
+                  <table className="table" style={{ margin: 0, fontSize: '0.85rem' }}>
+                    <thead>
+                      <tr>
+                        <th>STT</th>
+                        <th>Học viên</th>
+                        <th>CCCD</th>
+                        <th style={{ textAlign: 'right' }}>Học phí</th>
+                        <th style={{ textAlign: 'center' }}>%</th>
+                        <th style={{ textAlign: 'right' }}>Thù lao</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {selectedSettlement.students.map((st, i) => (
+                        <tr key={st.id || i}>
+                          <td>{i + 1}</td>
+                          <td><strong>{st.name}</strong></td>
+                          <td>{st.cccd || '-'}</td>
+                          <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)} đ</td>
+                          <td style={{ textAlign: 'center' }}>{st.teacherSharePercent}%</td>
+                          <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(st.earnedAmount)} đ</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              {/* FOOTER ACTIONS */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                <button className="btn btn-secondary" onClick={handleCloseSettlementModal} disabled={submittingSettlement}>
+                  Hủy bỏ
+                </button>
+                <button
+                  className="btn btn-success"
+                  onClick={handleConfirmSettlementPayment}
+                  disabled={submittingSettlement}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                >
+                  <Check size={16} />
+                  {submittingSettlement ? 'Đang xử lý...' : `Xác nhận Thanh toán (${formatCurrency(finalPayoutAmount)} đ)`}
+                </button>
               </div>
             </div>
           </div>

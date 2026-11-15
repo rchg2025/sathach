@@ -861,4 +861,234 @@ router.delete('/teacher-rates/:id', async (req, res) => {
   }
 });
 
+// ==========================================
+// 6. QUYẾT TOÁN / THANH TOÁN CUỐI KHÓA CHO GIÁO VIÊN (Settlements)
+// ==========================================
+
+// Lấy danh sách tổng hợp theo Giáo viên & Khóa học để chuẩn bị thanh toán cuối khóa
+router.get('/settlement-summary', async (req, res) => {
+  try {
+    const { courseId, teacherId } = req.query;
+
+    const studentWhere: any = {
+      teacherId: { not: null },
+      courseId: { not: null }
+    };
+    if (courseId) studentWhere.courseId = Number(courseId);
+    if (teacherId) studentWhere.teacherId = Number(teacherId);
+
+    // Lấy các cặp teacherId, courseId có học viên
+    const pairs = await prisma.student.groupBy({
+      by: ['teacherId', 'courseId'],
+      where: studentWhere,
+      _count: { id: true }
+    });
+
+    const results = await Promise.all(
+      pairs.map(async (p) => {
+        if (!p.teacherId || !p.courseId) return null;
+
+        const teacher = await prisma.user.findUnique({
+          where: { id: p.teacherId },
+          select: { id: true, name: true, username: true, phone: true }
+        });
+        const course = await prisma.course.findUnique({
+          where: { id: p.courseId },
+          select: { id: true, name: true, startDate: true, endDate: true }
+        });
+
+        if (!teacher || !course) return null;
+
+        // Lấy danh sách học viên
+        const students = await prisma.student.findMany({
+          where: { teacherId: p.teacherId, courseId: p.courseId },
+          include: {
+            tuitionInfo: { include: { tuitionConfig: true } }
+          }
+        });
+
+        const configs = await prisma.tuitionFeeConfig.findMany({ where: { courseId: p.courseId } });
+
+        let totalTuition = 0;
+        let grossEarned = 0;
+        const studentBreakdown = [];
+
+        for (const s of students) {
+          const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+          const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+          const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+          const tuition = s.tuitionInfo?.tuitionAmount || (cfg ? cfg.tuitionAmount : 0);
+          const defaultCoursePercent = cfg ? cfg.teacherSharePercent : 0;
+          const percent = await getEffectiveTeacherRate(p.teacherId, p.courseId, trans, sched, s.tuitionInfo?.teacherSharePercent || defaultCoursePercent);
+          const earned = (tuition * percent) / 100;
+
+          totalTuition += tuition;
+          grossEarned += earned;
+
+          studentBreakdown.push({
+            id: s.id,
+            name: s.name,
+            cccd: s.cccd,
+            transmissionType: trans,
+            scheduleType: sched,
+            tuitionAmount: tuition,
+            teacherSharePercent: percent,
+            earnedAmount: earned
+          });
+        }
+
+        // Lấy các đơn tạm ứng & quyết toán của GV trong khóa
+        const allRequests = await prisma.advancePaymentRequest.findMany({
+          where: { teacherId: p.teacherId, courseId: p.courseId },
+          include: { deductions: true },
+          orderBy: { createdAt: 'desc' }
+        });
+
+        // Tạm ứng đã duyệt/đã chi (TU-...)
+        const advanceRequests = allRequests.filter(r => !r.requestCode.startsWith('QT-'));
+        const totalAdvancePaid = advanceRequests
+          .filter(r => r.status === 'PAID')
+          .reduce((sum, r) => sum + (r.approvedAmount || r.requestedAmount || 0), 0);
+
+        const totalAdvancePendingOrApproved = advanceRequests
+          .filter(r => r.status === 'PENDING' || r.status === 'APPROVED')
+          .reduce((sum, r) => sum + (r.approvedAmount || r.requestedAmount || 0), 0);
+
+        // Quyết toán (QT-...)
+        const settlementRequests = allRequests.filter(r => r.requestCode.startsWith('QT-'));
+        const totalSettledPaid = settlementRequests
+          .filter(r => r.status === 'PAID')
+          .reduce((sum, r) => sum + (r.approvedAmount || r.requestedAmount || 0), 0);
+
+        const isFullySettled = settlementRequests.some(r => r.status === 'PAID');
+
+        // Số tiền còn lại chưa thanh toán
+        const remainingToPay = Math.max(0, grossEarned - totalAdvancePaid - totalSettledPaid);
+
+        return {
+          teacher,
+          course,
+          studentCount: students.length,
+          totalTuition,
+          grossEarned,
+          totalAdvancePaid,
+          totalAdvancePendingOrApproved,
+          totalSettledPaid,
+          remainingToPay,
+          isFullySettled,
+          advanceRequests,
+          settlementRequests,
+          students: studentBreakdown
+        };
+      })
+    );
+
+    const validResults = results.filter(Boolean);
+    res.json(validResults);
+  } catch (error: any) {
+    console.error('Error fetching settlement summary:', error);
+    res.status(500).json({ error: error.message || 'Lỗi lấy danh sách quyết toán' });
+  }
+});
+
+// Kế toán thực hiện Thanh toán / Quyết toán cuối khóa cho Giáo viên
+router.post('/settlement', async (req, res) => {
+  try {
+    const {
+      teacherId,
+      courseId,
+      finalAmount,
+      deductions,
+      accountantNotes,
+      paymentReference,
+      accountantName
+    } = req.body;
+
+    if (!teacherId || !courseId) {
+      return res.status(400).json({ error: 'Thiếu teacherId hoặc courseId' });
+    }
+
+    const tId = Number(teacherId);
+    const cId = Number(courseId);
+    const payAmount = Number(finalAmount || 0);
+
+    // Tính toán lại tổng thù lao
+    const students = await prisma.student.findMany({
+      where: { teacherId: tId, courseId: cId },
+      include: { tuitionInfo: true }
+    });
+
+    const configs = await prisma.tuitionFeeConfig.findMany({ where: { courseId: cId } });
+
+    let grossEstimatedAmount = 0;
+    for (const s of students) {
+      const trans = s.tuitionInfo?.transmissionType || 'MANUAL';
+      const sched = s.tuitionInfo?.scheduleType || 'WEEKDAY';
+      const cfg = configs.find(c => c.transmissionType === trans && c.scheduleType === sched);
+      const tuition = s.tuitionInfo?.tuitionAmount || (cfg ? cfg.tuitionAmount : 0);
+      const defaultCoursePercent = cfg ? cfg.teacherSharePercent : 0;
+      const percent = await getEffectiveTeacherRate(tId, cId, trans, sched, s.tuitionInfo?.teacherSharePercent || defaultCoursePercent);
+      grossEstimatedAmount += (tuition * percent) / 100;
+    }
+
+    // Các khoản trừ thêm
+    let totalDeductions = 0;
+    const deductionsData: any[] = [];
+    if (deductions && Array.isArray(deductions)) {
+      for (const d of deductions) {
+        const damount = Number(d.amount || 0);
+        totalDeductions += damount;
+        deductionsData.push({
+          deductionCategoryId: d.deductionCategoryId ? Number(d.deductionCategoryId) : null,
+          name: d.name || 'Khoản trừ cuối khóa',
+          amount: damount,
+          note: d.note || null
+        });
+      }
+    }
+
+    // Sinh mã phiếu quyết toán: QT-YYYYMM-XXXX
+    const now = new Date();
+    const yearMonth = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const count = await prisma.advancePaymentRequest.count({
+      where: { requestCode: { startsWith: `QT-${yearMonth}` } }
+    });
+    const requestCode = `QT-${yearMonth}-${String(count + 1).padStart(4, '0')}`;
+
+    const settlementRecord = await prisma.advancePaymentRequest.create({
+      data: {
+        requestCode,
+        teacherId: tId,
+        courseId: cId,
+        studentCount: students.length,
+        grossEstimatedAmount,
+        maxAllowedAmount: grossEstimatedAmount,
+        totalDeductions,
+        requestedAmount: payAmount,
+        approvedAmount: payAmount,
+        status: 'PAID', // Quyết toán thanh toán trực tiếp
+        reason: 'Quyết toán thanh toán kết thúc khóa học',
+        accountantNotes: accountantNotes || 'Thanh toán toàn bộ thù lao còn lại cuối khóa',
+        paymentReference: paymentReference || null,
+        approvedBy: accountantName || 'Kế toán',
+        approvedAt: now,
+        paidAt: now,
+        deductions: {
+          create: deductionsData
+        }
+      },
+      include: {
+        teacher: { select: { id: true, name: true, username: true } },
+        course: { select: { id: true, name: true } },
+        deductions: true
+      }
+    });
+
+    res.json({ message: 'Xác nhận thanh toán cuối khóa thành công', settlement: settlementRecord });
+  } catch (error: any) {
+    console.error('Error creating settlement:', error);
+    res.status(500).json({ error: error.message || 'Lỗi thực hiện thanh toán cuối khóa' });
+  }
+});
+
 export default router;
