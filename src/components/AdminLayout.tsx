@@ -209,9 +209,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
             </Link>
           )}
 
-          {/* Nhóm Kế toán: Duyệt chi & Cấu hình */}
+          {/* Nhóm Kế toán: Quản lý học viên, Duyệt chi & Cấu hình */}
           {(user?.role === 'ACCOUNTANT' || user?.role === 'ADMIN' || user?.username === 'quantri') && (
             <>
+              {user?.role === 'ACCOUNTANT' && (
+                <Link to="/manager/students" className={`sidebar-item ${isActive('/manager/students')}`} onClick={closeSidebar}>
+                  <Users size={20} /> <span className="sidebar-item-text">Quản lý học viên</span>
+                </Link>
+              )}
               <Link to="/manager/advance-approval" className={`sidebar-item ${isActive('/manager/advance-approval')}`} onClick={closeSidebar}>
                 <CheckSquare size={20} /> <span className="sidebar-item-text">Duyệt chi Tạm ứng</span>
               </Link>
