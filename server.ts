@@ -11,13 +11,30 @@ const mainApp = expressApp();
 mainApp.use(cors());
 
 // 1. Static assets from dist folder
-mainApp.use(expressApp.static(distPath));
+// For hashed assets in /assets, allow long cache. For index.html, never cache!
+mainApp.use('/assets', expressApp.static(path.join(distPath, 'assets'), {
+  maxAge: '1y',
+  immutable: true
+}));
+
+mainApp.use(expressApp.static(distPath, {
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
 
 // 2. API Routes
 mainApp.use(apiApp);
 
-// 3. Fallback for all other routes to React SPA (index.html)
+// 3. Fallback for all other routes to React SPA (index.html) with NO-CACHE headers
 mainApp.use((req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
