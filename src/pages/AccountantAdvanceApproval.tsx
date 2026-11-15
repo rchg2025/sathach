@@ -376,7 +376,7 @@ export default function AccountantAdvanceApproval() {
           >
             <div
               className="card"
-              style={{ width: '90%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}
+              style={{ width: '95%', maxWidth: '950px', maxHeight: '92vh', overflowY: 'auto', padding: '1.5rem' }}
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-3" style={{ borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
@@ -439,17 +439,17 @@ export default function AccountantAdvanceApproval() {
                     Chưa có dữ liệu học viên gắn với giáo viên trong khóa này.
                   </div>
                 ) : (
-                  <div style={{ maxHeight: '200px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
-                    <table className="table" style={{ margin: 0, fontSize: '0.82rem' }}>
+                  <div style={{ maxHeight: '280px', overflowY: 'auto', border: '1px solid var(--border)', borderRadius: '6px' }}>
+                    <table className="table" style={{ margin: 0, fontSize: '0.88rem' }}>
                       <thead style={{ position: 'sticky', top: 0, background: '#f8fafc', zIndex: 1 }}>
                         <tr>
-                          <th style={{ width: '40px', textAlign: 'center' }}>STT</th>
-                          <th>Học viên</th>
-                          <th>CCCD</th>
-                          <th>Loại xe & Lịch</th>
-                          <th style={{ textAlign: 'right' }}>Học phí đóng</th>
-                          <th style={{ textAlign: 'center' }}>%</th>
-                          <th style={{ textAlign: 'right' }}>Thù lao</th>
+                          <th style={{ width: '45px', textAlign: 'center' }}>STT</th>
+                          <th style={{ minWidth: '160px' }}>Học viên</th>
+                          <th style={{ minWidth: '130px' }}>CCCD</th>
+                          <th style={{ minWidth: '180px' }}>Loại xe & Lịch</th>
+                          <th style={{ textAlign: 'right', minWidth: '120px' }}>Học phí đóng</th>
+                          <th style={{ textAlign: 'center', width: '70px' }}>%</th>
+                          <th style={{ textAlign: 'right', minWidth: '120px' }}>Thù lao</th>
                         </tr>
                       </thead>
                       <tbody>
