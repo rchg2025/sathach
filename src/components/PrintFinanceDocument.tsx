@@ -239,32 +239,59 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                   const totalReq = advanceData.requestedAmount || 0;
                   let allocatedSum = 0;
 
-                  return advanceData.students.map((st, i) => {
-                    const isLast = i === advanceData.students!.length - 1;
-                    // Phân bổ số tiền đề nghị tạm ứng theo tỷ lệ thù lao của từng học viên
-                    let studentAdvance = 0;
-                    if (isLast) {
-                      studentAdvance = Math.max(0, totalReq - allocatedSum);
-                    } else {
-                      studentAdvance = Math.round((st.earnedAmount / totalGross) * totalReq);
-                      allocatedSum += studentAdvance;
-                    }
+                  return (
+                    <>
+                      {advanceData.students.map((st, i) => {
+                        const isLast = i === advanceData.students!.length - 1;
+                        // Phân bổ số tiền đề nghị tạm ứng theo tỷ lệ thù lao của từng học viên
+                        let studentAdvance = 0;
+                        if (isLast) {
+                          studentAdvance = Math.max(0, totalReq - allocatedSum);
+                        } else {
+                          studentAdvance = Math.round((st.earnedAmount / totalGross) * totalReq);
+                          allocatedSum += studentAdvance;
+                        }
 
-                    return (
-                      <tr key={st.id || i}>
-                        <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                        <td><strong>{st.name}</strong></td>
-                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
-                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
-                        <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
-                          {formatCurrency(studentAdvance)}
-                        </td>
-                        <td style={{ fontSize: '9pt', textAlign: 'center' }}>
-                          {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} ({st.teacherSharePercent}%)
-                        </td>
-                      </tr>
-                    );
-                  });
+                        return (
+                          <tr key={st.id || i}>
+                            <td style={{ textAlign: 'center' }}>{i + 1}</td>
+                            <td><strong>{st.name}</strong></td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
+                            <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
+                            <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                              {formatCurrency(studentAdvance)}
+                            </td>
+                            <td style={{ fontSize: '9pt', textAlign: 'center' }}>
+                              {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} ({st.teacherSharePercent}%)
+                            </td>
+                          </tr>
+                        );
+                      })}
+
+                      {/* CÁC KHOẢN GIẢM TRỪ ĐƯỢC KÊ KHAI TRỰC TIẾP TRONG BẢNG */}
+                      {advanceData.deductions && advanceData.deductions.length > 0 && (
+                        <>
+                          <tr style={{ background: '#fffbeb', fontWeight: 600 }}>
+                            <td colSpan={6} style={{ padding: '4px 8px', color: '#b45309', fontSize: '9pt' }}>
+                              * CÁC KHOẢN GIẢM TRỪ THÊM CỦA GIÁO VIÊN:
+                            </td>
+                          </tr>
+                          {advanceData.deductions.map((d, dIdx) => (
+                            <tr key={`ded-${d.id || dIdx}`} style={{ color: '#dc2626' }}>
+                              <td style={{ textAlign: 'center' }}>-</td>
+                              <td colSpan={3} style={{ paddingLeft: '15px' }}>
+                                Trừ: <strong>{d.name}</strong> {d.note ? `(${d.note})` : ''}
+                              </td>
+                              <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                -{formatCurrency(d.amount)}
+                              </td>
+                              <td style={{ fontSize: '9pt', textAlign: 'center', color: '#dc2626' }}>Khoản trừ thêm</td>
+                            </tr>
+                          ))}
+                        </>
+                      )}
+                    </>
+                  );
                 })()
               ) : (
                 <tr>
@@ -273,27 +300,49 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                   </td>
                 </tr>
               )}
-              <tr style={{ fontWeight: 'bold', backgroundColor: '#f2f2f2' }}>
-                <td colSpan={2} style={{ textAlign: 'center' }}>TỔNG CỘNG</td>
+              {/* DÒNG TỔNG CỘNG THÙ LAO & ĐỀ NGHỊ BAN ĐẦU */}
+              <tr style={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>
+                <td colSpan={2} style={{ textAlign: 'center' }}>TỔNG CỘNG THÙ LAO</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.totalTuitionAmount)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.grossEstimatedAmount)}</td>
-                <td style={{ textAlign: 'right', fontSize: '10.5pt' }}>{formatCurrency(advanceData.requestedAmount)}</td>
+                <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.requestedAmount)}</td>
                 <td></td>
               </tr>
+
+              {/* DÒNG TỔNG TIỀN THỰC LÃNH SAU KHI TRỪ (NẾU CÓ KHOẢN TRỪ) */}
+              {advanceData.deductions && advanceData.deductions.length > 0 ? (
+                (() => {
+                  const totalDeds = advanceData.deductions.reduce((s, d) => s + (Number(d.amount) || 0), 0);
+                  const netAdvance = Math.max(0, advanceData.requestedAmount - totalDeds);
+                  return (
+                    <tr style={{ fontWeight: 'bold', backgroundColor: '#f1f5f9', borderTop: '2px solid #000' }}>
+                      <td colSpan={4} style={{ textAlign: 'center', fontSize: '10.5pt', color: '#15803d' }}>
+                        TỔNG TIỀN ĐỀ NGHỊ THỰC LÃNH (ĐÃ TRỪ KHOẢN TRỪ):
+                      </td>
+                      <td style={{ textAlign: 'right', fontSize: '11.5pt', color: '#15803d' }}>
+                        {formatCurrency(netAdvance)}
+                      </td>
+                      <td style={{ textAlign: 'center', fontSize: '9pt', color: '#15803d' }}>
+                        Thực nhận
+                      </td>
+                    </tr>
+                  );
+                })()
+              ) : null}
             </tbody>
           </table>
 
           {/* SỐ TIỀN BẰNG CHỮ */}
           <div style={{ margin: '8px 0', fontSize: '10.5pt' }}>
-            - Số tiền đề nghị tạm ứng bằng chữ: <strong>{numberToWordsVietnamese(advanceData.requestedAmount)}</strong>
+            - Số tiền đề nghị tạm ứng thực lĩnh bằng chữ:{' '}
+            <strong>
+              {numberToWordsVietnamese(
+                advanceData.deductions && advanceData.deductions.length > 0
+                  ? Math.max(0, advanceData.requestedAmount - advanceData.deductions.reduce((s, d) => s + (Number(d.amount) || 0), 0))
+                  : advanceData.requestedAmount
+              )}
+            </strong>
           </div>
-
-          {/* KHOẢN GIẢM TRỪ NẾU CÓ */}
-          {advanceData.deductions && advanceData.deductions.length > 0 && (
-            <div style={{ margin: '6px 0', fontSize: '10pt' }}>
-              - Các khoản giảm trừ kê khai kèm theo: {advanceData.deductions.map(d => `${d.name} (-${formatCurrency(d.amount)} đ)`).join('; ')}
-            </div>
-          )}
 
           {/* PHÊ DUYỆT THỰC TẾ CỦA KẾ TOÁN */}
           {advanceData.approvedAmount !== undefined && advanceData.approvedAmount !== null && (
@@ -391,26 +440,51 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             </thead>
             <tbody>
               {settlementData.students && settlementData.students.length > 0 ? (
-                settlementData.students.map((st, i) => {
-                  const studentAdvance = settlementData.grossEarned > 0 
-                    ? Math.round((st.earnedAmount / settlementData.grossEarned) * settlementData.totalAdvancePaid)
-                    : 0;
-                  const studentRemain = Math.max(0, st.earnedAmount - studentAdvance);
+                <>
+                  {settlementData.students.map((st, i) => {
+                    const studentAdvance = settlementData.grossEarned > 0 
+                      ? Math.round((st.earnedAmount / settlementData.grossEarned) * settlementData.totalAdvancePaid)
+                      : 0;
+                    const studentRemain = Math.max(0, st.earnedAmount - studentAdvance);
 
-                  return (
-                    <tr key={st.id || i}>
-                      <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                      <td><strong>{st.name}</strong></td>
-                      <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
-                      <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
-                      <td style={{ textAlign: 'right' }}>{formatCurrency(studentAdvance)}</td>
-                      <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(studentRemain)}</td>
-                      <td style={{ fontSize: '8.5pt', textAlign: 'center' }}>
-                        {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'}
-                      </td>
-                    </tr>
-                  );
-                })
+                    return (
+                      <tr key={st.id || i}>
+                        <td style={{ textAlign: 'center' }}>{i + 1}</td>
+                        <td><strong>{st.name}</strong></td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(studentAdvance)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(studentRemain)}</td>
+                        <td style={{ fontSize: '8.5pt', textAlign: 'center' }}>
+                          {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'}
+                        </td>
+                      </tr>
+                    );
+                  })}
+
+                  {/* CÁC KHOẢN GIẢM TRỪ KẾT THÚC KHÓA ĐƯỢC KÊ KHAI TRỰC TIẾP TRONG BẢNG */}
+                  {settlementData.settlementDeductions && settlementData.settlementDeductions.length > 0 && (
+                    <>
+                      <tr style={{ background: '#fffbeb', fontWeight: 600 }}>
+                        <td colSpan={7} style={{ padding: '4px 8px', color: '#b45309', fontSize: '9pt' }}>
+                          * CÁC KHOẢN GIẢM TRỪ THÊM KẾT THÚC KHÓA CỦA GIÁO VIÊN:
+                        </td>
+                      </tr>
+                      {settlementData.settlementDeductions.map((d, dIdx) => (
+                        <tr key={`set-ded-${dIdx}`} style={{ color: '#dc2626' }}>
+                          <td style={{ textAlign: 'center' }}>-</td>
+                          <td colSpan={4} style={{ paddingLeft: '15px' }}>
+                            Trừ: <strong>{d.name}</strong> {d.note ? `(${d.note})` : ''}
+                          </td>
+                          <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                            -{formatCurrency(d.amount)}
+                          </td>
+                          <td style={{ fontSize: '8.5pt', textAlign: 'center', color: '#dc2626' }}>Khoản trừ</td>
+                        </tr>
+                      ))}
+                    </>
+                  )}
+                </>
               ) : (
                 <tr>
                   <td style={{ textAlign: 'center' }}>1</td>
@@ -423,29 +497,39 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                 </tr>
               )}
 
-              {/* DÒNG TỔNG CỘNG */}
-              <tr style={{ fontWeight: 'bold', backgroundColor: '#f2f2f2' }}>
-                <td colSpan={2} style={{ textAlign: 'center' }}>TỔNG CỘNG</td>
+              {/* DÒNG TỔNG CỘNG THÙ LAO & CÒN LẠI BAN ĐẦU */}
+              <tr style={{ fontWeight: 'bold', backgroundColor: '#f8fafc' }}>
+                <td colSpan={2} style={{ textAlign: 'center' }}>TỔNG CỘNG THÙ LAO</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.totalTuition)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.grossEarned)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.totalAdvancePaid)}</td>
-                <td style={{ textAlign: 'right', fontSize: '10.5pt' }}>{formatCurrency(settlementData.finalAmount)}</td>
+                <td style={{ textAlign: 'right', fontSize: '10.5pt' }}>
+                  {formatCurrency(Math.max(0, settlementData.grossEarned - settlementData.totalAdvancePaid))}
+                </td>
                 <td></td>
               </tr>
+
+              {/* DÒNG TỔNG TIỀN THỰC LÃNH SAU KHI TRỪ (NẾU CÓ KHOẢN TRỪ) */}
+              {settlementData.settlementDeductions && settlementData.settlementDeductions.length > 0 ? (
+                <tr style={{ fontWeight: 'bold', backgroundColor: '#f1f5f9', borderTop: '2px solid #000' }}>
+                  <td colSpan={5} style={{ textAlign: 'center', fontSize: '10.5pt', color: '#15803d' }}>
+                    TỔNG TIỀN THANH TOÁN THỰC LÃNH (ĐÃ TRỪ KHOẢN TRỪ):
+                  </td>
+                  <td style={{ textAlign: 'right', fontSize: '11.5pt', color: '#15803d' }}>
+                    {formatCurrency(settlementData.finalAmount)}
+                  </td>
+                  <td style={{ textAlign: 'center', fontSize: '8.5pt', color: '#15803d' }}>
+                    Thực nhận
+                  </td>
+                </tr>
+              ) : null}
             </tbody>
           </table>
 
           {/* SỐ TIỀN BẰNG CHỮ */}
           <div style={{ margin: '8px 0', fontSize: '10.5pt' }}>
-            - Số tiền thanh toán tiếp tục bằng chữ: <strong>{numberToWordsVietnamese(settlementData.finalAmount)}</strong>
+            - Số tiền thanh toán thực lĩnh bằng chữ: <strong>{numberToWordsVietnamese(settlementData.finalAmount)}</strong>
           </div>
-
-          {/* CHI TIẾT CÁC KHOẢN GIẢM TRỪ THÊM (NẾU CÓ) */}
-          {settlementData.settlementDeductions && settlementData.settlementDeductions.length > 0 && (
-            <div style={{ margin: '6px 0', fontSize: '10pt' }}>
-              - Các khoản giảm trừ kết thúc khóa: {settlementData.settlementDeductions.map(d => `${d.name} (-${formatCurrency(d.amount)} đ)`).join('; ')}
-            </div>
-          )}
 
           {/* THÔNG TIN THANH TOÁN / UNC */}
           {(settlementData.paymentReference || settlementData.accountantNotes) && (

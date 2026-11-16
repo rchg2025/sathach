@@ -1153,10 +1153,32 @@ export default function AccountantAdvanceApproval() {
                             <td style={{ textAlign: 'right', fontWeight: 600, color: 'var(--success)' }}>{formatCurrency(st.earnedAmount)} đ</td>
                           </tr>
                         ))}
+
+                        {/* CÁC KHOẢN GIẢM TRỪ ĐƯỢC ĐƯA VÀO BÊN TRONG BẢNG */}
+                        {selectedRequest.deductions && selectedRequest.deductions.length > 0 && (
+                          <>
+                            <tr style={{ background: '#fffbeb', fontWeight: 600 }}>
+                              <td colSpan={7} style={{ padding: '6px 10px', color: '#b45309', fontSize: '0.82rem' }}>
+                                * CÁC KHOẢN GIẢM TRỪ THÊM KÊ KHAI CỦA GIÁO VIÊN:
+                              </td>
+                            </tr>
+                            {selectedRequest.deductions.map((d, dIdx) => (
+                              <tr key={`modal-ded-${d.id || dIdx}`} style={{ background: '#fff1f2', color: '#dc2626' }}>
+                                <td style={{ textAlign: 'center' }}>-</td>
+                                <td colSpan={5} style={{ paddingLeft: '15px' }}>
+                                  Trừ: <strong>{d.name}</strong> {d.note ? `(${d.note})` : ''}
+                                </td>
+                                <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                                  -{formatCurrency(d.amount)} đ
+                                </td>
+                              </tr>
+                            ))}
+                          </>
+                        )}
                       </tbody>
                       <tfoot style={{ position: 'sticky', bottom: 0, background: '#f1f5f9', fontWeight: 'bold' }}>
                         <tr>
-                          <td colSpan={4} style={{ textAlign: 'right' }}>TỔNG CỘNG:</td>
+                          <td colSpan={4} style={{ textAlign: 'right' }}>TỔNG THÙ LAO:</td>
                           <td style={{ textAlign: 'right', color: 'var(--primary)' }}>
                             {formatCurrency(selectedRequest.totalTuitionAmount || 0)} đ
                           </td>
@@ -1165,23 +1187,27 @@ export default function AccountantAdvanceApproval() {
                             {formatCurrency(selectedRequest.grossEstimatedAmount)} đ
                           </td>
                         </tr>
+                        {selectedRequest.deductions && selectedRequest.deductions.length > 0 && (
+                          <tr style={{ background: '#e2e8f0', color: '#15803d' }}>
+                            <td colSpan={6} style={{ textAlign: 'right', fontSize: '0.9rem' }}>
+                              TỔNG THÙ LAO THỰC TẾ (SAU KHOẢN TRỪ):
+                            </td>
+                            <td style={{ textAlign: 'right', fontSize: '0.95rem' }}>
+                              {formatCurrency(
+                                Math.max(
+                                  0,
+                                  selectedRequest.grossEstimatedAmount -
+                                  selectedRequest.deductions.reduce((s, d) => s + (Number(d.amount) || 0), 0)
+                                )
+                              )} đ
+                            </td>
+                          </tr>
+                        )}
                       </tfoot>
                     </table>
                   </div>
                 )}
               </div>
-
-              {/* Chi tiết khoản trừ */}
-              {selectedRequest.deductions && selectedRequest.deductions.length > 0 && (
-                <div style={{ marginBottom: '1rem', padding: '0.5rem', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-                  <strong>Các khoản giảm trừ kê khai:</strong>
-                  <ul style={{ margin: '0.25rem 0 0 1.2rem', fontSize: '0.85rem' }}>
-                    {selectedRequest.deductions.map(d => (
-                      <li key={d.id}>{d.name}: -{formatCurrency(d.amount)} đ</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
 
               {/* FORM XỬ LÝ NẾU APPROVE HOẶC PAY */}
               {(actionType === 'APPROVE' || actionType === 'PAY') && (
