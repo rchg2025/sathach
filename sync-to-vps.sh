@@ -24,12 +24,17 @@ git push origin main || echo "Git push warning: Please check origin remote"
 
 echo ""
 echo "=========================================="
-echo "📦 2. Syncing files to VPS ($VPS_HOST)..."
+echo "🏗️ 2. Building Frontend locally..."
+echo "=========================================="
+npm run build
+
+echo ""
+echo "=========================================="
+echo "📦 3. Syncing files to VPS ($VPS_HOST)..."
 echo "=========================================="
 rsync -avz --delete \
   --exclude 'node_modules' \
   --exclude '.git' \
-  --exclude 'dist' \
   --exclude '.next' \
   --exclude '.env' \
   --exclude '*.log' \
@@ -39,16 +44,10 @@ rsync -avz --delete \
 
 echo ""
 echo "=========================================="
-echo "⚡ 3. Building & Reloading on VPS..."
+echo "⚡ 4. Reloading on VPS..."
 echo "=========================================="
 ssh -F /dev/null -i $SSH_KEY -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null $VPS_USER@$VPS_HOST << 'REMOTE_EXEC'
 cd /var/www/sathach
-echo "Generating Prisma Client..."
-npx prisma generate
-echo "Applying database schema changes / indexes..."
-npx prisma db push --skip-generate
-echo "Building Frontend..."
-npm run build
 echo "Restarting sathach.service..."
 systemctl restart sathach
 sleep 2
