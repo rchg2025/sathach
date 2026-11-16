@@ -36,6 +36,8 @@ const UserManager = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isAccountant = user?.role === 'ACCOUNTANT';
+
   useEffect(() => {
     const u = localStorage.getItem('user');
     if (u) setUser(JSON.parse(u));
@@ -84,8 +86,14 @@ const UserManager = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền thêm mới thành viên!');
+      return;
+    }
     try {
-      await axios.post(`${API_BASE_URL}/api/manager/users`, formData);
+      await axios.post(`${API_BASE_URL}/api/manager/users`, formData, {
+        params: { requesterRole: user?.role, requesterUsername: user?.username }
+      });
       toast.success('Thêm thành viên thành công!');
       setFormData({ username: '', password: '', role: 'MANAGER', name: '', phone: '', email: '' });
       setActiveTab('list');
@@ -189,6 +197,11 @@ const UserManager = () => {
   };
 
   const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền nhập thành viên từ Excel!');
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
     
@@ -240,19 +253,25 @@ const UserManager = () => {
         <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '10px' }}>
           <h2 style={{ margin: 0 }}>Quản lý Thành viên</h2>
           <div className="import-export-group" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'nowrap' }}>
-            <button className="btn" style={{ backgroundColor: '#e2e8f0', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={downloadTemplate}>
-              <ClipboardList size={16} />
-              <span>File Mẫu</span>
-            </button>
-            <button className="btn" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => fileInputRef.current?.click()}>
-              <Upload size={16} />
-              <span>Nhập Excel</span>
-            </button>
+            {!isAccountant && (
+              <>
+                <button className="btn" style={{ backgroundColor: '#e2e8f0', color: '#475569', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={downloadTemplate}>
+                  <ClipboardList size={16} />
+                  <span>File Mẫu</span>
+                </button>
+                <button className="btn" style={{ backgroundColor: '#e0f2fe', color: '#0369a1', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={() => fileInputRef.current?.click()}>
+                  <Upload size={16} />
+                  <span>Nhập Excel</span>
+                </button>
+              </>
+            )}
             <button className="btn" style={{ backgroundColor: '#0056b3', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={exportExcel}>
               <Download size={16} />
               <span>Xuất Excel</span>
             </button>
-            <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleImport} />
+            {!isAccountant && (
+              <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept=".xlsx, .xls" onChange={handleImport} />
+            )}
           </div>
         </div>
         
@@ -260,9 +279,11 @@ const UserManager = () => {
           <div className={`tab ${activeTab === 'list' ? 'active' : ''}`} onClick={() => { setActiveTab('list'); setEditingUser(null); }}>
             Danh sách Thành viên
           </div>
-          <div className={`tab ${activeTab === 'add' ? 'active' : ''}`} onClick={() => setActiveTab('add')}>
-            Thêm mới
-          </div>
+          {!isAccountant && (
+            <div className={`tab ${activeTab === 'add' ? 'active' : ''}`} onClick={() => setActiveTab('add')}>
+              Thêm mới
+            </div>
+          )}
         </div>
 
         {activeTab === 'list' && !editingUser && (

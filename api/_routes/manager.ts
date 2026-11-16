@@ -587,6 +587,11 @@ router.get('/users', async (req, res) => {
 });
 
 router.post('/users', async (req, res) => {
+  const { requesterRole, requesterUsername } = req.query;
+  if (requesterRole === 'ACCOUNTANT') {
+    return res.status(403).json({ error: 'Tài khoản Kế toán không có quyền thêm mới thành viên' });
+  }
+
   const { username, password, role, name, phone, email, avatarUrl } = req.body;
   try {
     const existing = await prisma.user.findUnique({ where: { username } });

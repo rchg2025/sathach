@@ -213,6 +213,10 @@ const StudentManager = () => {
 
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền thêm mới hoặc chỉnh sửa học viên');
+      return;
+    }
     if (!cccd || !name) {
       toast.error('CCCD và Họ tên là bắt buộc');
       return;
@@ -532,6 +536,11 @@ const StudentManager = () => {
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isAccountant) {
+      toast.error('Tài khoản Kế toán không có quyền nhập học viên từ file Excel');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -608,12 +617,14 @@ const StudentManager = () => {
         >
           Danh sách Học viên
         </div>
-        <div 
-          className={`tab ${activeTab === 'add' ? 'active' : ''}`}
-          onClick={() => { resetForm(); setActiveTab('add'); }}
-        >
-          {editingId ? 'Sửa Học viên' : 'Thêm Học viên mới'}
-        </div>
+        {!isAccountant && (
+          <div 
+            className={`tab ${activeTab === 'add' ? 'active' : ''}`}
+            onClick={() => { resetForm(); setActiveTab('add'); }}
+          >
+            {editingId ? 'Sửa Học viên' : 'Thêm Học viên mới'}
+          </div>
+        )}
       </div>
 
       {activeTab === 'list' && (
@@ -641,24 +652,28 @@ const StudentManager = () => {
             
             <div className="flex" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
               <div className="import-export-group" style={{ display: 'flex', gap: '0.5rem' }}>
-                <button className="btn btn-outline" onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
-                  <span>📋 File Mẫu</span>
-                </button>
-                
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  onChange={handleFileUpload} 
-                  accept=".xlsx, .xls" 
-                  style={{ display: 'none' }} 
-                />
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={() => fileInputRef.current?.click()} 
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
-                >
-                  <span>⬆️ Nhập Excel</span>
-                </button>
+                {!isAccountant && (
+                  <>
+                    <button className="btn btn-outline" onClick={downloadTemplate} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}>
+                      <span>📋 File Mẫu</span>
+                    </button>
+                    
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleFileUpload} 
+                      accept=".xlsx, .xls" 
+                      style={{ display: 'none' }} 
+                    />
+                    <button 
+                      className="btn btn-secondary" 
+                      onClick={() => fileInputRef.current?.click()} 
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem', flex: 1, padding: '0.5rem', fontSize: '0.85rem', whiteSpace: 'nowrap' }}
+                    >
+                      <span>⬆️ Nhập Excel</span>
+                    </button>
+                  </>
+                )}
               </div>
 
               <button className="btn btn-primary btn-export" onClick={exportToExcel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
