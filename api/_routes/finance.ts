@@ -745,21 +745,28 @@ router.post('/advance-requests/:id/action', async (req, res) => {
   }
 });
 
-// Xóa hoặc Hủy phiếu tạm ứng (chỉ khi đang ở trạng thái PENDING)
+// Xóa hoặc Hủy phiếu tạm ứng (Superadmin 'quantri' có toàn quyền xóa mọi trạng thái, tài khoản khác chỉ xóa khi PENDING)
 router.delete('/advance-requests/:id', async (req, res) => {
   try {
     const id = Number(req.params.id);
+    const { username } = req.query;
+
     const request = await prisma.advancePaymentRequest.findUnique({ where: { id } });
 
     if (!request) {
-      return res.status(404).json({ error: 'Không tìm thấy phiếu' });
+      return res.status(404).json({ error: 'Không tìm thấy phiếu đề nghị tạm ứng' });
     }
 
-    if (request.status !== 'PENDING') {
-      return res.status(400).json({ error: 'Không thể xóa phiếu đã được xử lý hoặc chi tiền' });
+    const isSuperAdmin = username === 'quantri';
+
+    if (!isSuperAdmin && request.status !== 'PENDING') {
+      return res.status(400).json({ error: 'Không thể xóa phiếu đã được xử lý hoặc chi tiền (Chỉ superadmin quantri mới có quyền xóa)' });
     }
 
+    // Xóa các khoản deductions liên quan (nếu có onDelete Cascade hoặc xóa tay)
+    await prisma.advancePaymentDeduction.deleteMany({ where: { requestId: id } });
     await prisma.advancePaymentRequest.delete({ where: { id } });
+
     res.json({ message: 'Xóa phiếu đề nghị tạm ứng thành công' });
   } catch (error: any) {
     console.error('Error deleting advance request:', error);

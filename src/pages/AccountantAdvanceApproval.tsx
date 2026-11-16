@@ -397,6 +397,25 @@ export default function AccountantAdvanceApproval() {
     }, 150);
   };
 
+  // Superadmin quantri xóa đơn đề nghị
+  const handleDeleteRequest = async (req: AdvanceRequest) => {
+    if (!window.confirm(`Xác nhận xóa phiếu đề nghị tạm ứng ${req.requestCode} của giáo viên ${req.teacher?.name}? Hành động này không thể hoàn tác.`)) {
+      return;
+    }
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/manager/finance/advance-requests/${req.id}`, {
+        params: { username: user?.username }
+      });
+      toast.success(`Đã xóa phiếu ${req.requestCode} thành công`);
+      fetchRequests();
+      if (activeTab === 'SETTLEMENT') fetchSettlementSummary();
+    } catch (err: any) {
+      console.error('Lỗi khi xóa phiếu đề nghị tạm ứng', err);
+      toast.error(err.response?.data?.error || 'Lỗi khi xóa phiếu đề nghị tạm ứng');
+    }
+  };
+
   const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN').format(val || 0);
 
   const getStatusBadge = (status: string) => {
@@ -743,6 +762,18 @@ export default function AccountantAdvanceApproval() {
                                   >
                                     <DollarSign size={14} />
                                     <span className="btn-action-text">Chi tiền</span>
+                                  </button>
+                                )}
+
+                                {user?.username === 'quantri' && (
+                                  <button
+                                    className="btn btn-danger"
+                                    style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                    onClick={() => handleDeleteRequest(req)}
+                                    title="Xóa phiếu (Quyền Superadmin quantri)"
+                                  >
+                                    <Trash2 size={14} />
+                                    <span className="btn-action-text">Xóa</span>
                                   </button>
                                 )}
                               </div>
