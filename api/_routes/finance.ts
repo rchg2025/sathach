@@ -414,6 +414,19 @@ router.post('/students-tuition-batch', async (req, res) => {
 // 5. ĐƠN ĐĂNG KÝ TẠM ỨNG (AdvancePaymentRequest)
 // ==========================================
 
+// Lấy số lượng đơn tạm ứng đang ở trạng thái PENDING (chờ duyệt)
+router.get('/advance-requests/pending-count', async (req, res) => {
+  try {
+    const count = await prisma.advancePaymentRequest.count({
+      where: { status: 'PENDING' }
+    });
+    res.json({ count });
+  } catch (error: any) {
+    console.error('Error fetching pending advance count:', error);
+    res.status(500).json({ error: error.message || 'Lỗi đếm số đơn chờ duyệt' });
+  }
+});
+
 // Lấy danh sách đơn tạm ứng (Kế toán xem tất cả, Giáo viên chỉ xem của mình)
 router.get('/advance-requests', async (req, res) => {
   try {

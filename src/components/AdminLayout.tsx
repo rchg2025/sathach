@@ -36,6 +36,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [pendingAdvanceCount, setPendingAdvanceCount] = useState<number>(0);
 
   const handleLogout = async () => {
     if (user?.id) {
@@ -68,6 +69,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
     const interval = setInterval(ping, 60000);
     return () => clearInterval(interval);
   }, [user?.id]);
+
+  // Lấy số lượng đơn tạm ứng đang chờ duyệt cho Kế toán / Admin / Superadmin
+  React.useEffect(() => {
+    const isAccountantOrAdmin = user?.role === 'ACCOUNTANT' || user?.role === 'ADMIN' || user?.username === 'quantri';
+    if (!isAccountantOrAdmin) return;
+
+    const fetchPendingCount = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/manager/finance/advance-requests/pending-count`);
+        if (res.ok) {
+          const data = await res.json();
+          setPendingAdvanceCount(data.count || 0);
+        }
+      } catch (e) {
+        // Lặng lẽ bỏ qua nếu lỗi mạng
+      }
+    };
+
+    fetchPendingCount();
+    // Cập nhật định kỳ mỗi 30 giây hoặc khi chuyển route
+    const countInterval = setInterval(fetchPendingCount, 30000);
+    return () => clearInterval(countInterval);
+  }, [user?.role, user?.username, location.pathname]);
 
   const isActive = (path: string) => location.pathname === path ? 'active' : '';
 
@@ -217,8 +241,61 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, user }) => {
                   <Users size={20} /> <span className="sidebar-item-text">Quản lý học viên</span>
                 </Link>
               )}
-              <Link to="/manager/advance-approval" className={`sidebar-item ${isActive('/manager/advance-approval')}`} onClick={closeSidebar}>
-                <CheckSquare size={20} /> <span className="sidebar-item-text">Duyệt chi Tạm ứng</span>
+              <Link 
+                to="/manager/advance-approval" 
+                className={`sidebar-item ${isActive('/manager/advance-approval')}`} 
+                onClick={closeSidebar}
+                style={{ position: 'relative' }}
+              >
+                <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                  <CheckSquare size={20} />
+                  {pendingAdvanceCount > 0 && isCollapsed && (
+                    <span 
+                      style={{
+                        position: 'absolute',
+                        top: '-6px',
+                        right: '-6px',
+                        backgroundColor: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: '0.7rem',
+                        fontWeight: 'bold',
+                        borderRadius: '9999px',
+                        minWidth: '16px',
+                        height: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 3px',
+                        boxShadow: '0 0 0 2px var(--sidebar-bg, #1e293b)'
+                      }}
+                    >
+                      {pendingAdvanceCount > 99 ? '99+' : pendingAdvanceCount}
+                    </span>
+                  )}
+                </div>
+                <span className="sidebar-item-text" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                  <span>Duyệt chi Tạm ứng</span>
+                  {pendingAdvanceCount > 0 && (
+                    <span 
+                      style={{
+                        backgroundColor: '#ef4444',
+                        color: '#ffffff',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        borderRadius: '9999px',
+                        minWidth: '18px',
+                        height: '18px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0 5px',
+                        marginLeft: '8px'
+                      }}
+                    >
+                      {pendingAdvanceCount > 99 ? '99+' : pendingAdvanceCount}
+                    </span>
+                  )}
+                </span>
               </Link>
               <Link to="/manager/finance-settings" className={`sidebar-item ${isActive('/manager/finance-settings')}`} onClick={closeSidebar}>
                 <DollarSign size={20} /> <span className="sidebar-item-text">Cấu hình Học phí & Tạm ứng</span>
