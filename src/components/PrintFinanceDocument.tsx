@@ -234,28 +234,43 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             </thead>
             <tbody>
               {advanceData.students && advanceData.students.length > 0 ? (
-                advanceData.students.map((st, i) => (
-                  <tr key={st.id || i}>
-                    <td style={{ textAlign: 'center' }}>{i + 1}</td>
-                    <td><strong>{st.name}</strong></td>
-                    <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
-                    <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
-                    <td style={{ textAlign: 'right' }}>
-                      {i === 0 ? formatCurrency(advanceData.requestedAmount) : '-'}
-                    </td>
-                    <td style={{ fontSize: '9pt', textAlign: 'center' }}>
-                      {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} ({st.teacherSharePercent}%)
-                    </td>
-                  </tr>
-                ))
+                (() => {
+                  const totalGross = advanceData.grossEstimatedAmount || 1;
+                  const totalReq = advanceData.requestedAmount || 0;
+                  let allocatedSum = 0;
+
+                  return advanceData.students.map((st, i) => {
+                    const isLast = i === advanceData.students!.length - 1;
+                    // Phân bổ số tiền đề nghị tạm ứng theo tỷ lệ thù lao của từng học viên
+                    let studentAdvance = 0;
+                    if (isLast) {
+                      studentAdvance = Math.max(0, totalReq - allocatedSum);
+                    } else {
+                      studentAdvance = Math.round((st.earnedAmount / totalGross) * totalReq);
+                      allocatedSum += studentAdvance;
+                    }
+
+                    return (
+                      <tr key={st.id || i}>
+                        <td style={{ textAlign: 'center' }}>{i + 1}</td>
+                        <td><strong>{st.name}</strong></td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
+                        <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
+                        <td style={{ textAlign: 'right', fontWeight: 'bold' }}>
+                          {formatCurrency(studentAdvance)}
+                        </td>
+                        <td style={{ fontSize: '9pt', textAlign: 'center' }}>
+                          {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} ({st.teacherSharePercent}%)
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()
               ) : (
                 <tr>
-                  <td style={{ textAlign: 'center' }}>1</td>
-                  <td><strong>{advanceData.teacher?.name}</strong></td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.totalTuitionAmount)}</td>
-                  <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.grossEstimatedAmount)}</td>
-                  <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(advanceData.requestedAmount)}</td>
-                  <td>{advanceData.reason || '-'}</td>
+                  <td colSpan={6} style={{ textAlign: 'center', padding: '15px', color: '#666' }}>
+                    Chưa có dữ liệu danh sách học viên
+                  </td>
                 </tr>
               )}
               <tr style={{ fontWeight: 'bold', backgroundColor: '#f2f2f2' }}>

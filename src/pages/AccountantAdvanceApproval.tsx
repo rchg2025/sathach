@@ -328,7 +328,23 @@ export default function AccountantAdvanceApproval() {
   };
 
   // Hàm kích hoạt In đơn tạm ứng
-  const handlePrintAdvance = (req: AdvanceRequest) => {
+  const handlePrintAdvance = async (req: AdvanceRequest) => {
+    let students = req.students;
+
+    // Nếu phiếu chưa có danh sách học viên, tự động tải từ endpoint estimate
+    if (!students || students.length === 0) {
+      try {
+        const estRes = await axios.get(`${API_BASE_URL}/api/manager/finance/estimate`, {
+          params: { teacherId: req.teacherId, courseId: req.courseId }
+        });
+        if (estRes.data?.students) {
+          students = estRes.data.students;
+        }
+      } catch (err) {
+        console.warn('Không tải được danh sách học viên bổ sung cho bản in:', err);
+      }
+    }
+
     setPrintSettlementData(null);
     setPrintDocType('ADVANCE_REQUEST');
     setPrintAdvanceData({
@@ -350,7 +366,7 @@ export default function AccountantAdvanceApproval() {
       approvedAt: req.approvedAt,
       paidAt: req.paidAt,
       deductions: req.deductions,
-      students: req.students,
+      students: students,
     });
 
     setTimeout(() => {
