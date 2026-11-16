@@ -89,12 +89,12 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
           @media print {
             @page {
               size: A4 portrait;
-              margin: 1.2cm 1.5cm;
+              margin: 1.2cm 1.4cm 1.2cm 1.4cm;
             }
             body {
               font-family: 'Times New Roman', Times, serif;
               font-size: 11pt;
-              line-height: 1.4;
+              line-height: 1.35;
               color: #000 !important;
               background: #fff !important;
               margin: 0;
@@ -108,13 +108,16 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             .print-table {
               width: 100%;
               border-collapse: collapse;
-              margin: 10px 0;
-              font-size: 10.5pt;
+              margin: 8px 0;
+              font-size: 10pt;
+              table-layout: fixed;
             }
             .print-table th, .print-table td {
               border: 1px solid #000;
-              padding: 5px 6px;
+              padding: 4px 5px;
               vertical-align: middle;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
             }
             .print-table th {
               background-color: #f2f2f2 !important;
@@ -125,7 +128,7 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             }
             .signature-block {
               width: 100%;
-              margin-top: 30px;
+              margin-top: 25px;
               border: none;
               page-break-inside: avoid;
             }
@@ -138,15 +141,15 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
           }
           .print-finance-container {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 11.5pt;
-            line-height: 1.45;
+            font-size: 11pt;
+            line-height: 1.4;
             color: #000;
           }
           .header-table-custom {
             width: 100%;
             border-collapse: collapse;
             border: none;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
           }
           .header-table-custom td {
             border: none;
@@ -155,23 +158,23 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
           }
           .doc-main-title {
             text-align: center;
-            font-size: 15pt;
+            font-size: 14pt;
             font-weight: bold;
             text-transform: uppercase;
-            margin: 15px 0 4px 0;
+            margin: 10px 0 3px 0;
           }
           .doc-sub-teacher {
             text-align: center;
-            font-size: 12pt;
+            font-size: 11.5pt;
             font-weight: bold;
             text-transform: uppercase;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
           }
           .dvt-label {
             text-align: right;
             font-style: italic;
-            font-size: 10pt;
-            margin-bottom: 4px;
+            font-size: 9.5pt;
+            margin-bottom: 3px;
           }
         `}
       </style>
@@ -186,16 +189,16 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             <tbody>
               <tr>
                 <td style={{ width: '48%', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10.5pt' }}>ỦY BAN NHÂN DÂN</div>
-                  <div style={{ fontSize: '10.5pt' }}>THÀNH PHỐ HỒ CHÍ MINH</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>TRƯỜNG CAO ĐẲNG BÁCH KHOA</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt', textDecoration: 'underline' }}>NAM SÀI GÒN</div>
+                  <div style={{ fontSize: '10pt' }}>ỦY BAN NHÂN DÂN</div>
+                  <div style={{ fontSize: '10pt' }}>THÀNH PHỐ HỒ CHÍ MINH</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>TRƯỜNG CAO ĐẲNG BÁCH KHOA</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10pt', textDecoration: 'underline' }}>NAM SÀI GÒN</div>
                 </td>
                 <td style={{ width: '52%', textAlign: 'center' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>Độc lập - Tự do - Hạnh phúc</div>
-                  <div style={{ width: '140px', height: '1px', background: '#000', margin: '3px auto 6px auto' }}></div>
-                  <div style={{ fontStyle: 'italic', fontSize: '10pt' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>Độc lập - Tự do - Hạnh phúc</div>
+                  <div style={{ width: '130px', height: '1px', background: '#000', margin: '3px auto 5px auto' }}></div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>
                     Thành phố Hồ Chí Minh, ngày {day} tháng {month} năm {year}
                   </div>
                 </td>
@@ -211,22 +214,22 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             {advanceData.teacher?.name ? advanceData.teacher.name.toUpperCase() : ''}
           </div>
 
-          <div style={{ textAlign: 'center', fontStyle: 'italic', fontSize: '10.5pt', marginBottom: '14px' }}>
+          <div style={{ textAlign: 'center', fontStyle: 'italic', fontSize: '10pt', marginBottom: '10px' }}>
             Mã phiếu: <strong>{advanceData.requestCode}</strong> &nbsp;|&nbsp; Ngày lập: {new Date(advanceData.createdAt).toLocaleDateString('vi-VN')}
           </div>
 
           <div className="dvt-label">(đvt: đồng)</div>
 
-          {/* BẢNG CHI TIẾT TẠM ỨNG THEO TỪNG HỌC VIÊN */}
+          {/* BẢNG CHI TIẾT TẠM ỨNG VỚI ĐỘ RỘNG CỘT CÂN ĐỐI */}
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '35px' }}>STT</th>
-                <th>HỌ VÀ TÊN</th>
-                <th style={{ width: '120px', textAlign: 'right' }}>MỨC THU</th>
-                <th style={{ width: '125px', textAlign: 'right' }}>TỔNG TIỀN THÙ LAO</th>
-                <th style={{ width: '125px', textAlign: 'right' }}>ĐỀ NGHỊ TẠM ỨNG</th>
-                <th style={{ width: '140px' }}>GHI CHÚ</th>
+                <th style={{ width: '38px' }}>STT</th>
+                <th style={{ width: '200px' }}>HỌ VÀ TÊN</th>
+                <th style={{ width: '105px', textAlign: 'right' }}>MỨC THU</th>
+                <th style={{ width: '115px', textAlign: 'right' }}>TỔNG TIỀN THÙ LAO</th>
+                <th style={{ width: '115px', textAlign: 'right' }}>ĐỀ NGHỊ TẠM ỨNG</th>
+                <th style={{ width: '120px' }}>GHI CHÚ</th>
               </tr>
             </thead>
             <tbody>
@@ -238,10 +241,9 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                     <td style={{ textAlign: 'right' }}>{formatCurrency(st.tuitionAmount)}</td>
                     <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
                     <td style={{ textAlign: 'right' }}>
-                      {/* Phân bổ tỷ lệ đề nghị tạm ứng hoặc hiển thị ở dòng tổng cộng */}
                       {i === 0 ? formatCurrency(advanceData.requestedAmount) : '-'}
                     </td>
-                    <td style={{ fontSize: '9.5pt' }}>
+                    <td style={{ fontSize: '9pt', textAlign: 'center' }}>
                       {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'} ({st.teacherSharePercent}%)
                     </td>
                   </tr>
@@ -260,7 +262,7 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                 <td colSpan={2} style={{ textAlign: 'center' }}>TỔNG CỘNG</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.totalTuitionAmount)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(advanceData.grossEstimatedAmount)}</td>
-                <td style={{ textAlign: 'right', fontSize: '11pt' }}>{formatCurrency(advanceData.requestedAmount)}</td>
+                <td style={{ textAlign: 'right', fontSize: '10.5pt' }}>{formatCurrency(advanceData.requestedAmount)}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -273,14 +275,14 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
 
           {/* KHOẢN GIẢM TRỪ NẾU CÓ */}
           {advanceData.deductions && advanceData.deductions.length > 0 && (
-            <div style={{ margin: '8px 0', fontSize: '10pt' }}>
+            <div style={{ margin: '6px 0', fontSize: '10pt' }}>
               - Các khoản giảm trừ kê khai kèm theo: {advanceData.deductions.map(d => `${d.name} (-${formatCurrency(d.amount)} đ)`).join('; ')}
             </div>
           )}
 
           {/* PHÊ DUYỆT THỰC TẾ CỦA KẾ TOÁN */}
           {advanceData.approvedAmount !== undefined && advanceData.approvedAmount !== null && (
-            <div style={{ margin: '6px 0', padding: '6px 10px', border: '1px solid #000', fontSize: '10pt', background: '#fafafa' }}>
+            <div style={{ margin: '6px 0', padding: '5px 10px', border: '1px solid #000', fontSize: '9.5pt', background: '#fafafa' }}>
               <div>
                 - Số tiền Kế toán duyệt chi: <strong>{formatCurrency(advanceData.approvedAmount)} VNĐ</strong> &nbsp;
                 (Bằng chữ: <em>{numberToWordsVietnamese(advanceData.approvedAmount)}</em>)
@@ -294,21 +296,27 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             </div>
           )}
 
-          {/* BẢNG CHỮ KÝ 2 CỘT CHUẨN FORM TRƯỜNG NAM SÀI GÒN */}
+          {/* BẢNG CHỮ KÝ 3 CỘT: GIÁO VIÊN - PHỤ TRÁCH KẾ TOÁN - HIỆU TRƯỞNG */}
           <table className="signature-block">
             <tbody>
               <tr>
-                <td style={{ width: '50%' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>PHỤ TRÁCH KẾ TOÁN</div>
-                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '75px' }}></div>
-                  <div style={{ fontWeight: 'bold' }}>{advanceData.approvedBy || '.....................................'}</div>
+                <td style={{ width: '33.33%' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>GIÁO VIÊN</div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9pt' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '70px' }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>{advanceData.teacher?.name || ''}</div>
                 </td>
-                <td style={{ width: '50%' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>HIỆU TRƯỞNG</div>
-                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>(Ký và đóng dấu)</div>
-                  <div style={{ height: '75px' }}></div>
-                  <div style={{ fontWeight: 'bold' }}>.....................................</div>
+                <td style={{ width: '33.33%' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>PHỤ TRÁCH KẾ TOÁN</div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9pt' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '70px' }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>{advanceData.approvedBy || 'Kế toán'}</div>
+                </td>
+                <td style={{ width: '33.34%' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>HIỆU TRƯỞNG</div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9pt' }}>(Ký và đóng dấu)</div>
+                  <div style={{ height: '70px' }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>&nbsp;</div>
                 </td>
               </tr>
             </tbody>
@@ -326,16 +334,16 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
             <tbody>
               <tr>
                 <td style={{ width: '48%', textAlign: 'center' }}>
-                  <div style={{ fontSize: '10.5pt' }}>ỦY BAN NHÂN DÂN</div>
-                  <div style={{ fontSize: '10.5pt' }}>THÀNH PHỐ HỒ CHÍ MINH</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>TRƯỜNG CAO ĐẲNG BÁCH KHOA</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt', textDecoration: 'underline' }}>NAM SÀI GÒN</div>
+                  <div style={{ fontSize: '10pt' }}>ỦY BAN NHÂN DÂN</div>
+                  <div style={{ fontSize: '10pt' }}>THÀNH PHỐ HỒ CHÍ MINH</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10pt' }}>TRƯỜNG CAO ĐẲNG BÁCH KHOA</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10pt', textDecoration: 'underline' }}>NAM SÀI GÒN</div>
                 </td>
                 <td style={{ width: '52%', textAlign: 'center' }}>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
-                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>Độc lập - Tự do - Hạnh phúc</div>
-                  <div style={{ width: '140px', height: '1px', background: '#000', margin: '3px auto 6px auto' }}></div>
-                  <div style={{ fontStyle: 'italic', fontSize: '10pt' }}>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</div>
+                  <div style={{ fontWeight: 'bold', fontSize: '10.5pt' }}>Độc lập - Tự do - Hạnh phúc</div>
+                  <div style={{ width: '130px', height: '1px', background: '#000', margin: '3px auto 5px auto' }}></div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>
                     Thành phố Hồ Chí Minh, ngày {day} tháng {month} năm {year}
                   </div>
                 </td>
@@ -353,23 +361,22 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
 
           <div className="dvt-label">(đvt: đồng)</div>
 
-          {/* BẢNG QUYẾT TOÁN ĐẦY ĐỦ CÁC CỘT THEO ẢNH MẪU NGƯỜI DÙNG CUNG CẤP */}
+          {/* BẢNG QUYẾT TOÁN VỚI ĐỘ RỘNG CỘT TỐI ƯU CÂN ĐỐI */}
           <table className="print-table">
             <thead>
               <tr>
-                <th style={{ width: '35px' }}>STT</th>
-                <th>HỌ VÀ TÊN</th>
-                <th style={{ width: '110px', textAlign: 'right' }}>MỨC THU</th>
-                <th style={{ width: '120px', textAlign: 'right' }}>TỔNG TIỀN THANH TOÁN</th>
-                <th style={{ width: '115px', textAlign: 'right' }}>ĐÃ THANH TOÁN L1</th>
-                <th style={{ width: '125px', textAlign: 'right' }}>TIẾP TỤC THANH TOÁN</th>
-                <th style={{ width: '130px' }}>GHI CHÚ</th>
+                <th style={{ width: '38px' }}>STT</th>
+                <th style={{ width: '185px' }}>HỌ VÀ TÊN</th>
+                <th style={{ width: '95px', textAlign: 'right' }}>MỨC THU</th>
+                <th style={{ width: '110px', textAlign: 'right' }}>TỔNG TIỀN THANH TOÁN</th>
+                <th style={{ width: '100px', textAlign: 'right' }}>ĐÃ THANH TOÁN L1</th>
+                <th style={{ width: '115px', textAlign: 'right' }}>TIẾP TỤC THANH TOÁN</th>
+                <th style={{ width: '60px' }}>GHI CHÚ</th>
               </tr>
             </thead>
             <tbody>
               {settlementData.students && settlementData.students.length > 0 ? (
                 settlementData.students.map((st, i) => {
-                  // Phân bổ tỷ lệ đã thanh toán đợt trước (hoặc hiển thị trực quan)
                   const studentAdvance = settlementData.grossEarned > 0 
                     ? Math.round((st.earnedAmount / settlementData.grossEarned) * settlementData.totalAdvancePaid)
                     : 0;
@@ -383,7 +390,7 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                       <td style={{ textAlign: 'right' }}>{formatCurrency(st.earnedAmount)}</td>
                       <td style={{ textAlign: 'right' }}>{formatCurrency(studentAdvance)}</td>
                       <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(studentRemain)}</td>
-                      <td style={{ fontSize: '9pt' }}>
+                      <td style={{ fontSize: '8.5pt', textAlign: 'center' }}>
                         {st.transmissionType === 'AUTO' ? 'Tự động' : 'Số sàn'}
                       </td>
                     </tr>
@@ -397,7 +404,7 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                   <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.grossEarned)}</td>
                   <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.totalAdvancePaid)}</td>
                   <td style={{ textAlign: 'right', fontWeight: 'bold' }}>{formatCurrency(settlementData.finalAmount)}</td>
-                  <td>Thanh toán cuối khóa</td>
+                  <td></td>
                 </tr>
               )}
 
@@ -407,7 +414,7 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.totalTuition)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.grossEarned)}</td>
                 <td style={{ textAlign: 'right' }}>{formatCurrency(settlementData.totalAdvancePaid)}</td>
-                <td style={{ textAlign: 'right', fontSize: '11pt' }}>{formatCurrency(settlementData.finalAmount)}</td>
+                <td style={{ textAlign: 'right', fontSize: '10.5pt' }}>{formatCurrency(settlementData.finalAmount)}</td>
                 <td></td>
               </tr>
             </tbody>
@@ -427,27 +434,27 @@ export const PrintFinanceDocument: React.FC<PrintFinanceDocumentProps> = ({
 
           {/* THÔNG TIN THANH TOÁN / UNC */}
           {(settlementData.paymentReference || settlementData.accountantNotes) && (
-            <div style={{ margin: '6px 0', fontSize: '10pt', fontStyle: 'italic' }}>
+            <div style={{ margin: '6px 0', fontSize: '9.5pt', fontStyle: 'italic' }}>
               {settlementData.paymentReference && <span>Mã giao dịch / Số UNC: <strong>{settlementData.paymentReference}</strong>. </span>}
               {settlementData.accountantNotes && <span>Ghi chú: {settlementData.accountantNotes}</span>}
             </div>
           )}
 
-          {/* BẢNG CHỮ KÝ 2 CỘT CHUẨN FORM MẪU (PHỤ TRÁCH KẾ TOÁN & HIỆU TRƯỞNG) */}
+          {/* BẢNG CHỮ KÝ 2 CỘT CHUẨN FORM MẪU (PHỤ TRÁCH KẾ TOÁN & HIỆU TRƯỞNG - ĐÃ BỎ PHẦN ..... DƯỚI HIỆU TRƯỞNG) */}
           <table className="signature-block">
             <tbody>
               <tr>
                 <td style={{ width: '50%' }}>
                   <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>PHỤ TRÁCH KẾ TOÁN</div>
-                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>(Ký và ghi rõ họ tên)</div>
-                  <div style={{ height: '75px' }}></div>
-                  <div style={{ fontWeight: 'bold' }}>{settlementData.accountantName || '.....................................'}</div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9pt' }}>(Ký và ghi rõ họ tên)</div>
+                  <div style={{ height: '70px' }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>{settlementData.accountantName || 'Kế toán'}</div>
                 </td>
                 <td style={{ width: '50%' }}>
                   <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>HIỆU TRƯỞNG</div>
-                  <div style={{ fontStyle: 'italic', fontSize: '9.5pt' }}>(Ký và đóng dấu)</div>
-                  <div style={{ height: '75px' }}></div>
-                  <div style={{ fontWeight: 'bold' }}>.....................................</div>
+                  <div style={{ fontStyle: 'italic', fontSize: '9pt' }}>(Ký và đóng dấu)</div>
+                  <div style={{ height: '70px' }}></div>
+                  <div style={{ fontWeight: 'bold', fontSize: '11pt' }}>&nbsp;</div>
                 </td>
               </tr>
             </tbody>

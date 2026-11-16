@@ -346,7 +346,7 @@ export default function AccountantAdvanceApproval() {
       reason: req.reason,
       accountantNotes: req.accountantNotes,
       paymentReference: req.paymentReference,
-      approvedBy: req.approvedBy,
+      approvedBy: req.approvedBy || user?.name || user?.username || 'Kế toán',
       approvedAt: req.approvedAt,
       paidAt: req.paidAt,
       deductions: req.deductions,
