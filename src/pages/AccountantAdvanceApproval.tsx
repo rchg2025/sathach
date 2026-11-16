@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Select from 'react-select';
-import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X, CreditCard, Plus, Trash2, Award } from 'lucide-react';
+import { DollarSign, CheckCircle2, XCircle, Clock, RefreshCw, Eye, Check, X, CreditCard, Plus, Trash2, Award, Printer } from 'lucide-react';
 import toast from 'react-hot-toast';
 import AdminLayout from '../components/AdminLayout';
 import { numberToWordsVietnamese, formatCurrencyNumber, parseCurrencyInput } from '../utils/currencyUtils';
+import PrintFinanceDocument, { type AdvanceRequestPrintData, type SettlementPrintData } from '../components/PrintFinanceDocument';
 
 const API_BASE_URL = '';
 
@@ -116,6 +117,11 @@ export default function AccountantAdvanceApproval() {
   const [customPayAmount, setCustomPayAmount] = useState<number>(0);
   const [useCustomPayAmount, setUseCustomPayAmount] = useState<boolean>(false);
   const [submittingSettlement, setSubmittingSettlement] = useState(false);
+
+  // In ấn Print state
+  const [printDocType, setPrintDocType] = useState<'ADVANCE_REQUEST' | 'SETTLEMENT' | null>(null);
+  const [printAdvanceData, setPrintAdvanceData] = useState<AdvanceRequestPrintData | null>(null);
+  const [printSettlementData, setPrintSettlementData] = useState<SettlementPrintData | null>(null);
 
   useEffect(() => {
     const uStr = localStorage.getItem('user');
@@ -321,6 +327,76 @@ export default function AccountantAdvanceApproval() {
     }
   };
 
+  // Hàm kích hoạt In đơn tạm ứng
+  const handlePrintAdvance = (req: AdvanceRequest) => {
+    setPrintSettlementData(null);
+    setPrintDocType('ADVANCE_REQUEST');
+    setPrintAdvanceData({
+      requestCode: req.requestCode,
+      createdAt: req.createdAt,
+      teacher: req.teacher,
+      course: req.course,
+      studentCount: req.studentCount,
+      grossEstimatedAmount: req.grossEstimatedAmount,
+      totalTuitionAmount: req.totalTuitionAmount,
+      requestedAmount: req.requestedAmount,
+      approvedAmount: req.approvedAmount,
+      totalDeductions: req.totalDeductions,
+      status: req.status,
+      reason: req.reason,
+      accountantNotes: req.accountantNotes,
+      paymentReference: req.paymentReference,
+      approvedBy: req.approvedBy,
+      approvedAt: req.approvedAt,
+      paidAt: req.paidAt,
+      deductions: req.deductions,
+      students: req.students,
+    });
+
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+  // Hàm kích hoạt In quyết toán thanh toán
+  const handlePrintSettlement = (item: SettlementSummaryItem, customAmount?: number, deductionsList?: NewDeductionItem[], paymentRef?: string, notes?: string) => {
+    setPrintAdvanceData(null);
+    setPrintDocType('SETTLEMENT');
+    const finalAmt = customAmount !== undefined ? customAmount : (
+      deductionsList ? Math.max(0, item.remainingToPay - deductionsList.reduce((s, d) => s + (Number(d.amount) || 0), 0)) : item.remainingToPay
+    );
+
+    setPrintSettlementData({
+      requestCode: item.settlementRequests?.[0]?.requestCode,
+      date: new Date().toISOString(),
+      teacher: item.teacher,
+      course: item.course,
+      studentCount: item.studentCount,
+      totalTuition: item.totalTuition,
+      grossEarned: item.grossEarned,
+      totalAdvancePaid: item.totalAdvancePaid,
+      totalSettledPaid: item.totalSettledPaid,
+      remainingToPay: item.remainingToPay,
+      settlementDeductions: deductionsList ? deductionsList.map(d => ({ name: d.name, amount: d.amount, note: d.note })) : [],
+      finalAmount: finalAmt,
+      paymentReference: paymentRef || item.settlementRequests?.[0]?.paymentReference,
+      accountantNotes: notes || item.settlementRequests?.[0]?.accountantNotes,
+      accountantName: user?.name || user?.username || 'Kế toán',
+      students: item.students,
+      advanceHistory: item.advanceRequests.map(r => ({
+        requestCode: r.requestCode,
+        createdAt: r.createdAt,
+        requestedAmount: r.requestedAmount,
+        approvedAmount: r.approvedAmount,
+        status: r.status
+      }))
+    });
+
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const formatCurrency = (val: number) => new Intl.NumberFormat('vi-VN').format(val || 0);
 
   const getStatusBadge = (status: string) => {
@@ -382,9 +458,24 @@ export default function AccountantAdvanceApproval() {
 
   return (
     <AdminLayout user={user}>
+      <style>
+        {`
+          @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .sidebar, .mobile-header, .navbar, .admin-sidebar { display: none !important; }
+            .main-content { margin: 0 !important; width: 100% !important; padding: 0 !important; }
+            body { background: white !important; margin: 0 !important; padding: 0 !important; }
+            .container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
+            .card { box-shadow: none !important; border: none !important; background: transparent !important; }
+            html, body, #root, .admin-layout, .main-content { height: auto !important; overflow: visible !important; }
+          }
+          .print-only { display: none; }
+        `}
+      </style>
       <div>
         {/* HEADER & TABS */}
-        <div className="flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
+        <div className="no-print flex justify-between items-center mb-4" style={{ flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
               <DollarSign size={26} color="var(--primary)" /> Quản lý Tạm ứng & Thanh toán Thù lao
@@ -403,7 +494,7 @@ export default function AccountantAdvanceApproval() {
         </div>
 
         {/* TAB BUTTONS */}
-        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem' }}>
+        <div className="no-print" style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '2px solid var(--border)', paddingBottom: '0.5rem' }}>
           <button
             className={`btn ${activeTab === 'ADVANCE' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600, padding: '8px 16px' }}
@@ -429,7 +520,7 @@ export default function AccountantAdvanceApproval() {
         {/* TAB 1: DANH SÁCH ĐƠN TẠM ỨNG                              */}
         {/* ========================================================= */}
         {activeTab === 'ADVANCE' && (
-          <>
+          <div className="no-print">
             {/* Bộ lọc */}
             <div className="card mb-4">
               <div className="flex justify-between items-center" style={{ gap: '1rem', flexWrap: 'wrap' }}>
@@ -610,6 +701,16 @@ export default function AccountantAdvanceApproval() {
                                   <span className="btn-action-text">Xem</span>
                                 </button>
 
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{ padding: '4px 8px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#1e40af', borderColor: '#bfdbfe', background: '#eff6ff' }}
+                                  onClick={() => handlePrintAdvance(req)}
+                                  title="In phiếu đề nghị tạm ứng"
+                                >
+                                  <Printer size={14} />
+                                  <span className="btn-action-text">In phiếu</span>
+                                </button>
+
                                 {req.status === 'PENDING' && (
                                   <>
                                     <button
@@ -654,14 +755,14 @@ export default function AccountantAdvanceApproval() {
                 </table>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {/* ========================================================= */}
         {/* TAB 2: QUYẾT TOÁN / THANH TOÁN CUỐI KHÓA CHO GIÁO VIÊN      */}
         {/* ========================================================= */}
         {activeTab === 'SETTLEMENT' && (
-          <div>
+          <div className="no-print">
             <div className="card mb-4" style={{ background: '#f8fafc', borderLeft: '4px solid var(--primary)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
                 <Award size={24} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
@@ -856,13 +957,24 @@ export default function AccountantAdvanceApproval() {
                               )}
                             </td>
                             <td style={{ textAlign: 'center' }}>
-                              <button
-                                className={`btn ${item.remainingToPay > 0 ? 'btn-primary' : 'btn-secondary'}`}
-                                style={{ padding: '6px 12px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
-                                onClick={() => handleOpenSettlementModal(item)}
-                              >
-                                <CreditCard size={14} /> Thanh toán
-                              </button>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                                <button
+                                  className={`btn ${item.remainingToPay > 0 ? 'btn-primary' : 'btn-secondary'}`}
+                                  style={{ padding: '5px 10px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                  onClick={() => handleOpenSettlementModal(item)}
+                                >
+                                  <CreditCard size={14} /> Thanh toán
+                                </button>
+                                <button
+                                  className="btn btn-secondary"
+                                  style={{ padding: '5px 8px', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '4px', color: '#047857', borderColor: '#a7f3d0', background: '#ecfdf5' }}
+                                  onClick={() => handlePrintSettlement(item)}
+                                  title="In bảng quyết toán thanh toán"
+                                >
+                                  <Printer size={14} />
+                                  <span className="btn-action-text">In bảng</span>
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         );
@@ -880,6 +992,7 @@ export default function AccountantAdvanceApproval() {
         {/* ========================================================= */}
         {selectedRequest && actionType && (
           <div
+            className="no-print"
             style={{
               position: 'fixed',
               top: 0,
@@ -1082,20 +1195,30 @@ export default function AccountantAdvanceApproval() {
               )}
 
               {/* FOOTER */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-                <button className="btn btn-secondary" onClick={handleCloseModal} disabled={submitting}>
-                  {actionType === 'VIEW' ? 'Đóng' : 'Hủy bỏ'}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                <button
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#1e40af', borderColor: '#bfdbfe', background: '#eff6ff' }}
+                  onClick={() => handlePrintAdvance(selectedRequest)}
+                >
+                  <Printer size={16} /> In phiếu đề nghị
                 </button>
 
-                {actionType !== 'VIEW' && (
-                  <button
-                    className={`btn ${actionType === 'REJECT' ? 'btn-danger' : actionType === 'PAY' ? 'btn-success' : 'btn-primary'}`}
-                    onClick={handleProcessAction}
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Đang xử lý...' : actionType === 'APPROVE' ? 'Xác nhận Duyệt' : actionType === 'PAY' ? 'Xác nhận Chi tiền' : 'Xác nhận Từ chối'}
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-secondary" onClick={handleCloseModal} disabled={submitting}>
+                    {actionType === 'VIEW' ? 'Đóng' : 'Hủy bỏ'}
                   </button>
-                )}
+
+                  {actionType !== 'VIEW' && (
+                    <button
+                      className={`btn ${actionType === 'REJECT' ? 'btn-danger' : actionType === 'PAY' ? 'btn-success' : 'btn-primary'}`}
+                      onClick={handleProcessAction}
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Đang xử lý...' : actionType === 'APPROVE' ? 'Xác nhận Duyệt' : actionType === 'PAY' ? 'Xác nhận Chi tiền' : 'Xác nhận Từ chối'}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1106,6 +1229,7 @@ export default function AccountantAdvanceApproval() {
         {/* ========================================================= */}
         {selectedSettlement && (
           <div
+            className="no-print"
             style={{
               position: 'fixed',
               top: 0,
@@ -1382,23 +1506,50 @@ export default function AccountantAdvanceApproval() {
               </details>
 
               {/* FOOTER ACTIONS */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-                <button className="btn btn-secondary" onClick={handleCloseSettlementModal} disabled={submittingSettlement}>
-                  Hủy bỏ
-                </button>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
                 <button
-                  className="btn btn-success"
-                  onClick={handleConfirmSettlementPayment}
-                  disabled={submittingSettlement}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#047857', borderColor: '#a7f3d0', background: '#ecfdf5' }}
+                  onClick={() => handlePrintSettlement(
+                    selectedSettlement,
+                    finalPayoutAmount,
+                    settlementDeductions,
+                    settlementPaymentRef,
+                    settlementNotes
+                  )}
                 >
-                  <Check size={16} />
-                  {submittingSettlement ? 'Đang xử lý...' : `Xác nhận Thanh toán (${formatCurrency(finalPayoutAmount)} đ)`}
+                  <Printer size={16} /> In phiếu thanh toán
                 </button>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn btn-secondary" onClick={handleCloseSettlementModal} disabled={submittingSettlement}>
+                    Hủy bỏ
+                  </button>
+                  <button
+                    className="btn btn-success"
+                    onClick={handleConfirmSettlementPayment}
+                    disabled={submittingSettlement}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontWeight: 600 }}
+                  >
+                    <Check size={16} />
+                    {submittingSettlement ? 'Đang xử lý...' : `Xác nhận Thanh toán (${formatCurrency(finalPayoutAmount)} đ)`}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         )}
+        {/* Print Only Area */}
+        <div className="print-only">
+          {printDocType && (
+            <PrintFinanceDocument
+              type={printDocType}
+              advanceData={printAdvanceData}
+              settlementData={printSettlementData}
+            />
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
